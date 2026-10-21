@@ -1,0 +1,51 @@
+name: Gerar IDs oficiais Survev
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/generate_type_registry.mjs
+      - .github/workflows/generate-registry.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: registry-main
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Generate original type IDs
+        run: |
+          node --experimental-transform-types scripts/generate_type_registry.mjs \
+            _reference/reference/survev \
+            src/survev/type_registry.lua
+      - name: Verify generated file with Lua
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.4
+          luac5.4 -p src/survev/type_registry.lua
+          lua5.4 -e 'local r=require("src.survev.type_registry"); assert(r.game.typeToId[""]==0); assert(r.map.idToType[0]==""); assert(r.game.count>1 and r.map.count>1); print("IDs:",r.game.count,r.map.count)'
+      - name: Commit verified registry
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/survev/type_registry.lua
+          if ! git diff --cached --quiet; then
+            git commit -m "port: sync exact item and map IDs from pinned Survev"
+            git push origin HEAD:main
+          fi
