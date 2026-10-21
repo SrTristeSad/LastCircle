@@ -194,6 +194,8 @@ function Game:update(dt, moveX, moveY, aimAngle, shooting, sprinting)
                     for _, bot in ipairs(self.bots) do
                         if bot.hp > 0 and distance2(b.x, b.y, bot.x, bot.y) <= (bot.r + 3)^2 then
                             bot.hp = bot.hp - b.damage
+                            bot.lastHit = "player"
+                            bot.lastHitAt = self.time
                             hit = true
                             break
                         end
@@ -217,10 +219,8 @@ function Game:update(dt, moveX, moveY, aimAngle, shooting, sprinting)
                     amount = 24
                 }
             end
-            if bot.hp <= 0 and distance2(bot.x, bot.y, p.x, p.y) < 560^2 then
-                -- A contagem registra apenas eliminações recentes pelo jogador.
-                -- Para o protótipo offline, mortes pela zona não são contabilizadas.
-                if bot.hp <= -1 then self.kills = self.kills + 1 end
+            if bot.lastHit == "player" and self.time - bot.lastHitAt <= 5 then
+                self.kills = self.kills + 1
             end
         end
     end
