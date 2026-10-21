@@ -21,8 +21,9 @@ const { BitStream: OriginalBitStream } = await load("shared/lib/bitBuffer.ts");
 const { MsgStream, MsgType } = await load("shared/net/net.ts");
 const { JoinMsg } = await load("shared/net/joinMsg.ts");
 const { InputMsg } = await load("shared/net/inputMsg.ts");
+const { MapMsg } = await load("shared/net/mapMsg.ts");
 const { GameConfig } = await load("shared/gameConfig.ts");
-const { GameObjectDefs } = await load("shared/defs/register.ts");
+const { GameObjectDefs, MapObjectDefs } = await load("shared/defs/register.ts");
 
 function hex(s) {
   const array = new Uint8Array(s.buffer, 0, s.byteIndex);
@@ -67,10 +68,29 @@ const inputStream = new MsgStream(new ArrayBuffer(256));
 inputStream.serializeMsg(MsgType.Input,input);
 const inputHex = msgHex(inputStream);
 
+const map = new MapMsg();
+map.mapName="main";
+map.seed=123456;
+map.width=720;
+map.height=640;
+map.shoreInset=8;
+map.grassInset=12;
+map.rivers=[{width:7,looped:false,points:[{x:20,y:30},{x:48,y:75}]}];
+map.places=[{name:"Town",pos:{x:.25,y:.65}}];
+map.objects=[{pos:{x:200,y:150},scale:1,type:MapObjectDefs.getAllTypes()[0],ori:2}];
+map.groundPatches=[
+  {bound:{type:0,pos:{x:300,y:200},rad:17},color:0x113355,roughness:.25,offsetDist:3.5,order:2,useAsMapShape:true},
+  {bound:{type:1,min:{x:50,y:100},max:{x:100,y:140}},color:0x8899aa,roughness:.5,offsetDist:1.25,order:1,useAsMapShape:false},
+];
+const mapStream = new MsgStream(new ArrayBuffer(2048));
+mapStream.serializeMsg(MsgType.Map,map);
+const mapHex=msgHex(mapStream);
+
 console.log("original Node TypeScript reference:", commit);
 console.log("JoinMsg    " + joinHex);
 console.log("InputMsg   " + inputHex);
-const result = spawnSync(lua, ["tests/bitstream_parity.lua",plain,joinHex,inputHex], {
+console.log("MapMsg     " + mapHex);
+const result = spawnSync(lua, ["tests/bitstream_parity.lua",plain,joinHex,inputHex,mapHex], {
   encoding: "utf8", cwd: process.cwd()
 });
 process.stdout.write(result.stdout);
