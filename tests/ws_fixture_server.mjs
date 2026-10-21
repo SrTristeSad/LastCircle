@@ -13,6 +13,8 @@ const { InputMsg }=await load("shared/net/inputMsg.ts");
 const { JoinedMsg }=await load("shared/net/joinedMsg.ts");
 const { MapMsg }=await load("shared/net/mapMsg.ts");
 const { UpdateMsg }=await load("shared/net/updateMsg.ts");
+const { ObjectSerializeFns,ObjectType }=await load("shared/net/objectSerializeFns.ts");
+const { BitStream }=await load("shared/lib/bitBuffer.ts");
 const PORT=19998;
 const GUID="258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 function serverFrame(body,opcode=2,fin=true) {
@@ -52,6 +54,25 @@ function decodeClient(buffer) {
   for(let i=0;i<n;i++)body[i]^=mask[i%4];
   return {frame:{opcode:buffer[0]&15,payload:body},rest:buffer.subarray(offset+4+n)};
 }
+function playerPayload(x,y,full=true) {
+  const d={
+    __type:ObjectType.Player,__id:7,pos:{x,y},dir:{x:1,y:0},
+    outfit:"outfitBase",backpack:"",helmet:"",chest:"",activeWeapon:"",
+    layer:0,dead:false,downed:false,animType:0,animSeq:0,
+    actionType:0,actionSeq:0,wearingPan:false,healEffect:false,
+    lastStandEffect:false,frozen:false,hasteType:0,hasteSeq:0,
+    actionItem:"",scale:1,role:"",perks:[]
+  };
+  const part=new BitStream(new ArrayBuffer(128));
+  part.writeUint8(d.__type);
+  part.writeUint16(d.__id);
+  ObjectSerializeFns[ObjectType.Player].serializePart(part,d);
+  part.writeAlignToNextByte();
+  const fullStream=new BitStream(new ArrayBuffer(256));
+  ObjectSerializeFns[ObjectType.Player].serializeFull(fullStream,d);
+  fullStream.writeAlignToNextByte();
+  return {...d,partialStream:part,fullStream};
+}
 const update=()=> {
   const u=new UpdateMsg();
   u.activePlayerIdDirty=true;
@@ -62,6 +83,7 @@ const update=()=> {
     spectatorCountDirty:false
   };
   u.ack=0;
+  u.fullObjects=[playerPayload(120,140)];
   return u;
 };
 const listen=net.createServer(socket=>{
@@ -117,6 +139,8 @@ const listen=net.createServer(socket=>{
           if(input.seq===0)throw Error("missing InputMsg sequence");
           inputSeen=true;
           const ack=update();ack.ack=input.seq;
+          ack.fullObjects=[];
+          ack.partObjects=[playerPayload(125,150,false)];
           socket.write(serverFrame(framedMsg(MsgType.Update,ack)));
         } else throw Error("unknown original client packet "+type);
       }
