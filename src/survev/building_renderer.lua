@@ -141,8 +141,8 @@ function Building:drawPhase(objects,camera,phase,width,height,mapName)
     return self.drawn[phase]
 end
 
-function Building:updateVisibility(dt,objects,activePlayer)
-    self.visibility:update(dt,objects,activePlayer)
+function Building:updateVisibility(dt,objects,activePlayer,revision)
+    self.visibility:update(dt,objects,activePlayer,revision)
 end
 
 function Building:getDefinition(typeName) return Meta[typeName] end
