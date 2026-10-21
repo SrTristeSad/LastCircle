@@ -32,3 +32,7 @@ jobs:
         run: |
           lua5.4 tests/map_renderer_smoke.lua
           luajit tests/map_renderer_smoke.lua
+      - name: Verify original Survev obstacle sprites and metadata
+        run: |
+          lua5.4 tests/obstacle_art_smoke.lua
+          luajit tests/obstacle_art_smoke.lua
