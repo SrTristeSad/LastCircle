@@ -9,15 +9,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Lua
-        run: sudo apt-get update && sudo apt-get install -y lua5.4
-      - name: Lua syntax checks
+      - name: Install Lua 5.4 and LuaJIT (same family as LÖVE)
+        run: sudo apt-get update && sudo apt-get install -y lua5.4 luajit
+      - name: Lua syntax checks (every port module)
         run: |
+          set -e
           luac5.4 -p conf.lua
           luac5.4 -p main.lua
-          luac5.4 -p src/survev/camera.lua
-          luac5.4 -p src/survev/input_bindings.lua
-          luac5.4 -p src/survev/game_config.lua
-          luac5.4 -p tests/survev_parity.lua
-      - name: Survev reference parity tests
-        run: lua5.4 tests/survev_parity.lua
+          for file in src/survev/*.lua tests/*.lua; do
+            luac5.4 -p "$file"
+            luajit -b "$file" /tmp/lastcircle-module.bc
+          done
+      - name: Shared camera, controls and constants parity
+        run: |
+          lua5.4 tests/survev_parity.lua
+          luajit tests/survev_parity.lua
