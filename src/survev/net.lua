@@ -119,6 +119,26 @@ function S:writeBytes(other,offset,length)
     local buffer=other:getBuffer()
     for i=offset+1,offset+length do self:writeUint8(buffer:byte(i)) end
 end
+-- Collider.Type: Circle=0, Aabb=1 (shared/utils/collider.ts).
+function S:writeCollider(col)
+    self:writeUint8(col.type)
+    if col.type == 0 then
+        self:writeMapPos(col.pos)
+        self:writeFloat(col.rad,0,Net.Constants.MaxPosition,16)
+    else
+        self:writeMapPos(col.min)
+        self:writeMapPos(col.max)
+    end
+end
+function S:readCollider()
+    local colliderType=self:readUint8()
+    if colliderType == 0 then
+        return {type=0,pos=self:readMapPos(),
+            rad=self:readFloat(0,Net.Constants.MaxPosition,16)}
+    end
+    return {type=1,min=self:readMapPos(),max=self:readMapPos()}
+end
+
 Net.BitStream=S
 
 local MsgStream={}
