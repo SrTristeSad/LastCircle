@@ -10,6 +10,8 @@ on:
       - "src/survev/spline.lua"
       - "src/survev/river.lua"
       - "src/survev/map_colors.lua"
+      - "src/survev/building_renderer.lua"
+      - "src/survev/map_building_art.lua"
       - "tests/love_render_project/**"
       - ".github/workflows/love-render.yml"
 
@@ -39,6 +41,12 @@ jobs:
           rsvg-convert -f png \
             _reference/reference/survev/client/public/img/map/map-door-01.svg \
             -o tests/love_render_project/assets/survev/img/map/map-door-01.png
+          rsvg-convert -f png \
+            _reference/reference/survev/client/public/img/map/map-building-shack-floor-01.svg \
+            -o tests/love_render_project/assets/survev/img/map/map-building-shack-floor-01.png
+          rsvg-convert -f png \
+            _reference/reference/survev/client/public/img/map/map-building-shack-ceiling-01.svg \
+            -o tests/love_render_project/assets/survev/img/map/map-building-shack-ceiling-01.png
       - name: Render actual upstream terrain polygons in OpenGL
         run: |
           timeout 45s xvfb-run -a love tests/love_render_project \
