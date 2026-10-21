@@ -40,9 +40,15 @@ local bank=renderer:getDefinition("bank_01")
 assert(bank and #bank.floor==2 and #bank.ceiling==3)
 local shack=renderer:getDefinition("shack_01")
 assert(shack and #shack.floor==1 and #shack.ceiling==1)
-local destroyed=renderer:commands({[99]={
+local destroyedObject={[99]={
     __type=ObjTypes.Building,__id=99,type="shack_01",
     pos={x=310,y=320},ori=0,ceilingDead=true,
-}},camera,"ceiling")
-assert(#destroyed==0,"destroyed ceilings must not obscure interiors")
+}}
+-- Original building.ts retains ceiling sprites during the fade-out.
+local before=renderer:commands(destroyedObject,camera,"ceiling")
+assert(#before==1 and before[1].alpha==1)
+renderer:updateVisibility(.2,destroyedObject,nil)
+local after=renderer:commands(destroyedObject,camera,"ceiling")
+assert(#after==1 and after[1].alpha==0,
+    "destroyed Survev ceiling fades out instead of disappearing instantly")
 print("Building image parity:",total,"numeric values matched original TS")
