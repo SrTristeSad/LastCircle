@@ -1,0 +1,54 @@
+name: Empacotar cliente Lua com recursos originais
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "main.lua"
+      - "conf.lua"
+      - "src/survev/**"
+      - "scripts/prepare_assets.py"
+      - ".github/workflows/build-love.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Codigo Lua
+        uses: actions/checkout@v4
+      - name: Recursos originais do ramo de referencia
+        uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - name: Instalar SVG converter
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
+      - name: Converter sem inventar imagens
+        run: |
+          python3 scripts/prepare_assets.py \
+            _reference/reference/survev/client/public \
+            assets/survev
+      - name: Empacotar LÖVE
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          name = "LastCircle-Lua.love"
+          paths = [Path("main.lua"), Path("conf.lua")]
+          for root in ("src/survev", "assets/survev"):
+              paths.extend(x for x in Path(root).rglob("*") if x.is_file())
+          with zipfile.ZipFile(name, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as bundle:
+              for path in paths:
+                  bundle.write(path, str(path).replace("\\", "/"))
+          print("Arquivo LÖVE:", name, "Arquivos:", len(paths))
+          PY
+      - name: Disponibilizar pacote de testes
+        uses: actions/upload-artifact@v4
+        with:
+          name: LastCircle-Lua
+          path: LastCircle-Lua.love
+          retention-days: 14
