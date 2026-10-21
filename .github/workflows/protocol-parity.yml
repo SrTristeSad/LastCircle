@@ -1,0 +1,37 @@
+name: Paridade binaria com Survev original
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/survev/**"
+      - "tests/bitstream_parity.lua"
+      - "scripts/check_bit_parity.mjs"
+      - ".github/workflows/protocol-parity.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compare-original-wire-bytes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: LastCircle Lua
+        uses: actions/checkout@v4
+      - name: Survev original fixado
+        uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - name: Node 24 TypeScript
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Lua 5.4
+        run: sudo apt-get update && sudo apt-get install -y lua5.4
+      - name: Comparar bytes com a implementação original
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_bit_parity.mjs \
+            _reference/reference/survev lua5.4
