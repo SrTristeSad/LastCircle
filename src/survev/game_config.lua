@@ -3,6 +3,20 @@
 -- NAO representa a transcricao completa do GameConfig.
 local GameConfig = {
     protocolVersion = 1028,
+    Action = {None=0,Reload=1,ReloadAlt=2,UseItem=3,Revive=4,Count=5},
+    Anim = {None=0,Melee=1,Cook=2,Throw=3,CrawlForward=4,CrawlBackward=5,Revive=6,DeployMelee=7,IdleMelee=8,Count=9},
+    HasteType = {None=0,Windwalk=1,Takedown=2,Inspire=3,Count=4},
+    GasMode = {Inactive=0,Waiting=1,Moving=2},
+    structureLayerCount = 2,
+    projectile = {maxHeight = 5},
+    -- Object.keys(GameConfig.bagSizes) order is part of the UpdateMsg wire format.
+    bagKeys = {
+        "9mm", "762mm", "556mm", "12gauge", "50AE", "308sub",
+        "flare", "45acp", "frag", "smoke", "strobe", "mirv",
+        "snowball", "potato", "tomato", "coconut",
+        "bandage", "healthkit", "soda", "painkiller",
+        "1xscope", "2xscope", "4xscope", "8xscope", "15xscope",
+    },
     gas = {damageTickRate = 2},
     map = {gridSize = 16, shoreVariation = 3, grassVariation = 2},
     player = {
