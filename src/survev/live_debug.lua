@@ -69,7 +69,7 @@ function V:draw(state,w,h)
     self.terrainRenderer:draw(cam,w,h)
     g.setColor(1,1,1)
     -- Original building floor textures precede players and ceiling layers.
-    self.buildingArt:drawPhase(state.objects,cam,"floor",w,h)
+    self.buildingArt:drawPhase(state.objects,cam,"floor",w,h,map.mapName)
     self.obstacleArt:draw(state.objects,cam,w,h)
 
     -- Debug markers intentionally do not pretend to reproduce object graphics.
@@ -94,7 +94,7 @@ function V:draw(state,w,h)
     end
 
     -- Roof images render above occupants. Full original LOS fade still pending.
-    self.buildingArt:drawPhase(state.objects,cam,"ceiling",w,h)
+    self.buildingArt:drawPhase(state.objects,cam,"ceiling",w,h,map.mapName)
 
     local active=state.objects[state.activeId]
     local info="MAPA: "..tostring(map.mapName)..
