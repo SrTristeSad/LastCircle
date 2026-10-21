@@ -21,13 +21,19 @@ function V.new()
         player=image("assets/survev/img/player/player-base-01.png"),
         terrainMap=nil,terrainRenderer=nil,obstacleArt=ObstacleArt.new(),
         buildingArt=BuildingArt.new(),
-        warning="INTERIORES/PISOS ORIGINAIS | REVELACAO COM RAIOS/LOS PENDENTE",
+        warning="PISOS, TETOS, PORTAS E RAIOS DE VISAO PORTADOS | CAMADAS FINAIS PENDENTES",
     },V)
 end
 function V:update(state,dt)
     if not state or not state.objects then return end
+    if self.lastUpdateMap~=state.map then
+        self.lastUpdateMap=state.map
+        self.buildingArt.visibility:reset()
+        self.obstacleArt.doors:reset()
+    end
     local active=state.objects[state.activeId]
     self.buildingArt:updateVisibility(dt,state.objects,active)
+    self.obstacleArt:update(state.objects,dt)
 end
 local function drawCentered(asset,x,y,dia,angle)
     local w,h=asset:getDimensions()
@@ -70,7 +76,7 @@ function V:draw(state,w,h)
     g.setColor(1,1,1)
     -- Original building floor textures precede players and ceiling layers.
     self.buildingArt:drawPhase(state.objects,cam,"floor",w,h,map.mapName)
-    self.obstacleArt:draw(state.objects,cam,w,h)
+    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName)
 
     -- Debug markers intentionally do not pretend to reproduce object graphics.
     for _,obj in pairs(state.objects) do
@@ -93,7 +99,7 @@ function V:draw(state,w,h)
         end
     end
 
-    -- Roof images render above occupants. Full original LOS fade still pending.
+    -- Roof images render above occupants, alpha determined by actual LOS rays.
     self.buildingArt:drawPhase(state.objects,cam,"ceiling",w,h,map.mapName)
 
     local active=state.objects[state.activeId]
