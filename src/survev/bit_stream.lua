@@ -133,29 +133,63 @@ function Stream:readFloat32() return readPacked(self,"<f",4) end
 function Stream:writeFloat64(v) writePacked(self,"<d",v) end
 function Stream:readFloat64() return readPacked(self,"<d",8) end
 
-function Stream:writeASCIIString(str,bytes)
-    assert(type(str)=="string", "expected ASCII string")
-    -- Native TS string.charCodeAt operates on UTF-16 code units, not UTF-8 bytes.
-    -- Refuse ambiguous non-ASCII names until the UTF-16 conversion is ported.
-    for i=1,#str do
-        assert(str:byte(i)<128, "non-ASCII text needs UTF-16 encoder parity")
+-- Survev's ASCIIString uses JavaScript charCodeAt (UTF-16 units),
+-- keeping ONLY the low byte of each unit. Latin-1 names like "José"
+-- MUST work. This is intentionally NOT normal UTF-8 serialization.
+local function codeUnitsLowBytes(str)
+    local codes={}
+    local i=1
+    while i<=#str do
+        local a=str:byte(i)
+        local cp,n
+        if a<128 then cp,n=a,1
+        elseif a>=194 and a<=223 then
+            local b=str:byte(i+1)
+            assert(b and b>=128 and b<=191,"invalid UTF-8")
+            cp,n=(a-192)*64+(b-128),2
+        elseif a>=224 and a<=239 then
+            local b,d=str:byte(i+1,i+2)
+            assert(b and d and b>=128 and b<=191 and d>=128 and d<=191,
+                "invalid UTF-8")
+            cp,n=(a-224)*4096+(b-128)*64+(d-128),3
+            assert(cp>=2048 and not(cp>=55296 and cp<=57343),"invalid UTF-8 code point")
+        elseif a>=240 and a<=244 then
+            local b,d,e=str:byte(i+1,i+3)
+            assert(b and d and e and b>=128 and b<=191 and d>=128 and d<=191
+                and e>=128 and e<=191,"invalid UTF-8")
+            cp,n=(a-240)*262144+(b-128)*4096+(d-128)*64+(e-128),4
+            assert(cp>=65536 and cp<=1114111,"invalid Unicode code point")
+        else error("invalid UTF-8 lead byte") end
+        if cp>65535 then
+            local v=cp-65536
+            codes[#codes+1]=(55296+math.floor(v/1024))%256
+            codes[#codes+1]=(56320+v%1024)%256
+        else codes[#codes+1]=cp%256 end
+        i=i+n
     end
-    local len = bytes and bytes > 0 and bytes or (#str+1)
-    for i=1,len do self:writeUint8(str:byte(i) or 0) end
+    return codes
+end
+local function latin1ToUtf8(c)
+    if c<128 then return string.char(c) end
+    return string.char(192+math.floor(c/64),128+c%64)
+end
+function Stream:writeASCIIString(str,bytes)
+    assert(type(str)=="string","expected ASCII/Latin-1 string")
+    local codes=codeUnitsLowBytes(str)
+    local len=bytes and bytes>0 and bytes or (#codes+1)
+    for i=1,len do self:writeUint8(codes[i] or 0) end
 end
 function Stream:readASCIIString(bytes)
-    if bytes == 0 then return "" end
-    local fixed = bytes ~= nil
-    local size = bytes or math.floor(self:bitsLeft()/8)
-    local result, accepting = {}, true
-    for i=1,size do
+    if bytes==0 then return "" end
+    local fixed=bytes~=nil
+    local size=bytes or math.floor(self:bitsLeft()/8)
+    local result,accepting={},true
+    for _=1,size do
         local ch=self:readUint8()
-        if ch == 0 then
+        if ch==0 then
             accepting=false
             if not fixed then break end
-        elseif accepting then
-            result[#result+1]=string.char(ch)
-        end
+        elseif accepting then result[#result+1]=latin1ToUtf8(ch) end
     end
     return table.concat(result)
 end
