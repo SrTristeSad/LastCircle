@@ -29,6 +29,9 @@ const { KillMsg } = await load("shared/net/killMsg.ts");
 const { EmoteMsg } = await load("shared/net/emoteMsg.ts");
 const { DropItemMsg } = await load("shared/net/dropItemMsg.ts");
 const { SpectateMsg } = await load("shared/net/spectateMsg.ts");
+const { PlayerStatsMsg } = await load("shared/net/playerStatsMsg.ts");
+const { GameOverMsg } = await load("shared/net/gameOverMsg.ts");
+const { RoleAnnouncementMsg } = await load("shared/net/roleAnnouncementMsg.ts");
 const { GameConfig } = await load("shared/gameConfig.ts");
 const { GameObjectDefs, MapObjectDefs } = await load("shared/defs/register.ts");
 
@@ -137,6 +140,26 @@ messages.serializeMsg(MsgType.DropItem,drop);
 const spectate = new SpectateMsg();
 spectate.action=2;
 messages.serializeMsg(MsgType.Spectate,spectate);
+
+const stats = new PlayerStatsMsg();
+stats.playerStats={playerId:481,timeAlive:87,kills:3,dead:true,damageDealt:149.6,damageTaken:51.4};
+messages.serializeMsg(MsgType.PlayerStats,stats);
+
+const gameOver = new GameOverMsg();
+gameOver.teamId=4;
+gameOver.teamRank=2;
+gameOver.gameOver=true;
+gameOver.winningTeamId=3;
+gameOver.playerStats=[stats.playerStats];
+messages.serializeMsg(MsgType.GameOver,gameOver);
+
+const role = new RoleAnnouncementMsg();
+role.playerId=481;
+role.killerId=222;
+role.role="";
+role.assigned=true;
+role.killed=false;
+messages.serializeMsg(MsgType.RoleAnnouncement,role);
 const batchHex=msgHex(messages);
 
 console.log("original Node TypeScript reference:", commit);
