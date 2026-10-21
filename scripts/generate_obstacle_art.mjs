@@ -75,6 +75,26 @@ for(const type of MapObjectDefs.getAllTypes()) {
         mirrorY:d.img.mirrorY??false,
         randomRotation:d.img.randomRotation??false,
         doorAnchor:d.door?.spriteAnchor || {x:.5,y:.5},
+        // Original collisionHelpers.ts checks these exact attributes.
+        collision:d.collision,
+        collidable:d.collidable,
+        height:d.height,
+        isWindow:!!d.isWindow,
+        isWall:!!d.isWall,
+        door:d.door ? {
+            slideToOpen:!!d.door.slideToOpen,
+            slideOffset:d.door.slideOffset,
+            openSpeed:d.door.openSpeed,
+            openOneWay:d.door.openOneWay,
+            casing:d.door.casingImg ? {
+                asset:assetFor(d.door.casingImg.sprite),
+                sprite:d.door.casingImg.sprite,
+                pos:d.door.casingImg.pos,
+                scale:d.door.casingImg.scale,
+                tint:d.door.casingImg.tint,
+                alpha:d.door.casingImg.alpha,
+            } : null,
+        } : null,
     };
     if(assetFor(picture))resolved++;
 }
