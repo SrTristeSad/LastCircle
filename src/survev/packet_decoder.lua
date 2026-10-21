@@ -16,6 +16,9 @@ local classes={
     [types.Emote]=require("src.survev.emote_msg"),
     [types.DropItem]=require("src.survev.drop_item_msg"),
     [types.Spectate]=require("src.survev.spectate_msg"),
+    [types.PlayerStats]=require("src.survev.player_stats_msg"),
+    [types.GameOver]=require("src.survev.game_over_msg"),
+    [types.RoleAnnouncement]=require("src.survev.role_announcement_msg"),
 }
 local Decoder={}
 function Decoder.decode(data,registry)
