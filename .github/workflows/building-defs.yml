@@ -1,0 +1,47 @@
+name: Survev Building Definitions
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/generate_building_art.mjs"
+      - ".github/workflows/building-defs.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  faithful-building-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Read original Survev floor/ceiling definitions and SVG manifest
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/generate_building_art.mjs \
+            _reference/reference/survev src/survev/map_building_art.lua
+      - name: Validate extracted Lua metadata
+        run: |
+          sudo apt-get update && sudo apt-get install -y lua5.4 luajit
+          luac5.4 -p src/survev/map_building_art.lua
+          lua5.4 -e 'local d=require("src.survev.map_building_art");local n,f,c=0,0,0; for _,b in pairs(d) do n=n+1; f=f+#b.floor; c=c+#b.ceiling end;assert(n>50 and f>50 and c>50); print("Original building definitions, floors, ceilings:",n,f,c)'
+          luajit -e 'local d=require("src.survev.map_building_art");assert(type(d)=="table")'
+      - name: Commit exact upstream-derived Lua building metadata
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/survev/map_building_art.lua
+          if ! git diff --cached --quiet; then
+            git commit -m "port: generated original Survev floor, ceiling and interior definitions"
+            git push origin HEAD:main
+          fi
