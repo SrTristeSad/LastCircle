@@ -120,4 +120,36 @@ for i=0,25 do test:addInput(i) end
 assert(#test.inputs==7)
 test:addInput(0)
 assert(#test.inputs==7)
+
+-- Transport-independent session must frame precisely the same Join/Input bytes
+-- that the original TypeScript test generated above.
+local Session=require("src.survev.protocol_session")
+local Update=require("src.survev.update_msg")
+local clock=0
+local sent={}
+local transport={send=function(_,bytes) sent[#sent+1]=bytes end}
+local session=Session.new(transport,{clock=function() return clock end})
+local handshake=session:open({
+    joinToken="test-token",name="Alex",
+    loadout={outfit="outfitBase",melee="",heal="",boost="",emotes={}},
+})
+eq(hex(handshake),expectedJoin,"Session Join handshake")
+assert(#sent==1 and session.opened)
+session.seq=30
+local first=session:sendInput(input,.016)
+eq(hex(first),expectedInput,"Session Input")
+assert(session.seq==31 and session.seqInFlight and #sent==2)
+assert(session:sendInput(input,.1)==nil,"unchanged input should be throttled")
+local ack=Update.new()
+ack.ack=31
+local ackStream=Net.newMsgStream(512,registry)
+ackStream:serializeMsg(Net.MsgType.Update,ack)
+clock=.27
+session:receive(ackStream:getBuffer())
+assert(session.state.updateCount==1 and session.state.lastAck==31)
+assert(not session.seqInFlight and math.abs(session.ping-.27)<.0001)
+session:close()
+assert(not session.opened)
+assert(not pcall(function() session:sendInput(input,.1) end))
+
 print("All upstream TypeScript -> Lua byte-level comparisons passed")
