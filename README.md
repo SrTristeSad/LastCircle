@@ -19,11 +19,13 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 **Agora implementado:** transporte WebSocket real via LuaSocket (`ws://` local e `wss://` condicionado a LuaSec e CA confiável), handshake RFC 6455, quadros binários, mascaramento, mensagens fragmentadas, ping/pong, abertura de sessão, envio de `Join`/`Input`, confirmação `ack` e retenção de entidades por `UpdateMsg`. O programa também oferece um **modo de diagnóstico F6** que mostra posições reais recebidas usando a arte original do jogador. Isso foi testado em rede loopback contra mensagens geradas pelo TypeScript original.
 
-**Ainda não portado:** descoberta de partidas e token pela API oficial, renderer/mapa procedural original, jogadores com todas as camadas/animações, interiores, HUD, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **não é um substituto do jogo final**.
+**Mapa e artes agora implementados parcialmente:** costa e praia/grama, rios, lagos, margens e áreas de solo seguem a matemática original (`terrain_gen.lua`, `river.lua`, `spline.lua`). As **cores dos mapas** são geradas diretamente de `MapDefs`. O `map_renderer.lua` desenha terreno e grade no LÖVE2D. Também extraímos **741 definições de obstáculos** (`map_obstacle_art.lua`), com **511 sprites principais encontrados** nos recursos originais: árvores, pedras, barris, portas etc. `obstacle_art_renderer.lua` respeita os caminhos, escalas, âncoras e rotações verificados, sem substituir artes ausentes por figuras falsas. Os cálculos foram comparados com o TypeScript original e houve testes gráficos em LÖVE2D real.
+
+**Ainda não portado:** descoberta de partidas/token pela API oficial, renderização completa de edifícios/interiores, camadas, animações dos personagens, HUD, efeitos, áudio e jogo multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
 ### Inspeção das artes no LÖVE
 
-O `main.lua` mostra arquivos gráficos reais do Survev, convertidos sem redesenho. **A/D ou setas** alternam as artes. **F6** abre a interface de conexão e diagnóstico com WebSocket, onde é possível informar o endereço e `joinToken` de uma partida válida. A tela F6 recebe estados reais e envia controles mas **não renderiza o jogo completo**. ESC desconecta/volta e F6 alterna telas. Consulte [docs/NETWORK.md](docs/NETWORK.md).
+O `main.lua` mostra arquivos gráficos reais do Survev, convertidos sem redesenho. **A/D ou setas** alternam as artes. **F6** abre a interface de conexão e diagnóstico com WebSocket, onde é possível informar o endereço e `joinToken` de uma partida válida. A tela F6 recebe estados reais, desenha o **terreno e obstáculos originais já portados** e envia controles, mas **ainda não renderiza o jogo completo**. ESC desconecta/volta e F6 alterna telas. Consulte [docs/NETWORK.md](docs/NETWORK.md).
 
 O LÖVE não suporta SVG diretamente. Para testar com recursos:
 1. Na guia [Actions](https://github.com/SrTristeSad/LastCircle/actions/workflows/build-love.yml), abra um pacote bem-sucedido chamado **LastCircle-Lua**.
