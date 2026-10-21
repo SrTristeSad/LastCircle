@@ -13,9 +13,11 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 ## Lua / LÖVE2D
 
-**Já traduzido:** câmera original (`client/src/camera.ts`), constantes verificadas de gameplay e controles padrão (`shared/gameConfig.ts`, `client/src/inputBinds.ts`), com testes de paridade.
+**Já portado e testado:** biblioteca vetorial 2D, câmera original, parte do GameConfig, controles, registro automático de **757 IDs de itens e 1.072 IDs de mapa**, leitura/escrita de bits e módulos de comunicação (Join, Input, Map, Joined, Kill, Pickup, Emote, DropItem, Spectate, AliveCounts, PlayerStats, GameOver e RoleAnnouncement). O leitor de pacotes interpreta mensagens concatenadas e recusa tipos ainda não traduzidos.
 
-**Não traduzido:** simulação de partidas, rede/protocolo, renderizador de mapa, players, combate, prédios, loot, HUD e menus. Esses módulos precisam ser portados do fonte acima; não serão substituídos por versões fictícias.
+**Paridade real:** o workflow [Comparação binária com Survev](https://github.com/SrTristeSad/LastCircle/actions/workflows/protocol-parity.yml) executa o TypeScript original para gerar pacotes, depois exige bytes idênticos dos módulos Lua. Consulte o [status detalhado](docs/PORT_STATUS.md).
+
+**Ainda não portado:** estado completo de partidas (UpdateMsg e entidades), WebSocket, renderização fiel do mapa e personagens, armas/combate no cliente, interiores, interface de partida, áudio e multiplayer. O código Lua de rede **ainda não se conecta a um servidor**.
 
 ### Inspeção das artes no LÖVE
 
