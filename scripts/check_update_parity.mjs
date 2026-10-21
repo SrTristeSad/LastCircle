@@ -3,7 +3,9 @@
  * compare a feature-complete Update frame against the Lua port byte-for-byte.
  * No invented protocol constants; only deterministic test fixture values.
  */
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -143,10 +145,29 @@ if(decoded.fullObjects.length!==11 || decoded.partObjects.length!==4
     || decoded.ack!==91) throw Error("original Survev self-decoding failed");
 
 console.log("Upstream UpdateMsg full feature fixture:",gold.length/2,"bytes");
-const result=spawnSync(interpreter,["tests/update_parity.lua",gold,mapType],{
+function toLua(value) {
+    if (value===null || value===undefined) return "nil";
+    if (typeof value==="boolean" || typeof value==="number") return String(value);
+    if (typeof value==="string") {
+        if (!/^[\x00-\x7e]*$/.test(value)) throw Error("fixture must be ASCII");
+        return JSON.stringify(value);
+    }
+    if (Array.isArray(value)) return "{"+value.map(toLua).join(",")+"}";
+    if (typeof value==="object") {
+        return "{"+Object.entries(value).map(([key,v])=>"["+toLua(key)+"]="+toLua(v)).join(",")+"}";
+    }
+    throw Error("unserializable fixture type "+typeof value);
+}
+const fixture={...msg,fullObjects:fixtures,partObjects:fixtures.slice(0,4)};
+const tempDir=await mkdtemp(join(tmpdir(),"survev-update-"));
+const fixturePath=join(tempDir,"update_fixture.lua");
+await writeFile(fixturePath,"return "+toLua(JSON.parse(JSON.stringify(fixture)))+"\n","utf8");
+
+const result=spawnSync(interpreter,["tests/update_parity.lua",gold,fixturePath],{
     encoding:"utf8",cwd:process.cwd(),maxBuffer:4*1024*1024
 });
 process.stdout.write(result.stdout);
 process.stderr.write(result.stderr);
 if(result.error) throw result.error;
+await rm(tempDir,{recursive:true,force:true});
 if(result.status!==0) throw Error("Lua UpdateMsg parity failed (exit "+result.status+")");
