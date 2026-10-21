@@ -8,8 +8,8 @@ O.Type={
     Invalid=0,Player=1,Obstacle=2,Loot=3,LootSpawner=4,DeadBody=5,
     Building=6,Structure=7,Decal=8,Projectile=9,Smoke=10,Airdrop=11
 }
--- GameConfig enum counts: Action=5, Anim=9, Haste=5, MaxPerks=8.
-local ACTION_BITS,ANIM_BITS,HASTE_BITS,PERK_BITS=3,4,3,3
+-- GameConfig enum counts: Action=5, Anim=9, Haste=4, MaxPerks=8.
+local ACTION_BITS,ANIM_BITS,HASTE_BITS,PERK_BITS=3,4,2,3
 local STRUCTURE_LAYERS=2
 local PROJECTILE_MAX_Z=5
 
