@@ -7,14 +7,14 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 const root=resolve(process.env.SURVEV_ROOT || "_reference/reference/survev");
 const load=async p=>await import(pathToFileURL(resolve(root,p)).href);
-const { MsgStream,MsgType }=await load("shared/net/net.ts");
+const { MsgStream,MsgType,BitStream }=await load("shared/net/net.ts");
 const { JoinMsg }=await load("shared/net/joinMsg.ts");
 const { InputMsg }=await load("shared/net/inputMsg.ts");
 const { JoinedMsg }=await load("shared/net/joinedMsg.ts");
 const { MapMsg }=await load("shared/net/mapMsg.ts");
 const { UpdateMsg }=await load("shared/net/updateMsg.ts");
 const { ObjectSerializeFns,ObjectType }=await load("shared/net/objectSerializeFns.ts");
-const { BitStream }=await load("shared/lib/bitBuffer.ts");
+
 const PORT=19998;
 const GUID="258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 function serverFrame(body,opcode=2,fin=true) {
