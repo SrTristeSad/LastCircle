@@ -1,0 +1,41 @@
+-- RFC 6455-known handshake vector and frame edge tests, Lua 5.4 + LuaJIT.
+local Codec=require("src.survev.ws_codec")
+local Frame=require("src.survev.ws_frame")
+local Ws=require("src.survev.ws_connection")
+local function hex(data) return (data:gsub(".",function(c) return string.format("%02x",c:byte()) end)) end
+assert(hex(Codec.sha1("abc"))=="a9993e364706816aba3e25717850c26c9cd0d89d")
+assert(Codec.base64("foobar")=="Zm9vYmFy")
+assert(Codec.base64("f")=="Zg==")
+assert(Codec.accept("dGhlIHNhbXBsZSBub25jZQ==")=="s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
+
+-- RFC 6455 section 5.7 client masked Hello
+local frame=Frame.encode("Hello",1,string.char(0x37,0xfa,0x21,0x3d))
+assert(hex(frame)=="818537fa213d7f9f4d5158")
+local unmasked=Frame.decodeMaskedClientForTest(frame)
+assert(unmasked.payload=="Hello" and unmasked.opcode==1)
+
+for _,length in ipairs({0,1,125,126,127,65535,65536,120000}) do
+    local payload=string.rep("A",length)
+    local written=Frame.encode(payload,2,string.char(1,2,3,4))
+    local decoded=Frame.decodeMaskedClientForTest(written)
+    assert(decoded.payload==payload,"client frame length mismatch "..length)
+    local server=Frame.encodeServerForTest(payload)
+    local half=server:sub(1,math.floor(#server/2))
+    local first,rest=Frame.tryDecode(half)
+    assert(not first and rest==half,"must buffer incomplete frames")
+    local fromServer,tail=Frame.tryDecode(server)
+    assert(fromServer and fromServer.payload==payload and tail=="")
+end
+local _,__,err=Frame.tryDecode(string.char(0x82,0x81,1,2,3,4,65))
+assert(err and err:find("masked",1,true))
+_,__,err=Frame.tryDecode(string.char(0x09,0))
+assert(err and err:find("fragmented",1,true))
+_,__,err=Frame.tryDecode(string.char(0x82,0x7e,0,1))
+assert(err and err:find("non-minimal",1,true))
+local url=Ws.parseUrl("ws://localhost:19998/relay?test=1")
+assert(not url.secure and url.host=="localhost" and url.path=="/relay?test=1")
+assert(Ws.parseUrl("wss://survev.example.org:443/game").secure)
+assert(not pcall(Ws.parseUrl,"ws://evil.example\r\nInjected: true"))
+assert(not pcall(Ws.parseUrl,"https://invalid"))
+assert(#Codec.randomBytes(16)==16)
+print("RFC6455 SHA1, masking, length, partial reads and URL tests passed")
