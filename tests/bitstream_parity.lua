@@ -4,10 +4,11 @@ local Base=require("src.survev.bit_stream")
 local Net=require("src.survev.net")
 local Join=require("src.survev.join_msg")
 local Input=require("src.survev.input_msg")
+local Map=require("src.survev.map_msg")
 local Bind=require("src.survev.input_bindings")
 
-local expectedPlain,expectedJoin,expectedInput=arg[1],arg[2],arg[3]
-assert(expectedPlain and expectedJoin and expectedInput,"missing upstream golden wire vectors")
+local expectedPlain,expectedJoin,expectedInput,expectedMap=arg[1],arg[2],arg[3],arg[4]
+assert(expectedPlain and expectedJoin and expectedInput and expectedMap,"missing upstream golden wire vectors")
 local function eq(actual,expected,label)
     assert(actual==expected,label.." expected "..expected.." but got "..actual)
 end
@@ -78,6 +79,40 @@ assert(inputCopy.touchMoveActive and inputCopy.touchMoveLen==201)
 assert(#inputCopy.inputs==2)
 assert(inputCopy.useItem=="bandage")
 assert(math.abs(inputCopy.toMouseLen-27.25)<.26)
+
+local map=Map.new()
+map.mapName="main"
+map.seed=123456
+map.width=720
+map.height=640
+map.shoreInset=8
+map.grassInset=12
+map.rivers={{width=7,looped=false,points={{x=20,y=30},{x=48,y=75}}}}
+map.places={{name="Town",pos={x=.25,y=.65}}}
+map.objects={{pos={x=200,y=150},scale=1,type=registry.map.idToType[1],ori=2}}
+map.groundPatches={
+    {bound={type=0,pos={x=300,y=200},rad=17},
+        color=0x113355,roughness=.25,offsetDist=3.5,order=2,useAsMapShape=true},
+    {bound={type=1,min={x=50,y=100},max={x=100,y=140}},
+        color=0x8899aa,roughness=.5,offsetDist=1.25,order=1,useAsMapShape=false},
+}
+local mapPacket=Net.newMsgStream(2048,registry)
+mapPacket:serializeMsg(Net.MsgType.Map,map)
+eq(hex(mapPacket:getBuffer()),expectedMap,"MapMsg")
+local mapRead=Net.newMsgStream(mapPacket:getBuffer(),registry)
+assert(mapRead:deserializeMsgType()==Net.MsgType.Map)
+local decodedMap=Map.new()
+decodedMap:deserialize(mapRead:getStream())
+assert(decodedMap.mapName=="main" and decodedMap.seed==123456)
+assert(decodedMap.width==720 and decodedMap.height==640)
+assert(decodedMap.shoreInset==8 and decodedMap.grassInset==12)
+assert(#decodedMap.rivers==1 and #decodedMap.rivers[1].points==2)
+assert(#decodedMap.places==1 and decodedMap.places[1].name=="Town")
+assert(#decodedMap.objects==1 and decodedMap.objects[1].type==registry.map.idToType[1])
+assert(#decodedMap.groundPatches==2)
+assert(decodedMap.groundPatches[1].bound.type==0)
+assert(decodedMap.groundPatches[2].bound.type==1)
+assert(decodedMap.groundPatches[2].color==0x8899aa)
 
 -- The input.addInput rule from upstream limits duplicates and list length.
 local test=Input.new()
