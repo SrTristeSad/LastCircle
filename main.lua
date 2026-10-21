@@ -1,5 +1,6 @@
 -- LastCircle / Survev Lua: real WebSocket connection + asset and state inspector.
--- The original renderer, map generator and full gameplay are NOT ported yet.
+-- Terrain, building interiors/roofs and obstacle sprites are partially ported;
+-- full player/roof LOS/GUI gameplay is NOT complete. No invented mechanics.
 -- Press F6 for the optional network debug tool. No fictitious battle royale.
 local Camera=require("src.survev.camera")
 local Binds=require("src.survev.input_bindings")
