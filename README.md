@@ -23,7 +23,9 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 **Edifícios e interiores (nova etapa):** foram exportadas **228 construções originais**, com 342 camadas de piso e 242 de teto. O cliente agora desenha os pisos e tetos pelas imagens e transformações originais, usa transparência progressiva nas regiões internas já suportadas e identifica materiais de chão pelas definições de colisão. Os testes de sprite e de materiais comparam seus resultados ao TypeScript original; há também teste gráfico real do piso/teto no LÖVE2D.
 
-**Ainda não portado:** API oficial para encontrar partidas e tokens, line-of-sight de tetos através de obstáculos, edifícios/portas com comportamento completo, renderização final por camadas, animações completas dos personagens, HUD, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
+**Nova etapa — visibilidade e portas:** acrescentei a varredura de **cinco raios de linha de visão**, respeitando os colisores originais das paredes, janelas, portas, obstáculos destruídos e regras de escadas. O teto usa os resultados para fazer o fade como no Survev. As portas agora têm interpolação visual de posição e rotação, além das molduras originais. As comparações são geradas a partir do TypeScript original e executadas em Lua 5.4 e LuaJIT.
+
+**Ainda não portado:** API oficial para descobrir partidas/tokens, composição final das quatro camadas e máscaras, interação de portas com o servidor, animações completas de jogadores, HUD, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
 ### Inspeção das artes no LÖVE
 
