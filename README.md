@@ -1,56 +1,42 @@
-# LastCircle
+# LastCircle — porte fiel do Survev para Lua
 
-Battle royale 2D top-down. Primeira etapa: cliente offline em **Lua / LÖVE2D 11.5**.
+O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeitando seus sistemas, interface e recursos originais. **Não** é um novo battle royale com mecânicas imaginadas.
 
-## Executar
+> O cliente Lua ainda NÃO é o jogo completo. A cópia completa do Survev está disponível no ramo de referência; o desenvolvimento Lua é um porte incremental.
 
-1. Instale o LÖVE2D: https://love2d.org/
-2. Baixe este repositório (Code > Download ZIP) e extraia.
-3. Arraste a pasta `LastCircle` sobre `love.exe`, ou no terminal execute `love .` dentro da pasta.
+## Onde está a cópia completa?
 
-### Controles
+- [Cópia integral do Survev no LastCircle](https://github.com/SrTristeSad/LastCircle/tree/referencia-survev/reference/survev) — cliente, servidor, shared, imagens, sons e arquivos originais, 2.562 entradas, commit fixado `c6185e31fe25a4a07def77a2bb25b1710bda90ac`.
+- [Original dos autores](https://github.com/survev/survev).
+- [Histórico do protótipo genérico (descartado)](https://github.com/SrTristeSad/LastCircle/tree/historico-prototipo-generico). **Não** usar como referência de gameplay.
+- [Acompanhamento do porte Lua](docs/PORT_STATUS.md).
 
-- **WASD**: movimentar
-- **Mouse**: mirar
-- **Botão esquerdo**: atirar (segure)
-- **R**: recarregar
-- **1 / 2**: alternar armas
-- **E**: usar kit médico
-- **Espaço**: correr (consome energia)
-- **Enter**: reiniciar depois de morrer/vencer
-- **Esc**: sair
+## Lua / LÖVE2D
 
-## Incluído no protótipo v0.1
+**Já traduzido:** câmera original (`client/src/camera.ts`), constantes verificadas de gameplay e controles padrão (`shared/gameConfig.ts`, `client/src/inputBinds.ts`), com testes de paridade.
 
-- Câmera seguindo o personagem, mundo 3200×3200, terreno procedural
-- Árvores, pedras, caixas e obstáculos com colisão
-- Duas armas, projéteis, recarga, dano e HUD
-- Bots inimigos, munição e kits médicos coletáveis
-- Círculo seguro que encolhe, dano fora da zona, vitória e derrota
-- Minimapa e reinício da partida
+**Não traduzido:** simulação de partidas, rede/protocolo, renderizador de mapa, players, combate, prédios, loot, HUD e menus. Esses módulos precisam ser portados do fonte acima; não serão substituídos por versões fictícias.
 
-**Status:** protótipo offline inicial; não é um porte completo do Survev e não tem multiplayer, casas com interiores ou sprites finais.
+### Inspeção das artes no LÖVE
 
-## Referência técnica
+O `main.lua` atual **não simula uma partida**. Ele é um verificador que mostra arquivos gráficos reais do Survev, convertidos sem redesenho. Use A/D ou setas para alternar e ESC para sair.
 
-- Survev: https://github.com/survev/survev
-- O código do Survev é TypeScript e seu repositório está sob GPL-3.0. Este cliente é uma implementação Lua inicial original, sem copiar código-fonte ou sprites do Survev.
-- Para integração com o servidor Survev será necessário estudar e implementar o protocolo, incluindo serialização, autenticação/handshake e sincronização de entidades. **Não existe compatibilidade de rede nesta versão.**
-- Não foram incluídos sprites nem marcas do Surviv.io/Survev. O visual desenhado por código é provisório, até integrar assets licenciados.
+O LÖVE não suporta SVG diretamente. Para testar com recursos:
+1. Na guia [Actions](https://github.com/SrTristeSad/LastCircle/actions/workflows/build-love.yml), abra um pacote bem-sucedido chamado **LastCircle-Lua**.
+2. Baixe o artefato e extraia o arquivo `LastCircle-Lua.love`.
+3. Instale o [LÖVE 11.5](https://love2d.org/) e arraste o arquivo `.love` sobre o `love.exe` (ou execute `love LastCircle-Lua.love`).
 
-## Estrutura
-
-```
-conf.lua
-main.lua
-src/
-  world.lua
-  game.lua
+Você também pode preparar recursos localmente, desde que tenha Python 3 e `rsvg-convert`:
+```sh
+git clone --branch referencia-survev --depth 1 https://github.com/SrTristeSad/LastCircle.git upstream-ref
+python scripts/prepare_assets.py upstream-ref/reference/survev/client/public assets/survev
+love .
 ```
 
-## Próximas etapas
+## Licenças e direitos
 
-1. Importar arte com licença verificada e montar atlas/objetos.
-2. Criar edifícios com interiores, portas e colisão mais precisa.
-3. Inventário, loot de chão, armas adicionais, áudio e animações.
-4. Cliente de rede com protocolo baseado no servidor Survev, validado por testes.
+Este porte e o código-fonte derivado do Survev seguem as condições da **GNU GPL-3.0** (consulte [LICENSE](LICENSE)). O upstream disponibiliza [attribution.txt](ATTRIBUTION-SURVEV.txt) com créditos de diversos recursos de terceiros, incluindo CC BY 3.0. Todas as licenças e atribuições pertinentes precisam ser preservadas. A licença GPL do código não assegura direitos sobre todas as marcas e recursos gráficos do jogo original; isso exige verificação adicional antes de distribuição comercial.
+
+## Filosofia
+
+A regra do LastCircle é **copiar funcionalidades verificadas do projeto de referência, não inventá-las**. Só marcar uma funcionalidade como portado após código Lua e teste correspondente.
