@@ -9,6 +9,9 @@ local Kill=require("src.survev.kill_msg")
 local Emote=require("src.survev.emote_msg")
 local Drop=require("src.survev.drop_item_msg")
 local Spectate=require("src.survev.spectate_msg")
+local Stats=require("src.survev.player_stats_msg")
+local GameOver=require("src.survev.game_over_msg")
+local Role=require("src.survev.role_announcement_msg")
 local function hex(binary)
     return (binary:gsub(".",function(c) return string.format("%02x",c:byte()) end))
 end
@@ -59,12 +62,32 @@ local spec=Spectate.new()
 spec.action=2
 msgs:serializeMsg(t.Spectate,spec)
 
+local stats=Stats.new()
+stats.playerStats={playerId=481,timeAlive=87,kills=3,dead=true,damageDealt=149.6,damageTaken=51.4}
+msgs:serializeMsg(t.PlayerStats,stats)
+
+local gameOver=GameOver.new()
+gameOver.teamId=4
+gameOver.teamRank=2
+gameOver.gameOver=true
+gameOver.winningTeamId=3
+gameOver.playerStats={stats.playerStats}
+msgs:serializeMsg(t.GameOver,gameOver)
+
+local role=Role.new()
+role.playerId=481
+role.killerId=222
+role.role=""
+role.assigned=true
+role.killed=false
+msgs:serializeMsg(t.RoleAnnouncement,role)
+
 local actual=hex(msgs:getBuffer())
 assert(actual==arg[1],"Survev batched packet differs:\noriginal="..tostring(arg[1])..
     "\nLua="..actual)
 
 local decoded=Decoder.decode(msgs:getBuffer())
-assert(#decoded==7,"unexpected message count")
+assert(#decoded==10,"unexpected message count")
 assert(decoded[1].id==t.Joined and decoded[1].msg.playerId==481)
 assert(decoded[1].msg.emotes[1]=="emote_happyface")
 assert(decoded[2].id==t.AliveCounts and decoded[2].msg.teamAliveCounts[2]==7)
@@ -73,7 +96,14 @@ assert(decoded[4].id==t.Kill and decoded[4].msg.killed==true)
 assert(decoded[5].id==t.Emote and decoded[5].msg.type=="emote_happyface")
 assert(decoded[6].id==t.DropItem and decoded[6].msg.weapIdx==1)
 assert(decoded[7].id==t.Spectate and decoded[7].msg.action==2)
+assert(decoded[8].id==t.PlayerStats and decoded[8].msg.playerStats.playerId==481)
+assert(decoded[8].msg.playerStats.damageDealt==150)
+assert(decoded[8].msg.playerStats.damageTaken==51)
+assert(decoded[9].id==t.GameOver and decoded[9].msg.gameOver)
+assert(decoded[9].msg.playerStats[1].playerId==481)
+assert(decoded[10].id==t.RoleAnnouncement and decoded[10].msg.assigned)
+assert(decoded[10].msg.playerId==481)
 
 local unknown=pcall(function() Decoder.decode(string.char(Net.MsgType.Update,0,0)) end)
 assert(not unknown,"must not silently skip unsupported UpdateMsg")
-print("Upstream multi-message wire packet equals Lua, and all 7 messages decoded")
+print("Upstream multi-message wire packet equals Lua, and all 10 messages decoded")
