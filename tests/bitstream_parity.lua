@@ -139,7 +139,9 @@ session.seq=30
 local first=session:sendInput(input,.016)
 eq(hex(first),expectedInput,"Session Input")
 assert(session.seq==31 and session.seqInFlight and #sent==2)
-assert(session:sendInput(input,.1)==nil,"unchanged input should be throttled")
+local idle=Input.new()
+assert(session:sendInput(idle,.1)~=nil,"shootStart release should be sent")
+assert(session:sendInput(idle,.1)==nil,"unchanged input should be throttled")
 local ack=Update.new()
 ack.ack=31
 local ackStream=Net.newMsgStream(512,registry)
