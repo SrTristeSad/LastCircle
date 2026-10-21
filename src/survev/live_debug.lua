@@ -5,6 +5,7 @@ local Camera=require("src.survev.camera")
 local Objects=require("src.survev.object_serialize_fns")
 local MapRenderer=require("src.survev.map_renderer")
 local ObstacleArt=require("src.survev.obstacle_art_renderer")
+local BuildingArt=require("src.survev.building_renderer")
 local V={}
 V.__index=V
 local function image(path)
@@ -19,7 +20,8 @@ function V.new()
         camera=Camera.new(),
         player=image("assets/survev/img/player/player-base-01.png"),
         terrainMap=nil,terrainRenderer=nil,obstacleArt=ObstacleArt.new(),
-        warning="TERRENO E OBSTACULOS ORIGINAIS | EDIFICIOS/INTERIORES PENDENTES",
+        buildingArt=BuildingArt.new(),
+        warning="PISOS E TETOS ORIGINAIS | VISIBILIDADE DE INTERIORES AINDA PARCIAL",
     },V)
 end
 local function drawCentered(asset,x,y,dia,angle)
@@ -61,6 +63,8 @@ function V:draw(state,w,h)
     end
     self.terrainRenderer:draw(cam,w,h)
     g.setColor(1,1,1)
+    -- Original building floor textures precede players and ceiling layers.
+    self.buildingArt:drawPhase(state.objects,cam,"floor",w,h)
     self.obstacleArt:draw(state.objects,cam,w,h)
 
     -- Debug markers intentionally do not pretend to reproduce object graphics.
@@ -74,7 +78,8 @@ function V:draw(state,w,h)
                 elseif obj.__type==Objects.Type.Player then
                     g.setColor(.96,.93,.75)
                     g.circle("line",pt.x,pt.y,cam:m_z())
-                elseif obj.__type~=Objects.Type.Obstacle then
+                elseif obj.__type~=Objects.Type.Obstacle and
+                    obj.__type~=Objects.Type.Building then
                     g.setColor(.84,.86,.62)
                     g.circle("line",pt.x,pt.y,7)
                     g.print(tostring(obj.__type)..":"..tostring(obj.__id),pt.x+8,pt.y-10)
@@ -82,6 +87,9 @@ function V:draw(state,w,h)
             end
         end
     end
+
+    -- Roof images render above occupants. Full original LOS fade still pending.
+    self.buildingArt:drawPhase(state.objects,cam,"ceiling",w,h)
 
     local active=state.objects[state.activeId]
     local info="MAPA: "..tostring(map.mapName)..
