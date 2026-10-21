@@ -1,0 +1,56 @@
+name: Survev Terrain Fidelity
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/survev/terrain_gen.lua"
+      - "scripts/check_terrain_parity.mjs"
+      - "scripts/generate_map_colors.mjs"
+      - "tests/terrain_parity.lua"
+      - ".github/workflows/terrain-port.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  original-terrain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install both Lua runtimes
+        run: sudo apt-get update && sudo apt-get install -y lua5.4 luajit
+      - name: Seeded Survev shore, grass and patch coordinates (Lua 5.4)
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_terrain_parity.mjs _reference/reference/survev lua5.4
+      - name: Seeded Survev shore, grass and patch coordinates (LuaJIT)
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_terrain_parity.mjs _reference/reference/survev luajit
+      - name: Extract original biome colors and atlas list
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/generate_map_colors.mjs \
+            _reference/reference/survev src/survev/map_colors.lua
+          luac5.4 -p src/survev/map_colors.lua
+          lua5.4 -e 'local maps=require("src.survev.map_colors"); assert(maps.main.colors.grass==0x80af49 and maps.main.colors.water==0x3282ab); assert(maps.woods); print("Main map colors verified")'
+      - name: Commit generated original palette if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/survev/map_colors.lua
+          if ! git diff --cached --quiet; then
+            git commit -m "port: generate exact Survev biome palettes from MapDefs"
+            git push origin HEAD:main
+          fi
