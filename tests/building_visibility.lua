@@ -40,6 +40,19 @@ assert(vis:alpha(50)<1)
 player.noCeilingRevealTicker=2
 vis:update(.05,objs,player)
 assert(vis:alpha(50)>.4)
+-- Geometry cache must refresh on each authoritative UpdateMsg revision.
+vis:reset()
+objs[50].ceilingDead=false
+player.noCeilingRevealTicker=0
+vis:update(.01,objs,player,1)
+local cached=vis.cachedObstacles
+assert(cached and vis.obstacleRevision==1)
+vis:update(.01,objs,player,1)
+assert(vis.cachedObstacles==cached,"collision shapes should be reused within a packet")
+vis:update(.01,objs,player,2)
+assert(vis.cachedObstacles~=cached,"collision cache must refresh on next update")
+vis:reset()
+assert(vis.cachedObstacles==nil and vis.obstacleRevision==nil)
 objs[50]=nil
 vis:update(.05,objs,player)
 assert(vis:alpha(50)==1)
