@@ -32,7 +32,7 @@ function V:update(state,dt)
         self.obstacleArt.doors:reset()
     end
     local active=state.objects[state.activeId]
-    self.buildingArt:updateVisibility(dt,state.objects,active)
+    self.buildingArt:updateVisibility(dt,state.objects,active,state.updateCount)
     self.obstacleArt:update(state.objects,dt)
 end
 local function drawCentered(asset,x,y,dia,angle)
