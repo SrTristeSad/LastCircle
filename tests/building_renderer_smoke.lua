@@ -33,6 +33,7 @@ local objs={
    [22]={__type=Type.Building,__id=22,type="shack_01",
        pos={x=300,y=360},ori=0,layer=0,ceilingDead=true,ceilingDamaged=false},
 }
+renderer:updateVisibility(.2,objs,nil)
 local floors=renderer:drawPhase(objs,camera,"floor",1024,768)
 assert(floors==3,"bank 2 floors + shack 1 interior floor")
 local ceilings=renderer:drawPhase(objs,camera,"ceiling",1024,768)
@@ -54,6 +55,7 @@ renderer:drawPhase(objs,camera,"floor",1024,768)
 renderer:drawPhase(objs,camera,"ceiling",1024,768)
 assert(#loaded==countLoaded,"building sprites must not reload each frame")
 objs[21].ceilingDead=true
+renderer:updateVisibility(.2,objs,nil)
 assert(renderer:drawPhase(objs,camera,"ceiling",1024,768)==0,
     "destroyed roof must reveal original interior floor")
 assert(#renderer:getDefinition("bank_01").zoomRegions==3)
