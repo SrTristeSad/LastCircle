@@ -21,10 +21,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install actual LOVE2D with a virtual X server
-        run: sudo apt-get update && sudo apt-get install -y love xvfb
+      - name: Original Survev source artwork
+        uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - name: Install actual LOVE2D, librsvg and virtual display
+        run: sudo apt-get update && sudo apt-get install -y love xvfb librsvg2-bin
       - name: Prepare standalone test game
         run: cp -r src tests/love_render_project/src
+      - name: Rasterize the original barrel and door SVGs
+        run: |
+          mkdir -p tests/love_render_project/assets/survev/img/map
+          rsvg-convert -f png \
+            _reference/reference/survev/client/public/img/map/map-barrel-01.svg \
+            -o tests/love_render_project/assets/survev/img/map/map-barrel-01.png
+          rsvg-convert -f png \
+            _reference/reference/survev/client/public/img/map/map-door-01.svg \
+            -o tests/love_render_project/assets/survev/img/map/map-door-01.png
       - name: Render actual upstream terrain polygons in OpenGL
         run: |
           timeout 45s xvfb-run -a love tests/love_render_project \
