@@ -38,8 +38,7 @@ function cmdList(phase){
     const pictures=phase==="floor"?def.floor.imgs:def.ceiling.imgs;
     for(let i=0;i<pictures.length;i++){
       const img=pictures[i];
-      if(phase==="ceiling"&&(obj.ceilingDead||
-         (obj.ceilingDamaged&&img.removeOnDamaged))) continue;
+      if(phase==="ceiling"&&obj.ceilingDamaged&&img.removeOnDamaged) continue;
       const off=v2.rotate(img.pos||v2.create(0,0),math.oriToRad(obj.ori));
       const point=camera.m_pointToScreen(v2.add(obj.pos,off));
       const s=camera.m_pixels(img.scale);
