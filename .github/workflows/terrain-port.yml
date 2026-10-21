@@ -52,5 +52,13 @@ jobs:
           git add src/survev/map_colors.lua
           if ! git diff --cached --quiet; then
             git commit -m "port: generate exact Survev biome palettes from MapDefs"
-            git push origin HEAD:main
+            # New gameplay commits can arrive while SVG/TS jobs are running.
+            # Integrate them instead of attempting a non-fast-forward push.
+            for attempt in 1 2 3 4; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then exit 0; fi
+              sleep 2
+            done
+            exit 1
           fi
