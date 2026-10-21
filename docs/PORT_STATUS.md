@@ -29,7 +29,13 @@ O código original está integralmente espelhado em [referencia-survev](https://
 | `shared/net/roleAnnouncementMsg.ts` | `role_announcement_msg.lua` | Função e equipe |
 | `shared/net/net.ts` | `packet_decoder.lua` | Várias mensagens sequenciais; aborta com erro para tipos não portados |
 
-**Testes:** a Action [Paridade binária](https://github.com/SrTristeSad/LastCircle/actions/workflows/protocol-parity.yml) usa o TypeScript **original**, em execução, para gerar bytes esperados. O Lua precisa produzir bytes idênticos para Join, Input, Map e pacote de 10 mensagens. A [Lua CI](https://github.com/SrTristeSad/LastCircle/actions/workflows/lua-check.yml) executa testes e verifica sintaxe em Lua 5.4 e LuaJIT.
+| `shared/net/updateMsg.ts` | `update_msg.lua` | **16 flags**, corpo completo de atualização; pacote testado byte a byte em Lua 5.4 e LuaJIT |
+| `shared/net/objectSerializeFns.ts` | `object_serialize_fns.lua` | **11 tipos** de entidades, com formatos parcial e completo; teste de cada categoria no UpdateMsg |
+| `client/src/gas.ts` | `gas.lua` | Dados e interpolação do círculo, sem renderizador gráfico |
+| `client/src/game.ts:m_processGameUpdate` | `client_state.lua` | Retenção de dados autoritativos, exclusão, criação e atualizações parciais sem inventar mecânicas |
+| `client/src/game.ts:tryJoinGame` e envio de Input | `protocol_session.lua` | Handshake, enquadramento, ACK, sequência e redução de tráfego via transporte injetado; **não é uma conexão WebSocket real** |
+
+**Testes:** [Paridade binária](https://github.com/SrTristeSad/LastCircle/actions/workflows/protocol-parity.yml) executa o TypeScript original para gerar os pacotes Join, Input, Map e uma sequência de 10 mensagens; [Survev UpdateMsg Fidelity](https://github.com/SrTristeSad/LastCircle/actions/workflows/update-parity.yml) exercita todos os 16 flags e os 11 formatos de objetos, comparando byte a byte e depois conferindo a aplicação de deltas. As verificações são feitas em Lua 5.4 e LuaJIT. A [Lua CI](https://github.com/SrTristeSad/LastCircle/actions/workflows/lua-check.yml) verifica sintaxe em ambos os ambientes.
 
 ## Artes e empacotamento
 
@@ -39,12 +45,13 @@ O `main.lua` atual é somente um **inspector da arte original**. Não é uma par
 
 ## Pendências prioritárias
 
-1. Completar `shared/net/updateMsg.ts`, serialização de entidades e estado replicado.
-2. Conectar WebSocket: token de entrada, pacotes, recebimento, sincronização, desconexão e testes reais com o servidor.
-3. Portar geração de mapa, renderer em camadas, edifícios, obstáculos, colisões e interiores a partir das definições reais.
-4. Portar modelos dos jogadores, armas, movimento, dano, loot e inventário.
-5. Portar menus, HUD, tela de morte/resultado, controles mobile, áudio e partículas.
-6. Testar ponta a ponta partida e multiplayer.
+1. **WebSocket real:** transporte `ws/wss`, token obtido da API original, conexão/desconexão e testes contra servidor Survev. O protocolo está preparado, mas a conexão ainda não existe.
+2. **Mapas reais:** geração procedural a partir da seed e `MapDefs`, terreno, rios, edifícios, interiores, obstáculos, renderização em camadas e colisões.
+3. **Personagens:** portar `client/src/objects/player.ts`, sprites, animações, armas, loot, feedback de combate e efeitos. O estado das entidades recebido pelo servidor já pode ser mantido.
+4. **Interface:** menus, HUD, inventário, loot, tela de morte/resultado, controles mobile, áudio e partículas.
+5. **Integração:** testar entrada na partida, renderização e movimento, dano, troca de arma e saída, com servidor multiplayer original.
+
+**O `UpdateMsg` não é mais o bloqueador do protocolo; o próximo bloqueador é conectar e apresentar graficamente os dados recebidos.**
 
 **Situação:** código original completo preservado, vários módulos de protocolo Lua validados, mas cliente Lua completo e multiplayer **ainda não existem**. A interface atual serve apenas para conferir arte. 
 
