@@ -38,7 +38,7 @@ jobs:
           from pathlib import Path
           import zipfile
           name = "LastCircle-Lua.love"
-          paths = [Path("main.lua"), Path("conf.lua")]
+          paths = [Path("main.lua"), Path("conf.lua"), Path("LICENSE"), Path("ATTRIBUTION-SURVEV.txt"), Path("README.md")]
           for root in ("src/survev", "assets/survev"):
               paths.extend(x for x in Path(root).rglob("*") if x.is_file())
           with zipfile.ZipFile(name, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as bundle:
