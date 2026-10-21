@@ -1,0 +1,43 @@
+name: Survev Building Sprite Fidelity
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/survev/building_renderer.lua"
+      - "src/survev/map_building_art.lua"
+      - "scripts/check_building_parity.mjs"
+      - "tests/building_parity.lua"
+      - "tests/building_renderer_smoke.lua"
+      - ".github/workflows/building-parity.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  original-building-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install Lua and LuaJIT
+        run: sudo apt-get update && sudo apt-get install -y lua5.4 luajit
+      - name: Compare ORIGINAL TS Building rendering offsets and layers in Lua 5.4
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_building_parity.mjs _reference/reference/survev lua5.4
+      - name: Compare ORIGINAL TS Building rendering offsets and layers in LuaJIT
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_building_parity.mjs _reference/reference/survev luajit
+      - name: Check image caching and ceiling state in both Lua runtimes
+        run: |
+          lua5.4 tests/building_renderer_smoke.lua
+          luajit tests/building_renderer_smoke.lua
