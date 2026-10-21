@@ -13,11 +13,11 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 ## Lua / LÖVE2D
 
-**Já portado e testado:** biblioteca vetorial 2D, câmera original, parte do GameConfig, controles, registro automático de **757 IDs de itens e 1.072 IDs de mapa**, leitura/escrita de bits e módulos de comunicação (Join, Input, Map, Joined, Kill, Pickup, Emote, DropItem, Spectate, AliveCounts, PlayerStats, GameOver e RoleAnnouncement). O leitor de pacotes interpreta mensagens concatenadas e recusa tipos ainda não traduzidos.
+**Já portado e testado:** biblioteca vetorial 2D, câmera original, parte do GameConfig, controles, registro automático de **757 IDs de game e 1.072 IDs de mapa**, leitura/escrita de bits e mensagens (Join, Input, Map, **UpdateMsg**, Joined, Kill, Pickup, Emote, DropItem, Spectate, AliveCounts, PlayerStats, GameOver e RoleAnnouncement). Foram portados os formatos de **11 categorias de entidades**, os 16 flags do UpdateMsg e a aplicação de deltas no estado do cliente (criação, exclusão, atualização parcial, vida, inventário e zona).
 
-**Paridade real:** o workflow [Comparação binária com Survev](https://github.com/SrTristeSad/LastCircle/actions/workflows/protocol-parity.yml) executa o TypeScript original para gerar pacotes, depois exige bytes idênticos dos módulos Lua. Consulte o [status detalhado](docs/PORT_STATUS.md).
+**Paridade real:** os workflows [protocolo](https://github.com/SrTristeSad/LastCircle/actions/workflows/protocol-parity.yml) e [UpdateMsg](https://github.com/SrTristeSad/LastCircle/actions/workflows/update-parity.yml) executam o TypeScript original para produzir pacotes de referência; exigem bytes idênticos no Lua 5.4 e LuaJIT. O teste completo cobre 16 flags e 11 categorias de entidades. Consulte o [status detalhado](docs/PORT_STATUS.md).
 
-**Ainda não portado:** estado completo de partidas (UpdateMsg e entidades), WebSocket, renderização fiel do mapa e personagens, armas/combate no cliente, interiores, interface de partida, áudio e multiplayer. O código Lua de rede **ainda não se conecta a um servidor**.
+**Ainda não portado:** transporte WebSocket real, token de entrada via API, renderização fiel de mapa/personagens, interpolação gráfica, armas/combate do cliente, interiores, menus/HUD, áudio e multiplayer. O módulo `protocol_session.lua` prepara a conexão e os envios com um transporte injetado, **mas ainda não estabelece conexão com um servidor**. O `main.lua` permanece como visualizador de arte e não é um jogo pronto.
 
 ### Inspeção das artes no LÖVE
 
