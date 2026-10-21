@@ -7,7 +7,7 @@ local Input=require("src.survev.input_msg")
 local Map=require("src.survev.map_msg")
 local Bind=require("src.survev.input_bindings")
 
-local expectedPlain,expectedJoin,expectedInput,expectedMap=arg[1],arg[2],arg[3],arg[4]
+local expectedPlain,expectedJoin,expectedInput,expectedMap,expectedUnicodeJoin=arg[1],arg[2],arg[3],arg[4],arg[5]
 assert(expectedPlain and expectedJoin and expectedInput and expectedMap,"missing upstream golden wire vectors")
 local function eq(actual,expected,label)
     assert(actual==expected,label.." expected "..expected.." but got "..actual)
@@ -47,6 +47,21 @@ join.loadout.outfit="outfitBase"
 local joined=Net.newMsgStream(256,registry)
 joined:serializeMsg(Net.MsgType.Join,join)
 eq(hex(joined:getBuffer()),expectedJoin,"JoinMsg")
+
+local utfJoin=Join.new()
+utfJoin.protocol=1028
+utfJoin.joinToken="abc"
+utfJoin.name="José"
+utfJoin.loadout.outfit="outfitBase"
+local utfPacket=Net.newMsgStream(256,registry)
+utfPacket:serializeMsg(Net.MsgType.Join,utfJoin)
+eq(hex(utfPacket:getBuffer()),expectedUnicodeJoin,"JoinMsg UTF16 low-byte")
+local utfRead=Net.newMsgStream(utfPacket:getBuffer(),registry)
+assert(utfRead:deserializeMsgType()==Net.MsgType.Join)
+local utfCopy=Join.new()
+utfCopy:deserialize(utfRead:getStream())
+assert(utfCopy.name=="José","Non-ASCII Survev name mismatch")
+
 local decode=Net.newMsgStream(joined:getBuffer(),registry)
 assert(decode:deserializeMsgType()==Net.MsgType.Join)
 local joinedCopy=Join.new()
