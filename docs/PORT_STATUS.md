@@ -38,32 +38,36 @@ O código original está integralmente espelhado em [referencia-survev](https://
 | `shared/utils/terrainGen.ts` e `util.seededRand` | `terrain_gen.lua` | Curvas de costa, praia/grama e ground patches: pontos comparados com original em Lua 5.4 e LuaJIT |
 | `shared/utils/spline.ts` | `spline.lua` | Splines Catmull–Rom, normais, comprimentos e proximidade, testados contra fonte original |
 | `shared/utils/river.ts` | `river.lua` | Rios e lagos, margens, conexões, recortes e polígonos equivalentes aos originais |
-| `shared/defs/mapDefs.ts` | `map_colors.lua` | **Cores e atlases oficiais** extraídos automaticamente por TypeScript, sem tons aproximados |
+| `shared/defs/mapDefs.ts` | `map_colors.lua` | **Cores, atlases, ajuste de brilho e tipo de margem oficial** extraídos de TypeScript, sem valores aproximados |
 | `client/src/map.ts:renderTerrain` | `map_renderer.lua` | Malhas cacheadas de água, praia, gramado, rios, patches e grade, testadas no LÖVE2D real |
 | `shared/defs/register.ts` (obstáculos e imagens) | `map_obstacle_art.lua` | **741 definições** extraídas, com **511 sprites principais localizados** nos assets originais |
 | `client/src/objects/obstacle.ts` (renderização básica) | `obstacle_art_renderer.lua` | Imagens reais, tint, escala, âncora e rotação; portas/estados completos e ordem final por camadas pendentes |
+| `shared/defs/mapObjects/buildings/**` | `map_building_art.lua` | **228 definições originais**, 342 imagens de piso e 242 de teto; 537 camadas associadas aos arquivos originais |
+| `client/src/objects/building.ts` (sprites e z-order) | `building_renderer.lua` | Pisos/tetos com offsets, escala, rotação, tint e z-index originais; comparação com TypeScript; imagens carregadas sob demanda |
+| `client/src/objects/building.ts` (visibilidade interna) | `building_visibility.lua` | Regiões `zoomIn`, desaparecimento de teto ao entrar e efeito de teto destruído; **raios LOS externos ainda pendentes** |
+| `client/src/map.ts:getGroundSurface` (edificações) | `building_surfaces.lua` | Materiais de piso e colliders transformados/ordenados; testes comparativos usando `collider.transform` original |
 
 **Testes:** [Paridade binária](https://github.com/SrTristeSad/LastCircle/actions/workflows/protocol-parity.yml) executa o TypeScript original para gerar os pacotes Join, Input, Map e uma sequência de 10 mensagens; [Survev UpdateMsg Fidelity](https://github.com/SrTristeSad/LastCircle/actions/workflows/update-parity.yml) exercita todos os 16 flags e os 11 formatos de objetos, comparando byte a byte e depois conferindo a aplicação de deltas. As verificações são feitas em Lua 5.4 e LuaJIT. A [Lua CI](https://github.com/SrTristeSad/LastCircle/actions/workflows/lua-check.yml) verifica sintaxe em ambos os ambientes.
 
-**Validação gráfica real:** [LOVE Render Terrain](https://github.com/SrTristeSad/LastCircle/actions/workflows/love-render.yml) executa um LÖVE instalado em um display virtual, renderizando praias, rios, lagos e sprites rasterizados do **barril e da porta originais**. [Survev Terrain Fidelity](https://github.com/SrTristeSad/LastCircle/actions/workflows/terrain-port.yml) compara pontos contra TypeScript. [Obstacle Artwork Metadata](https://github.com/SrTristeSad/LastCircle/actions/workflows/obstacle-art.yml) gera as definições oficiais. Nenhuma dessas verificações significa que mapas completos e interiores já estejam concluídos.
+**Validação gráfica real:** [LOVE Render Terrain](https://github.com/SrTristeSad/LastCircle/actions/workflows/love-render.yml) executa um LÖVE instalado em um display virtual, renderizando praias, rios, lagos e sprites rasterizados do **barril, porta e edifício com piso/teto originais**. [Survev Terrain Fidelity](https://github.com/SrTristeSad/LastCircle/actions/workflows/terrain-port.yml) compara pontos contra TypeScript. [Obstacle Artwork Metadata](https://github.com/SrTristeSad/LastCircle/actions/workflows/obstacle-art.yml) gera as definições oficiais. [Survev Building Definitions](https://github.com/SrTristeSad/LastCircle/actions/workflows/building-defs.yml) gera os metadados das construções, e [Building Sprite Fidelity](https://github.com/SrTristeSad/LastCircle/actions/workflows/building-parity.yml) compara offsets, rotações, ordenação, materiais e transparência interna contra o TypeScript. Nenhuma dessas verificações significa que mapas completos e interiores já estejam concluídos.
 
 ## Artes e empacotamento
 
 `scripts/prepare_assets.py` rasteriza **1.616 SVG** originais como PNG e copia **492 arquivos** de recursos adicionais sem redesenhar. O workflow `build-love.yml` cria o pacote `LastCircle-Lua.love` com os recursos e módulos Lua.
 
-O `main.lua` apresenta as artes originais e, via **F6**, uma tela WebSocket que renderiza **terreno real gerado pela seed, rios e obstáculos com arte original**, junto dos jogadores recebidos do servidor. O mapa tem cores e contornos oficiais, porém não implementa ainda edificações com interiores, todas as camadas/efeitos ou o HUD. **Não é uma partida plenamente jogável nem um renderer completo.**
+O `main.lua` apresenta as artes originais e, via **F6**, uma tela WebSocket que renderiza **terreno real pela seed, rios, obstáculos e imagens originais de pisos/tetos das construções**, junto dos jogadores recebidos do servidor. O teto se torna transparente quando o jogador entra em regiões internas já portadas. **Ainda faltam a linha de visão externa atravessando paredes, estados/portas completos, todas as camadas/efeitos e o HUD.** Não é uma partida plenamente jogável.
 
 ## Pendências prioritárias
 
 1. **Matchmaking/API:** obter endereço e `joinToken` da API original e testar a sessão com um servidor Survev de verdade. `ws://` local já funciona; `wss://` exige LuaSec e CA confiável. O teste atual é contra servidor local que emite pacotes do TS original.
-2. **Mapa e edifícios:** costa, rios, biomas, patches e obstáculos visuais básicos estão portados. Faltam a composição completa das construções, interiores, portas animadas, renderização por camadas, clipping e colisões.
+2. **Mapa e edifícios:** costa, rios, biomas, obstáculos e camadas de piso/teto das construções estão portados. Faltam linha de visão com raios contra paredes, composição completa de camadas, portas animadas, máscaras, física/colisão funcional e integração dos materiais de piso a áudio/passos.
 3. **Personagens:** portar `client/src/objects/player.ts`, sprites, animações, armas, loot, feedback de combate e efeitos. O estado das entidades recebido pelo servidor já pode ser mantido.
 4. **Interface:** menus, HUD, inventário, loot, tela de morte/resultado, controles mobile, áudio e partículas.
 5. **Integração:** testar entrada na partida, renderização e movimento, dano, troca de arma e saída, com servidor multiplayer original.
 
 **O `UpdateMsg` e a camada WebSocket possuem testes aprovados; os bloqueadores principais agora são matchmaking real, renderização completa e teste ponta a ponta em partida.**
 
-**Situação:** código original completo preservado; protocolo, WebSocket e geometria de terreno validados; renderer parcial de biomas e obstáculos com imagens originais. **O cliente Lua completo e plenamente jogável ainda não existe.** 
+**Situação:** código original completo preservado; protocolo, WebSocket e geometria de terreno validados; renderer parcial de biomas, obstáculos e interiores de construções com imagens originais. **O cliente Lua completo e plenamente jogável ainda não existe.** 
 
 ## Licenciamento
 
