@@ -30,9 +30,12 @@ jobs:
         with:
           node-version: "24"
       - name: Lua 5.4
-        run: sudo apt-get update && sudo apt-get install -y lua5.4
+        run: sudo apt-get update && sudo apt-get install -y lua5.4 luajit
       - name: Comparar bytes com a implementação original
         run: |
           node --disable-warning=ExperimentalWarning --experimental-transform-types \
             scripts/check_bit_parity.mjs \
             _reference/reference/survev lua5.4
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_bit_parity.mjs \
+            _reference/reference/survev luajit
