@@ -46,11 +46,14 @@ function love.draw()
     }
     assert(buildings:drawPhase(obj,cam,"floor",960,640)==1,
         "original Survev shack interior floor must render")
+    local doorState={__type=2,__id=2,type="house_door_01",
+        pos={x=370+frames*.25,y=320},ori=frames%4,
+        scale=1,dead=false,door={open=frames>0}}
+    obstacles:update({[2]=doorState},.016)
     obstacles:draw({
         [1]={__type=2,__id=1,type="barrel_01",pos={x=360,y=320},
             ori=1,scale=1,dead=false},
-        [2]={__type=2,__id=2,type="house_door_01",pos={x=370,y=320},
-            ori=0,scale=1,dead=false}
+        [2]=doorState
     },cam,960,640)
     assert(buildings:drawPhase(obj,cam,"ceiling",960,640)==1,
         "original Survev shack ceiling must render")
