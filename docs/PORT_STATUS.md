@@ -33,7 +33,9 @@ O código original está integralmente espelhado em [referencia-survev](https://
 | `shared/net/objectSerializeFns.ts` | `object_serialize_fns.lua` | **11 tipos** de entidades, com formatos parcial e completo; teste de cada categoria no UpdateMsg |
 | `client/src/gas.ts` | `gas.lua` | Dados e interpolação do círculo, sem renderizador gráfico |
 | `client/src/game.ts:m_processGameUpdate` | `client_state.lua` | Retenção de dados autoritativos, exclusão, criação e atualizações parciais sem inventar mecânicas |
-| `client/src/game.ts:tryJoinGame` e envio de Input | `protocol_session.lua` | Handshake, enquadramento, ACK, sequência e redução de tráfego via transporte injetado; **não é uma conexão WebSocket real** |
+| `client/src/game.ts:tryJoinGame` e envio de Input | `protocol_session.lua` | Handshake, enquadramento, ACK, sequência e redução de tráfego com transporte WebSocket real implementado e testado em loopback |
+| `shared/net/connection.ts` e `client/src/game.ts` | `ws_codec.lua`, `ws_frame.lua`, `ws_connection.lua`, `network_client.lua` | RFC 6455, TCP/LuaSocket, TLS opcional com verificação de CA/hostname, mensagens fragmentadas, ping/pong, Join, Input e recepção de pacotes; **teste TCP real com gerador TS original** |
+| `client/src/objects/player.ts` (arte) | `live_debug.lua`, `main.lua` | Inspeção da posição dos jogadores usando sprite original; **não equivale ao renderer final** |
 
 **Testes:** [Paridade binária](https://github.com/SrTristeSad/LastCircle/actions/workflows/protocol-parity.yml) executa o TypeScript original para gerar os pacotes Join, Input, Map e uma sequência de 10 mensagens; [Survev UpdateMsg Fidelity](https://github.com/SrTristeSad/LastCircle/actions/workflows/update-parity.yml) exercita todos os 16 flags e os 11 formatos de objetos, comparando byte a byte e depois conferindo a aplicação de deltas. As verificações são feitas em Lua 5.4 e LuaJIT. A [Lua CI](https://github.com/SrTristeSad/LastCircle/actions/workflows/lua-check.yml) verifica sintaxe em ambos os ambientes.
 
@@ -41,17 +43,17 @@ O código original está integralmente espelhado em [referencia-survev](https://
 
 `scripts/prepare_assets.py` rasteriza **1.616 SVG** originais como PNG e copia **492 arquivos** de recursos adicionais sem redesenhar. O workflow `build-love.yml` cria o pacote `LastCircle-Lua.love` com os recursos e módulos Lua.
 
-O `main.lua` atual é somente um **inspector da arte original**. Não é uma partida jogável e não se deve apresentá-lo como reprodução completa do Survev.
+O `main.lua` apresenta as artes originais e, via **F6**, uma tela de conexão WebSocket com visualização diagnóstica das posições reais dos jogadores. Ainda não é uma partida jogável e não se deve apresentá-lo como renderer completo do Survev.
 
 ## Pendências prioritárias
 
-1. **WebSocket real:** transporte `ws/wss`, token obtido da API original, conexão/desconexão e testes contra servidor Survev. O protocolo está preparado, mas a conexão ainda não existe.
+1. **Matchmaking/API:** obter endereço e `joinToken` da API original e testar a sessão com um servidor Survev de verdade. `ws://` local já funciona; `wss://` exige LuaSec e CA confiável. O teste atual é contra servidor local que emite pacotes do TS original.
 2. **Mapas reais:** geração procedural a partir da seed e `MapDefs`, terreno, rios, edifícios, interiores, obstáculos, renderização em camadas e colisões.
 3. **Personagens:** portar `client/src/objects/player.ts`, sprites, animações, armas, loot, feedback de combate e efeitos. O estado das entidades recebido pelo servidor já pode ser mantido.
 4. **Interface:** menus, HUD, inventário, loot, tela de morte/resultado, controles mobile, áudio e partículas.
 5. **Integração:** testar entrada na partida, renderização e movimento, dano, troca de arma e saída, com servidor multiplayer original.
 
-**O `UpdateMsg` não é mais o bloqueador do protocolo; o próximo bloqueador é conectar e apresentar graficamente os dados recebidos.**
+**O `UpdateMsg` e a camada WebSocket possuem testes aprovados; os bloqueadores principais agora são matchmaking real, renderização completa e teste ponta a ponta em partida.**
 
 **Situação:** código original completo preservado, vários módulos de protocolo Lua validados, mas cliente Lua completo e multiplayer **ainda não existem**. A interface atual serve apenas para conferir arte. 
 
