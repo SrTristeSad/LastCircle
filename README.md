@@ -6,7 +6,7 @@ Battle royale 2D top-down. Primeira etapa: cliente offline em **Lua / LÖVE2D 11
 
 1. Instale o LÖVE2D: https://love2d.org/
 2. Baixe este repositório (Code > Download ZIP) e extraia.
-3. Arraste a pasta \`LastCircle\` sobre \`love.exe\`, ou no terminal execute \`love .\` dentro da pasta.
+3. Arraste a pasta `LastCircle` sobre `love.exe`, ou no terminal execute `love .` dentro da pasta.
 
 ### Controles
 
@@ -40,13 +40,13 @@ Battle royale 2D top-down. Primeira etapa: cliente offline em **Lua / LÖVE2D 11
 
 ## Estrutura
 
-\`\`\`
+```
 conf.lua
 main.lua
 src/
   world.lua
   game.lua
-\`\`\`
+```
 
 ## Próximas etapas
 
