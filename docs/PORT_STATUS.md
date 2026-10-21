@@ -28,7 +28,6 @@ O código original está integralmente espelhado em [referencia-survev](https://
 | `shared/net/gameOverMsg.ts` | `game_over_msg.lua` | Resultado da partida |
 | `shared/net/roleAnnouncementMsg.ts` | `role_announcement_msg.lua` | Função e equipe |
 | `shared/net/net.ts` | `packet_decoder.lua` | Várias mensagens sequenciais; aborta com erro para tipos não portados |
-
 | `shared/net/updateMsg.ts` | `update_msg.lua` | **16 flags**, corpo completo de atualização; pacote testado byte a byte em Lua 5.4 e LuaJIT |
 | `shared/net/objectSerializeFns.ts` | `object_serialize_fns.lua` | **11 tipos** de entidades, com formatos parcial e completo; teste de cada categoria no UpdateMsg |
 | `client/src/gas.ts` | `gas.lua` | Dados e interpolação do círculo, sem renderizador gráfico |
@@ -36,26 +35,35 @@ O código original está integralmente espelhado em [referencia-survev](https://
 | `client/src/game.ts:tryJoinGame` e envio de Input | `protocol_session.lua` | Handshake, enquadramento, ACK, sequência e redução de tráfego com transporte WebSocket real implementado e testado em loopback |
 | `shared/net/connection.ts` e `client/src/game.ts` | `ws_codec.lua`, `ws_frame.lua`, `ws_connection.lua`, `network_client.lua` | RFC 6455, TCP/LuaSocket, TLS opcional com verificação de CA/hostname, mensagens fragmentadas, ping/pong, Join, Input e recepção de pacotes; **teste TCP real com gerador TS original** |
 | `client/src/objects/player.ts` (arte) | `live_debug.lua`, `main.lua` | Inspeção da posição dos jogadores usando sprite original; **não equivale ao renderer final** |
+| `shared/utils/terrainGen.ts` e `util.seededRand` | `terrain_gen.lua` | Curvas de costa, praia/grama e ground patches: pontos comparados com original em Lua 5.4 e LuaJIT |
+| `shared/utils/spline.ts` | `spline.lua` | Splines Catmull–Rom, normais, comprimentos e proximidade, testados contra fonte original |
+| `shared/utils/river.ts` | `river.lua` | Rios e lagos, margens, conexões, recortes e polígonos equivalentes aos originais |
+| `shared/defs/mapDefs.ts` | `map_colors.lua` | **Cores e atlases oficiais** extraídos automaticamente por TypeScript, sem tons aproximados |
+| `client/src/map.ts:renderTerrain` | `map_renderer.lua` | Malhas cacheadas de água, praia, gramado, rios, patches e grade, testadas no LÖVE2D real |
+| `shared/defs/register.ts` (obstáculos e imagens) | `map_obstacle_art.lua` | **741 definições** extraídas, com **511 sprites principais localizados** nos assets originais |
+| `client/src/objects/obstacle.ts` (renderização básica) | `obstacle_art_renderer.lua` | Imagens reais, tint, escala, âncora e rotação; portas/estados completos e ordem final por camadas pendentes |
 
 **Testes:** [Paridade binária](https://github.com/SrTristeSad/LastCircle/actions/workflows/protocol-parity.yml) executa o TypeScript original para gerar os pacotes Join, Input, Map e uma sequência de 10 mensagens; [Survev UpdateMsg Fidelity](https://github.com/SrTristeSad/LastCircle/actions/workflows/update-parity.yml) exercita todos os 16 flags e os 11 formatos de objetos, comparando byte a byte e depois conferindo a aplicação de deltas. As verificações são feitas em Lua 5.4 e LuaJIT. A [Lua CI](https://github.com/SrTristeSad/LastCircle/actions/workflows/lua-check.yml) verifica sintaxe em ambos os ambientes.
+
+**Validação gráfica real:** [LOVE Render Terrain](https://github.com/SrTristeSad/LastCircle/actions/workflows/love-render.yml) executa um LÖVE instalado em um display virtual, renderizando praias, rios, lagos e sprites rasterizados do **barril e da porta originais**. [Survev Terrain Fidelity](https://github.com/SrTristeSad/LastCircle/actions/workflows/terrain-port.yml) compara pontos contra TypeScript. [Obstacle Artwork Metadata](https://github.com/SrTristeSad/LastCircle/actions/workflows/obstacle-art.yml) gera as definições oficiais. Nenhuma dessas verificações significa que mapas completos e interiores já estejam concluídos.
 
 ## Artes e empacotamento
 
 `scripts/prepare_assets.py` rasteriza **1.616 SVG** originais como PNG e copia **492 arquivos** de recursos adicionais sem redesenhar. O workflow `build-love.yml` cria o pacote `LastCircle-Lua.love` com os recursos e módulos Lua.
 
-O `main.lua` apresenta as artes originais e, via **F6**, uma tela de conexão WebSocket com visualização diagnóstica das posições reais dos jogadores. Ainda não é uma partida jogável e não se deve apresentá-lo como renderer completo do Survev.
+O `main.lua` apresenta as artes originais e, via **F6**, uma tela WebSocket que renderiza **terreno real gerado pela seed, rios e obstáculos com arte original**, junto dos jogadores recebidos do servidor. O mapa tem cores e contornos oficiais, porém não implementa ainda edificações com interiores, todas as camadas/efeitos ou o HUD. **Não é uma partida plenamente jogável nem um renderer completo.**
 
 ## Pendências prioritárias
 
 1. **Matchmaking/API:** obter endereço e `joinToken` da API original e testar a sessão com um servidor Survev de verdade. `ws://` local já funciona; `wss://` exige LuaSec e CA confiável. O teste atual é contra servidor local que emite pacotes do TS original.
-2. **Mapas reais:** geração procedural a partir da seed e `MapDefs`, terreno, rios, edifícios, interiores, obstáculos, renderização em camadas e colisões.
+2. **Mapa e edifícios:** costa, rios, biomas, patches e obstáculos visuais básicos estão portados. Faltam a composição completa das construções, interiores, portas animadas, renderização por camadas, clipping e colisões.
 3. **Personagens:** portar `client/src/objects/player.ts`, sprites, animações, armas, loot, feedback de combate e efeitos. O estado das entidades recebido pelo servidor já pode ser mantido.
 4. **Interface:** menus, HUD, inventário, loot, tela de morte/resultado, controles mobile, áudio e partículas.
 5. **Integração:** testar entrada na partida, renderização e movimento, dano, troca de arma e saída, com servidor multiplayer original.
 
 **O `UpdateMsg` e a camada WebSocket possuem testes aprovados; os bloqueadores principais agora são matchmaking real, renderização completa e teste ponta a ponta em partida.**
 
-**Situação:** código original completo preservado, vários módulos de protocolo Lua validados, mas cliente Lua completo e multiplayer **ainda não existem**. A interface atual serve apenas para conferir arte. 
+**Situação:** código original completo preservado; protocolo, WebSocket e geometria de terreno validados; renderer parcial de biomas e obstáculos com imagens originais. **O cliente Lua completo e plenamente jogável ainda não existe.** 
 
 ## Licenciamento
 
