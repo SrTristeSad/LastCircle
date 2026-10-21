@@ -1,9 +1,10 @@
 -- Live Survev terrain renderer / state inspector. Coastline, river/lake
 -- polygons, map palettes, patches and grid are ported from ORIGINAL code.
--- Map objects remain diagnostic markers, not final original sprites.
+-- Obstacles now use actual source sprites; other entities remain diagnostics.
 local Camera=require("src.survev.camera")
 local Objects=require("src.survev.object_serialize_fns")
 local MapRenderer=require("src.survev.map_renderer")
+local ObstacleArt=require("src.survev.obstacle_art_renderer")
 local V={}
 V.__index=V
 local function image(path)
@@ -17,8 +18,8 @@ function V.new()
     return setmetatable({
         camera=Camera.new(),
         player=image("assets/survev/img/player/player-base-01.png"),
-        terrainMap=nil,terrainRenderer=nil,
-        warning="TERRENO ORIGINAL | OBJETOS/INTERIORES AINDA EM PORTABILIDADE",
+        terrainMap=nil,terrainRenderer=nil,obstacleArt=ObstacleArt.new(),
+        warning="TERRENO E OBSTACULOS ORIGINAIS | EDIFICIOS/INTERIORES PENDENTES",
     },V)
 end
 local function drawCentered(asset,x,y,dia,angle)
@@ -60,6 +61,7 @@ function V:draw(state,w,h)
     end
     self.terrainRenderer:draw(cam,w,h)
     g.setColor(1,1,1)
+    self.obstacleArt:draw(state.objects,cam,w,h)
 
     -- Debug markers intentionally do not pretend to reproduce object graphics.
     for _,obj in pairs(state.objects) do
@@ -72,7 +74,7 @@ function V:draw(state,w,h)
                 elseif obj.__type==Objects.Type.Player then
                     g.setColor(.96,.93,.75)
                     g.circle("line",pt.x,pt.y,cam:m_z())
-                else
+                elseif obj.__type~=Objects.Type.Obstacle then
                     g.setColor(.84,.86,.62)
                     g.circle("line",pt.x,pt.y,7)
                     g.print(tostring(obj.__type)..":"..tostring(obj.__id),pt.x+8,pt.y-10)
