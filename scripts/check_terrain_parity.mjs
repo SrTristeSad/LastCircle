@@ -21,12 +21,33 @@ const input=[
     {width:720,height:680,seed:123456,shoreInset:12,grassInset:9,rivers:[]},
     {width:620,height:620,seed:0,shoreInset:15,grassInset:10,rivers:[]},
     {width:810,height:640,seed:98765,shoreInset:20,grassInset:6,rivers:[]},
+    {width:720,height:640,seed:98765,shoreInset:17,grassInset:8,rivers:[
+      {width:8,looped:false,points:[
+        {x:0,y:130},{x:110,y:155},{x:200,y:210},{x:310,y:250},{x:440,y:290}
+      ]},
+      {width:5,looped:false,points:[
+        {x:200,y:210},{x:270,y:350},{x:300,y:440},{x:310,y:640}
+      ]}
+    ]},
+    {width:620,height:620,seed:8761,shoreInset:18,grassInset:12,rivers:[
+      {width:11,looped:true,points:[
+        {x:235,y:300},{x:285,y:365},{x:360,y:370},{x:390,y:300},
+        {x:355,y:250},{x:280,y:245},{x:235,y:300}
+      ]}
+    ]},
 ];
 const fixture=input.map(map=>{
-    const {shore,grass}=generateTerrain(map.width,map.height,map.shoreInset,
-        map.grassInset,[],map.seed);
+    const {shore,grass,rivers}=generateTerrain(map.width,map.height,map.shoreInset,
+        map.grassInset,map.rivers,map.seed);
     if(shore.length!==260 || grass.length!==260)throw Error("expected 260 original outline points");
-    return {map,shore,grass};
+    return {map,shore,grass,rivers:rivers.map(r=>({
+      waterPoly:r.waterPoly,shorePoly:r.shorePoly,
+      waterWidths:r.waterWidths,shoreWidths:r.shoreWidths,
+      center:r.center,aabb:r.aabb,totalArcLen:r.spline.totalArcLen,
+      getPos:r.spline.getPos(.35),getNormal:r.spline.getNormal(.35),
+      getClosest:r.spline.getClosestTtoPoint({x:280,y:300}),
+      distanceToShore:r.distanceToShore({x:280,y:300}),
+    }))};
 });
 const seed=54321;
 const patches=[
