@@ -10,7 +10,7 @@ Este cliente continua um **porte fiel para Lua/LÖVE2D**. Os transportes e pacot
 - `ws_connection.lua` recebe mensagens binárias, suporta fragmentação com ping entre fragmentos e responde PONG.
 - `network_client.lua` conecta o transporte à `protocol_session.lua` e aplica Joined, Map, Update e demais mensagens portadas ao `client_state.lua`.
 - A sessão envia Join após WebSocket abrir, Input quando houver alterações, e gerencia seq, ack e latência.
-- A tela do LÖVE usa **F6** para diagnóstico. Enquanto recebe dados, desenha o terreno pela seed, os sprites originais de obstáculos, os pisos e os tetos de construções e as posições de jogadores. **A composição por camadas e a visibilidade externa através de paredes ainda são parciais; isso não equivale ao renderizador completo.**
+- A tela do LÖVE usa **F6** para diagnóstico. Enquanto recebe dados, desenha o terreno pela seed, os sprites originais de obstáculos, os pisos e os tetos de construções e as posições de jogadores. **A visão dos interiores já utiliza varredura de cinco raios e colisões de paredes, com interpolação visual de portas; ainda faltam composição por camadas/máscaras PIXI, interação completa e o renderizador do jogador. Isso não equivale ao jogo completo.**
 
 ## Como usar no LÖVE
 
