@@ -19,6 +19,15 @@ function Client:connect(url,joinOptions)
     assert(self.state=="idle" or self.state=="closed" or self.state=="error",
         "connection already active")
     joinOptions=joinOptions or {}
+    -- Exactly the original shared/utils/loadout.ts defaultLoadout(), not
+    -- a made-up weapon or appearance. Used only when caller supplied no loadout.
+    if not joinOptions.loadout then
+        joinOptions.loadout={
+            outfit="outfitBase",melee="fists",heal="heal_basic",
+            boost="boost_basic",
+            emotes={"emote_happyface","emote_thumbsup","emote_surviv","emote_sadface","",""},
+        }
+    end
     assert(type(joinOptions.name)=="string","player name required")
     assert(type(joinOptions.joinToken)=="string","join token required")
     self.error=nil
