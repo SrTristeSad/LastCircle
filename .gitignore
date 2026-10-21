@@ -1,0 +1,11 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+# Exported distributions
+dist/
+build/
+*.love
+*.exe
