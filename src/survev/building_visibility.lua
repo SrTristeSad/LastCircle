@@ -1,11 +1,10 @@
 -- Survev client/src/objects/building.ts ceiling visibility state.
--- Ports EXACT "inside collider" fast-path of collisionHelpers.scanCollider,
--- zoomRegions transforms and original fade/linger equations. The RAY/LOS
--- branch for viewing *from outside* the building is not yet implemented:
--- do not pretend unobstructed visibility without collision data.
+-- Ports collisionHelpers.scanCollider rays through authoritative obstacle
+-- geometry, transformed zoomRegions and original fade/linger equations.
 local Meta=require("src.survev.map_building_art")
 local Types=require("src.survev.object_serialize_fns").Type
 local V=require("src.survev.v2")
+local Geometry=require("src.survev.los_geometry")
 local HalfPi=math.pi*.5
 local Visibility={}
 Visibility.__index=Visibility
@@ -30,12 +29,11 @@ function Visibility:reset()
     self.active={}
 end
 
--- Called once per rendered frame. This intentionally never claims the LOS
--- result from a player *outside* a building: that requires the upstream
--- collisionHelpers.scanCollider rays against obstacle collision geometry.
+-- Called once per rendered frame. Uses source-derived world colliders only.
 function Visibility:update(dt,objects,activePlayer)
     assert(type(dt)=="number" and dt>=0,"invalid elapsed time")
     local seen={}
+    local obstacles=Geometry.obstacles(objects)
     for id,building in pairs(objects) do
         if building.__type==Types.Building and building.type then
             local def=Meta[building.type]
@@ -52,10 +50,17 @@ function Visibility:update(dt,objects,activePlayer)
                     ((building.layer or 0)==(activePlayer.layer or 0)
                         or (activePlayer.layer or 0)%4>=2) then
                     for _,region in ipairs(def.zoomRegions or {}) do
-                        if region.zoomIn and
-                            isInRegion(region.zoomIn,building.pos,building.ori,activePlayer.pos) then
-                            visible=true
-                            break
+                        if region.zoomIn then
+                            local world=Geometry.transform(
+                                region.zoomIn,building.pos,building.ori,1)
+                            local result=Geometry.scanCollider(
+                                world,obstacles,activePlayer.pos,activePlayer.layer or 0,
+                                0,(def.vision and def.vision.width or 2.75)*2,
+                                def.vision and def.vision.dist or 5.5,5)
+                            if result then
+                                visible=true
+                                break
+                            end
                         end
                     end
                 end
