@@ -27,6 +27,8 @@ const lines=[
 for(const [name,def] of entries){
     lines.push("    ["+q(name)+"] = {");
     lines.push("        mapId = "+def.mapId+",");
+    lines.push("        valueAdjust = "+def.biome.valueAdjust+",");
+    lines.push("        riverShore = "+q(def.biome.sound.riverShore)+",");
     lines.push("        colors = {");
     for(const [key,val] of Object.entries(def.biome.colors)){
         if(!Number.isInteger(val)||val<0||val>0xffffff)throw Error(name+" color "+key+" invalid: "+val);
