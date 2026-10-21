@@ -3,7 +3,8 @@
 local Renderer=require("src.survev.map_renderer")
 local Camera=require("src.survev.camera")
 local Obstacles=require("src.survev.obstacle_art_renderer")
-local renderer,cam,obstacles
+local Buildings=require("src.survev.building_renderer")
+local renderer,cam,obstacles,buildings
 local frames=0
 function love.load()
     love.window.setTitle("LastCircle terrain smoke")
@@ -35,15 +36,24 @@ function love.load()
     })
     assert(#renderer.terrain.rivers==3)
     obstacles=Obstacles.new()
+    buildings=Buildings.new()
 end
 function love.draw()
     renderer:draw(cam,960,640)
+    local obj={
+        [80]={__type=6,__id=80,type="shack_01",
+            pos={x=360,y=320},ori=0,layer=0,ceilingDead=false},
+    }
+    assert(buildings:drawPhase(obj,cam,"floor",960,640)==1,
+        "original Survev shack interior floor must render")
     obstacles:draw({
         [1]={__type=2,__id=1,type="barrel_01",pos={x=360,y=320},
             ori=1,scale=1,dead=false},
         [2]={__type=2,__id=2,type="house_door_01",pos={x=370,y=320},
             ori=0,scale=1,dead=false}
     },cam,960,640)
+    assert(buildings:drawPhase(obj,cam,"ceiling",960,640)==1,
+        "original Survev shack ceiling must render")
     assert(obstacles.drawn==2 and obstacles.unavailable==0,
         "original Survev barrel/door SVG rasterized assets must render")
     frames=frames+1
