@@ -171,6 +171,8 @@ local atan2=math.atan2 or math.atan
 function love.update(dt)
     if not client then return end
     client:poll()
+    local world=client:getGameState()
+    if world and world.map then live:update(world,dt) end
     if screen~="network" or not connected() or not client:getGameState()
         or not client:getGameState().joined then return end
     local state=client:getGameState()
