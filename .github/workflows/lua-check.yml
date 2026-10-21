@@ -28,3 +28,7 @@ jobs:
         run: |
           lua5.4 tests/main_smoke.lua
           luajit tests/main_smoke.lua
+      - name: Survev terrain renderer / map palette smoke
+        run: |
+          lua5.4 tests/map_renderer_smoke.lua
+          luajit tests/map_renderer_smoke.lua
