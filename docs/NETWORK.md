@@ -10,14 +10,14 @@ Este cliente continua um **porte fiel para Lua/LÖVE2D**. Os transportes e pacot
 - `ws_connection.lua` recebe mensagens binárias, suporta fragmentação com ping entre fragmentos e responde PONG.
 - `network_client.lua` conecta o transporte à `protocol_session.lua` e aplica Joined, Map, Update e demais mensagens portadas ao `client_state.lua`.
 - A sessão envia Join após WebSocket abrir, Input quando houver alterações, e gerencia seq, ack e latência.
-- A tela do LÖVE usa **F6** para diagnóstico. Enquanto recebe dados, mostra posições de jogadores e o recurso gráfico original `player-base-01`. Outros objetos são **marcadores de debug**, não a arte final.
+- A tela do LÖVE usa **F6** para diagnóstico. Enquanto recebe dados, desenha o terreno pela seed, os sprites originais de obstáculos, os pisos e os tetos de construções e as posições de jogadores. **A composição por camadas e a visibilidade externa através de paredes ainda são parciais; isso não equivale ao renderizador completo.**
 
 ## Como usar no LÖVE
 
 1. Instale o [LÖVE2D](https://love2d.org/) 11.x e execute o `LastCircle-Lua.love` da Action de empacotamento.
 2. Pressione **F6** para abrir o modo de conexão.
 3. Informe **URL WebSocket completa da partida**, o **joinToken válido concedido pelo matchmaking** e o nome.
-4. Pressione **ENTER**. Após JoinedMsg e MapMsg, a visualização de debug mostra dados enviados pelo servidor.
+4. Pressione **ENTER**. Após JoinedMsg, MapMsg e as atualizações, o cliente mostra terreno, edifícios e entidades cujos dados foram efetivamente recebidos do servidor.
 5. WASD, mouse e as teclas originais enviam InputMsg, **sem simular movimento local**: só o servidor determina posições.
 
 O repositório ainda **não busca partidas pela API**. A tela de teste não cria tokens nem garante aceitação em servidores de produção. **Isso ainda não é um cliente jogável completo.**
