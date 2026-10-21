@@ -4,6 +4,7 @@
 -- Rivers are handled separately by the spline/River port: do not improvise.
 local V2=require("src.survev.v2")
 local Config=require("src.survev.game_config")
+local River=require("src.survev.river")
 local T={}
 
 -- Identical Park-Miller RNG from shared/utils/util.ts:seededRand.
@@ -70,7 +71,14 @@ function T.generate(map)
         local dist=map.grassInset+variation
         grass[#grass+1]=V2.add(point,V2.mul(toward,dist))
     end
-    return {shore=shore,grass=grass}
+    -- Same river generation order as the original shared/utils/terrainGen.ts.
+    -- Additional rivers can terminate inside an earlier river and are clipped.
+    local bounds={min=V2.create(0,0),max=V2.create(map.width,map.height)}
+    local rivers={}
+    for _,desc in ipairs(map.rivers or {}) do
+        rivers[#rivers+1]=River.new(desc.points,desc.width,desc.looped,rivers,bounds)
+    end
+    return {shore=shore,grass=grass,rivers=rivers}
 end
 
 function T.patchPolygon(patch,seed)
