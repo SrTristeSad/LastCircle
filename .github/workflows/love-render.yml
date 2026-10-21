@@ -1,0 +1,33 @@
+name: LOVE Render Terrain
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/survev/map_renderer.lua"
+      - "src/survev/terrain_gen.lua"
+      - "src/survev/spline.lua"
+      - "src/survev/river.lua"
+      - "src/survev/map_colors.lua"
+      - "tests/love_render_project/**"
+      - ".github/workflows/love-render.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  actual-love-graphics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install actual LOVE2D with a virtual X server
+        run: sudo apt-get update && sudo apt-get install -y love xvfb
+      - name: Prepare standalone test game
+        run: cp -r src tests/love_render_project/src
+      - name: Render actual upstream terrain polygons in OpenGL
+        run: |
+          timeout 45s xvfb-run -a love tests/love_render_project \
+            > /tmp/love-render.log 2>&1
+          cat /tmp/love-render.log
+          grep -q TRUE_LOVE_SURVEV_TERRAIN_RENDER_SUCCESS /tmp/love-render.log
