@@ -6,6 +6,7 @@
 local Meta=require("src.survev.map_building_art")
 local ObjectTypes=require("src.survev.object_serialize_fns").Type
 local V2=require("src.survev.v2")
+local Visibility=require("src.survev.building_visibility")
 local Building={}
 Building.__index=Building
 local HALF_PI=math.pi/2
@@ -34,7 +35,8 @@ Building.placement=placement
 
 function Building.new()
     return setmetatable({
-        loaded={},missing={},drawn={floor=0,ceiling=0},
+        loaded={},missing={},visibility=Visibility.new(),
+        drawn={floor=0,ceiling=0},
         notFound={floor=0,ceiling=0},
     },Building)
 end
@@ -68,10 +70,12 @@ function Building:commands(objects,camera,phase)
             if def then
                 local list=def[phase]
                 for i,img in ipairs(list) do
-                    if (phase~="ceiling" or
-                        (not obj.ceilingDead and not
-                            (obj.ceilingDamaged and img.removeOnDamaged))) then
+                    if phase~="ceiling" or
+                        not (obj.ceilingDamaged and img.removeOnDamaged) then
                         local info=placement(obj,img,camera)
+                        if phase=="ceiling" then
+                            info.alpha=info.alpha*self.visibility:alpha(obj.__id)
+                        end
                         -- The original Building zOrd: floor=def.zIdx,
                         -- ceiling=750-def.zIdx, zIdx=id*100+i(0-based).
                         info.zOrd=phase=="ceiling" and 750-def.zIdx or def.zIdx
@@ -101,7 +105,7 @@ function Building:drawPhase(objects,camera,phase,width,height)
     self.notFound[phase]=0
     for _,entry in ipairs(commands) do
         -- Nil/none image in original means no image: never draw placeholders.
-        if entry.asset then
+        if entry.asset and entry.alpha>0.001 then
             local img=self:getImage(entry.asset)
             if img then
                 local iw,ih=img:getDimensions()
@@ -125,6 +129,10 @@ function Building:drawPhase(objects,camera,phase,width,height)
     end
     graphics.setColor(1,1,1,1)
     return self.drawn[phase]
+end
+
+function Building:updateVisibility(dt,objects,activePlayer)
+    self.visibility:update(dt,objects,activePlayer)
 end
 
 function Building:getDefinition(typeName) return Meta[typeName] end
