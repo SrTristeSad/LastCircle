@@ -2,7 +2,8 @@
 -- A temporary CI game directory contains this file + src/, not mocks.
 local Renderer=require("src.survev.map_renderer")
 local Camera=require("src.survev.camera")
-local renderer,cam
+local Obstacles=require("src.survev.obstacle_art_renderer")
+local renderer,cam,obstacles
 local frames=0
 function love.load()
     love.window.setTitle("LastCircle terrain smoke")
@@ -33,9 +34,18 @@ function love.load()
         },
     })
     assert(#renderer.terrain.rivers==3)
+    obstacles=Obstacles.new()
 end
 function love.draw()
     renderer:draw(cam,960,640)
+    obstacles:draw({
+        [1]={__type=2,__id=1,type="barrel_01",pos={x=360,y=320},
+            ori=1,scale=1,dead=false},
+        [2]={__type=2,__id=2,type="house_door_01",pos={x=370,y=320},
+            ori=0,scale=1,dead=false}
+    },cam,960,640)
+    assert(obstacles.drawn==2 and obstacles.unavailable==0,
+        "original Survev barrel/door SVG rasterized assets must render")
     frames=frames+1
     if frames>=3 then
         renderer:release()
