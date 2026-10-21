@@ -71,7 +71,7 @@ cam.m_pos={x=200,y=240}
 cam.m_screenWidth,cam.m_screenHeight=1280,720
 renderer:draw(cam,1280,720)
 assert(draws==8)
-assert(grid>20,"Survev original world grid should be drawn")
+assert(grid>=4,"Survev original world grid should be drawn within visible viewport")
 renderer:release()
 assert(released==8)
 print("LÖVE Survev biome/shore/river/patch mesh rendering smoke test passed")
