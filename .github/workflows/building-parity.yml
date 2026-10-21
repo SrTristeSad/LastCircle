@@ -6,10 +6,12 @@ on:
     branches: [main]
     paths:
       - "src/survev/building_renderer.lua"
+      - "src/survev/building_visibility.lua"
       - "src/survev/map_building_art.lua"
       - "scripts/check_building_parity.mjs"
       - "tests/building_parity.lua"
       - "tests/building_renderer_smoke.lua"
+      - "tests/building_visibility.lua"
       - ".github/workflows/building-parity.yml"
 
 permissions:
@@ -41,3 +43,5 @@ jobs:
         run: |
           lua5.4 tests/building_renderer_smoke.lua
           luajit tests/building_renderer_smoke.lua
+          lua5.4 tests/building_visibility.lua
+          luajit tests/building_visibility.lua
