@@ -4,6 +4,8 @@
 return {
     ["beach"] = {
         mapId = 9,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x42b0ba,
@@ -19,6 +21,8 @@ return {
     },
     ["birthday"] = {
         mapId = 8,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x80af49,
@@ -34,6 +38,8 @@ return {
     },
     ["cobalt"] = {
         mapId = 7,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x020e18,
             ["water"] = 0x003571,
@@ -49,6 +55,8 @@ return {
     },
     ["desert"] = {
         mapId = 1,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x6a7543,
             ["water"] = 0x8a9b4e,
@@ -67,6 +75,8 @@ return {
     },
     ["faction"] = {
         mapId = 3,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x051624,
             ["water"] = 0x071b36,
@@ -82,6 +92,8 @@ return {
     },
     ["faction_potato"] = {
         mapId = 10,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x051624,
             ["water"] = 0x071b36,
@@ -97,6 +109,8 @@ return {
     },
     ["halloween"] = {
         mapId = 6,
+        valueAdjust = 0.3,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x170000,
             ["water"] = 0x280000,
@@ -112,6 +126,8 @@ return {
     },
     ["main"] = {
         mapId = 0,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x3282ab,
@@ -127,6 +143,8 @@ return {
     },
     ["main_spring"] = {
         mapId = 0,
+        valueAdjust = 1,
+        riverShore = "stone",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x3282ab,
@@ -142,6 +160,8 @@ return {
     },
     ["main_summer"] = {
         mapId = 0,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x3282ab,
@@ -157,6 +177,8 @@ return {
     },
     ["potato"] = {
         mapId = 4,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x3282ab,
@@ -172,6 +194,8 @@ return {
     },
     ["potato_spring"] = {
         mapId = 4,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x3282ab,
@@ -187,6 +211,8 @@ return {
     },
     ["savannah"] = {
         mapId = 5,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x1c5b5f,
             ["water"] = 0x41a4aa,
@@ -202,6 +228,8 @@ return {
     },
     ["snow"] = {
         mapId = 0,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x093639,
             ["water"] = 0x0c4d51,
@@ -217,6 +245,8 @@ return {
     },
     ["test_faction"] = {
         mapId = 0,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x3282ab,
@@ -232,6 +262,8 @@ return {
     },
     ["test_normal"] = {
         mapId = 0,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x3282ab,
@@ -247,6 +279,8 @@ return {
     },
     ["turkey"] = {
         mapId = 0,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x474d4a,
             ["water"] = 0x707b76,
@@ -262,6 +296,8 @@ return {
     },
     ["woods"] = {
         mapId = 2,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x3282ab,
@@ -277,6 +313,8 @@ return {
     },
     ["woods_snow"] = {
         mapId = 2,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x093639,
             ["water"] = 0x0c4d51,
@@ -292,6 +330,8 @@ return {
     },
     ["woods_spring"] = {
         mapId = 2,
+        valueAdjust = 1,
+        riverShore = "stone",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x3282ab,
@@ -307,6 +347,8 @@ return {
     },
     ["woods_summer"] = {
         mapId = 2,
+        valueAdjust = 1,
+        riverShore = "sand",
         colors = {
             ["background"] = 0x20536e,
             ["water"] = 0x3282ab,
