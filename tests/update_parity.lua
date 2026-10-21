@@ -45,4 +45,55 @@ local batch=Decoder.decode(packet:getBuffer())
 assert(#batch==1 and batch[1].id==Net.MsgType.Update and batch[1].msg.ack==91)
 assert(Update.getPlayerStatusUpdateRate(true)==.5)
 assert(Update.getPlayerStatusUpdateRate(false)==.25)
+
+-- Apply the same REAL packet to a retained client state and then simulate
+-- incremental updates, including a type mismatch and an object deletion.
+local State=require("src.survev.client_state")
+local Joined=require("src.survev.joined_msg")
+local Map=require("src.survev.map_msg")
+local state=State.new()
+local joined=Joined.new()
+joined.playerId=10
+joined.teamMode=2
+joined.started=true
+state:applyMessage(Net.MsgType.Joined,joined)
+local map=Map.new()
+map.mapName="main"
+map.seed=123456
+map.width=720
+map.height=640
+state:applyMessage(Net.MsgType.Map,map)
+state:receive(packet:getBuffer())
+assert(state.joined and state.started and state.localId==10)
+assert(state.map.seed==123456)
+assert(state.updateCount==1 and state.lastAck==91)
+assert(state:getObject(10).outfit=="outfitBase")
+assert(state:getObject(11).isDoor==true)
+assert(state.localData.health==73)
+assert(state.localData.inventory["9mm"]==87)
+assert(state.gas.mode==2)
+assert(#state.bullets==1 and state.killLeaderId==10)
+assert(#state.playerInfos>0 or state.playerInfos[10])
+
+local delta=Update.new()
+delta.ack=92
+delta.delObjIds={11}
+delta.partObjects={
+    {__type=1,__id=10,pos={x=155,y=165},dir={x=0,y=1}},
+    {__type=2,__id=10,pos={x=50,y=60},ori=1,scale=1}
+}
+state:applyUpdate(delta)
+assert(state.updateCount==2 and state.lastAck==92)
+assert(state:getObject(11)==nil)
+assert(state:getObject(10).pos.x==155)
+assert(state:getObject(10).outfit=="outfitBase")
+assert(state.localData.health==73 and state.localData.inventory["9mm"]==87)
+assert(#state.errors==1)
+assert(#state.bullets==0 and #state.explosions==0)
+assert(state.gas.mode==2)
+
+local circle=state.gas:getCircle(1)
+assert(circle.rad<650 and circle.rad>400)
+
 print("UpdateMsg 16 flags / 11 objects: byte-identical to original and decoded")
+print("Authoritative entity state: create/update/delete/mismatch and gas tested")
