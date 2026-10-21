@@ -52,7 +52,7 @@ function sourceLookup(point,layer) {
   const onStairs=!!(layer&2);
   for(const building of buildings) {
     const def=MapObjectDefs.typeToDef(building.type,"building");
-    if(def.zIdx>=zIdx && (building.layer===layer || onStairs) &&
+    if((def.zIdx||0)>=zIdx && (building.layer===layer || onStairs) &&
       (building.layer!==1 || !onStairs)){
       for(const s of def.floor.surfaces){
         for(const col of s.collision){
