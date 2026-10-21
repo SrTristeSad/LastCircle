@@ -7,12 +7,16 @@ on:
     paths:
       - "src/survev/building_renderer.lua"
       - "src/survev/building_visibility.lua"
+      - "src/survev/los_geometry.lua"
+      - "src/survev/map_obstacle_art.lua"
       - "src/survev/building_surfaces.lua"
       - "src/survev/map_building_art.lua"
       - "scripts/check_building_parity.mjs"
       - "tests/building_parity.lua"
       - "tests/building_renderer_smoke.lua"
       - "tests/building_visibility.lua"
+      - "tests/los_parity.lua"
+      - "scripts/check_los_parity.mjs"
       - "tests/building_surface_parity.lua"
       - "scripts/check_building_surface_parity.mjs"
       - ".github/workflows/building-parity.yml"
@@ -48,6 +52,14 @@ jobs:
           luajit tests/building_renderer_smoke.lua
           lua5.4 tests/building_visibility.lua
           luajit tests/building_visibility.lua
+      - name: Compare original obstacle ray cast and ceiling visibility (Lua 5.4)
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_los_parity.mjs _reference/reference/survev lua5.4
+      - name: Compare original obstacle ray cast and ceiling visibility (LuaJIT)
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_los_parity.mjs _reference/reference/survev luajit
       - name: Compare source Survev floor material collisions (Lua 5.4)
         run: |
           node --disable-warning=ExperimentalWarning --experimental-transform-types \
