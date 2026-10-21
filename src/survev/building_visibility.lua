@@ -22,18 +22,29 @@ end
 Visibility.isInRegion=isInRegion
 
 function Visibility.new()
-    return setmetatable({active={}},Visibility)
+    return setmetatable({active={},obstacleRevision=nil,cachedObstacles=nil},Visibility)
 end
 
 function Visibility:reset()
     self.active={}
+    self.obstacleRevision=nil
+    self.cachedObstacles=nil
 end
 
 -- Called once per rendered frame. Uses source-derived world colliders only.
-function Visibility:update(dt,objects,activePlayer)
+function Visibility:update(dt,objects,activePlayer,revision)
     assert(type(dt)=="number" and dt>=0,"invalid elapsed time")
     local seen={}
-    local obstacles=Geometry.obstacles(objects)
+    -- Map snapshots are authoritative. Between two UpdateMsg packets,
+    -- obstacle collision transforms are identical and can be reused.
+    local obstacles
+    if revision~=nil and self.obstacleRevision==revision and self.cachedObstacles then
+        obstacles=self.cachedObstacles
+    else
+        obstacles=Geometry.obstacles(objects)
+        self.cachedObstacles=obstacles
+        self.obstacleRevision=revision
+    end
     for id,building in pairs(objects) do
         if building.__type==Types.Building and building.type then
             local def=Meta[building.type]
