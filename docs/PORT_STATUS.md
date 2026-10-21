@@ -1,46 +1,53 @@
-# LastCircle: port fiel Survev -> Lua / LÖVE2D
+# LastCircle — porte fiel Survev → Lua / LÖVE2D
 
-## A fonte da verdade
+## Referência
 
-**Repositório original:** https://github.com/survev/survev
+O código original está integralmente espelhado em [referencia-survev](https://github.com/SrTristeSad/LastCircle/tree/referencia-survev/reference/survev), fixado no commit `c6185e31fe25a4a07def77a2bb25b1710bda90ac`, com 2.562 entradas incluindo diretórios. O protótipo genérico anterior está apenas no ramo `historico-prototipo-generico`. O fonte original — não interpretações aproximadas — é a especificação de comportamento e visual.
 
-**Commit fixado:** \`c6185e31fe25a4a07def77a2bb25b1710bda90ac\` (30/09/2026)
+## Módulos Lua efetivamente implementados
 
-**Cópia INTEGRAL verificada:** ramo \`referencia-survev\`, pasta \`reference/survev\`, 2.562 entradas incluindo diretórios. O ramo foi criado sem apagar o código de trabalho original.
-
-**Histórico do protótipo descartado:** ramo \`historico-prototipo-generico\`. As mecânicas que foram imaginadas para esse protótipo não são a base de especificação do porte.
-
-## Regras de implementação
-
-1. Cada comportamento Lua deve referenciar um arquivo e constante do Survev. Não inventar armas, dano, construções, regras de movimentação, itens, mapa ou interface.
-2. Manter IDs, ordem de enumerações, precisão e unidades do protocolo; verificar alterações contra o commit fixado.
-3. Usar os recursos do próprio repositório quando sua licença permitir, preservando attribution.txt. Converter SVG -> PNG sem redesenhar.
-4. A câmera e a lógica de mundo originais usam eixo Y+ para cima; LÖVE usa Y+ para baixo na tela. Aplicar a transformação ao renderizar.
-5. Manter código-fonte original como referência, sem vendê-lo como porte Lua pronto.
-6. Compatibilidade com servidor só existe após testes de pacotes reais de entrada/saída; antes disso é **incompatível**.
-
-## Auditoria e estado
-
-| Código Survev | Destino Lua | Estado |
+| Origem Survev | Lua | Status |
 |---|---|---|
-| \`client/src/camera.ts\` | \`src/survev/camera.lua\` | Traduzido, teste de escala e coordenadas |
-| \`shared/gameConfig.ts\` | \`src/survev/game_config.lua\` | Parcial: campos selecionados transcritos |
-| \`client/src/inputBinds.ts\` e \`shared/gameConfig.ts\` | \`src/survev/input_bindings.lua\` | Enum e teclas padrão transcritos |
-| \`client/public/img/**\` | \`assets/survev/img/**\` | Pipeline de conversão, integração ao renderer pendente |
-| \`client/public/audio/**\` | \`assets/survev/audio/**\` | Cópia no pipeline, reprodução pendente |
-| \`shared/net/**\` | \`src/survev/net/**\` | Não portado |
-| \`client/src/game.ts\` | \`src/survev/game.lua\` | Não portado |
-| \`client/src/map.ts\`, \`shared/defs/maps/**\` | Mapas Lua | Não portado |
-| \`client/src/objects/player.ts\` | Entidades Lua | Não portado |
-| \`client/src/objects/building.ts\`, \`obstacle.ts\` | Construções Lua | Não portado |
-| \`client/src/objects/bullet.ts\`, \`projectile.ts\` | Combate Lua | Não portado |
-| \`client/src/ui/**\` | UI Lua | Não portado |
-| \`client/src/gas.ts\` | Zona Lua | Não portado |
-| \`client/src/resources.ts\` | Asset loader Lua | Não portado |
-| \`client/src/audioManager.ts\` | Áudio Lua | Não portado |
+| `shared/utils/v2.ts` | `src/survev/v2.lua` | Operações vetoriais portadas |
+| `client/src/camera.ts` | `src/survev/camera.lua` | Câmera, zoom e coordenadas testados |
+| `shared/gameConfig.ts` e `inputBinds.ts` | `game_config.lua` e `input_bindings.lua` | Constantes selecionadas, enums e controles |
+| `shared/defs/register.ts` | `type_registry.lua` | 757 IDs de game e 1.072 IDs de mapa, incluindo ID 0, gerados da fonte original |
+| `shared/lib/bitBuffer.ts` | `bit_stream.lua` | Bits, números, strings, floats e limites; paridade binária testada |
+| `shared/net/net.ts` | `net.lua` | Quantização, coordenadas, colliders, listas e enquadramento de mensagens |
+| `shared/net/joinMsg.ts` | `join_msg.lua` | Mensagem de conexão |
+| `shared/net/inputMsg.ts` | `input_msg.lua` | Mensagem de controles do jogador |
+| `shared/net/mapMsg.ts` | `map_msg.lua` | Metadados de mapa, seed, rios, locais, objetos e patches |
+| `shared/net/joinedMsg.ts` | `joined_msg.lua` | Entrada na partida |
+| `shared/net/aliveCountsMsg.ts` | `alive_counts_msg.lua` | Sobreviventes |
+| `shared/net/pickupMsg.ts` | `pickup_msg.lua` | Coleta de item |
+| `shared/net/killMsg.ts` | `kill_msg.lua` | Eliminações |
+| `shared/net/emoteMsg.ts` | `emote_msg.lua` | Emotes e pings |
+| `shared/net/dropItemMsg.ts` | `drop_item_msg.lua` | Soltar equipamento |
+| `shared/net/spectateMsg.ts` | `spectate_msg.lua` | Comandos de espectador |
+| `shared/net/playerStatsMsg.ts` | `player_stats_msg.lua` | Estatísticas |
+| `shared/net/gameOverMsg.ts` | `game_over_msg.lua` | Resultado da partida |
+| `shared/net/roleAnnouncementMsg.ts` | `role_announcement_msg.lua` | Função e equipe |
+| `shared/net/net.ts` | `packet_decoder.lua` | Várias mensagens sequenciais; aborta com erro para tipos não portados |
 
-**Estado geral:** cópia completa do código original disponível; cliente Lua completo NÃO está implementado.
+**Testes:** a Action [Paridade binária](https://github.com/SrTristeSad/LastCircle/actions/workflows/protocol-parity.yml) usa o TypeScript **original**, em execução, para gerar bytes esperados. O Lua precisa produzir bytes idênticos para Join, Input, Map e pacote de 10 mensagens. A [Lua CI](https://github.com/SrTristeSad/LastCircle/actions/workflows/lua-check.yml) executa testes e verifica sintaxe em Lua 5.4 e LuaJIT.
+
+## Artes e empacotamento
+
+`scripts/prepare_assets.py` rasteriza **1.616 SVG** originais como PNG e copia **492 arquivos** de recursos adicionais sem redesenhar. O workflow `build-love.yml` cria o pacote `LastCircle-Lua.love` com os recursos e módulos Lua.
+
+O `main.lua` atual é somente um **inspector da arte original**. Não é uma partida jogável e não se deve apresentá-lo como reprodução completa do Survev.
+
+## Pendências prioritárias
+
+1. Completar `shared/net/updateMsg.ts`, serialização de entidades e estado replicado.
+2. Conectar WebSocket: token de entrada, pacotes, recebimento, sincronização, desconexão e testes reais com o servidor.
+3. Portar geração de mapa, renderer em camadas, edifícios, obstáculos, colisões e interiores a partir das definições reais.
+4. Portar modelos dos jogadores, armas, movimento, dano, loot e inventário.
+5. Portar menus, HUD, tela de morte/resultado, controles mobile, áudio e partículas.
+6. Testar ponta a ponta partida e multiplayer.
+
+**Situação:** código original completo preservado, vários módulos de protocolo Lua validados, mas cliente Lua completo e multiplayer **ainda não existem**. A interface atual serve apenas para conferir arte. 
 
 ## Licenciamento
 
-O projeto fonte tem LICENSE GPL-3.0 e attribution.txt para vários recursos de terceiros (inclui CC BY 3.0). Preservar ambos. A licença do código não basta para declarar que todas as imagens, logos e áudios podem ser usados em qualquer distribuição comercial. Conferir individualmente direitos de arte e marcas antes de publicar.
+O Survev é distribuído sob licença GNU GPL-3.0-or-later. `LICENSE` e `ATTRIBUTION-SURVEV.txt` foram preservados. A existência de uma licença open source no código não assegura que todas as marcas e recursos gráficos possam ser redistribuídos comercialmente sem verificação adicional.
