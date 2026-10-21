@@ -79,19 +79,45 @@ for _,size in ipairs({8,16,32}) do
     Stream["readInt"..size] = function(self) return self:readBits(size,true) end
 end
 
+-- LÖVE provides love.data.pack, but plain LuaJIT test runners do not.
+-- LuaJIT's built-in FFI is a portable fallback on little-endian hosts.
+local haveFFI, ffi = pcall(require, "ffi")
+if not haveFFI then ffi = nil end
+local function requireLittleEndian()
+    local check = ffi.new("uint16_t[1]", 0x0102)
+    assert(ffi.cast("const uint8_t*", check)[0] == 0x02,
+        "LuaJIT FFI float wire format requires little-endian host")
+end
 local function pack(fmt,v)
     if string.pack then return string.pack(fmt,v) end
     if love and love.data and love.data.pack then
         return love.data.pack("string",fmt,v)
     end
-    error("float packing requires Lua 5.3+ or love.data.pack")
+    if ffi then
+        requireLittleEndian()
+        local isFloat = fmt == "<f"
+        assert(isFloat or fmt == "<d", "unsupported binary float")
+        local ptr = ffi.new(isFloat and "float[1]" or "double[1]", v)
+        return ffi.string(ffi.cast("const char*",ptr),isFloat and 4 or 8)
+    end
+    error("float packing requires Lua 5.3+, love.data or LuaJIT FFI")
 end
 local function unpack(fmt,str)
     if string.unpack then return string.unpack(fmt,str) end
     if love and love.data and love.data.unpack then
         return love.data.unpack(fmt,str)
     end
-    error("float unpacking requires Lua 5.3+ or love.data.unpack")
+    if ffi then
+        requireLittleEndian()
+        local isFloat = fmt == "<f"
+        assert(isFloat or fmt == "<d", "unsupported binary float")
+        local len = isFloat and 4 or 8
+        assert(#str == len, "invalid floating point byte count")
+        local ptr = ffi.new(isFloat and "float[1]" or "double[1]")
+        ffi.copy(ptr,str,len)
+        return tonumber(ptr[0])
+    end
+    error("float unpacking requires Lua 5.3+, love.data or LuaJIT FFI")
 end
 local function writePacked(self,fmt,v)
     local s = pack(fmt,v)
