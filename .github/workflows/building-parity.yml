@@ -17,6 +17,9 @@ on:
       - "tests/building_visibility.lua"
       - "tests/los_parity.lua"
       - "scripts/check_los_parity.mjs"
+      - "src/survev/door_visual.lua"
+      - "scripts/check_door_parity.mjs"
+      - "tests/door_parity.lua"
       - "tests/building_surface_parity.lua"
       - "scripts/check_building_surface_parity.mjs"
       - ".github/workflows/building-parity.yml"
@@ -60,6 +63,14 @@ jobs:
         run: |
           node --disable-warning=ExperimentalWarning --experimental-transform-types \
             scripts/check_los_parity.mjs _reference/reference/survev luajit
+      - name: Compare source Survev door animation and casing (Lua 5.4)
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_door_parity.mjs _reference/reference/survev lua5.4
+      - name: Compare source Survev door animation and casing (LuaJIT)
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_door_parity.mjs _reference/reference/survev luajit
       - name: Compare source Survev floor material collisions (Lua 5.4)
         run: |
           node --disable-warning=ExperimentalWarning --experimental-transform-types \
