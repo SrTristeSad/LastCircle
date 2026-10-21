@@ -1,0 +1,46 @@
+name: Survev UpdateMsg Fidelity
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/survev/update_msg.lua"
+      - "src/survev/object_serialize_fns.lua"
+      - "src/survev/packet_decoder.lua"
+      - "src/survev/game_config.lua"
+      - "src/survev/net.lua"
+      - "src/survev/bit_stream.lua"
+      - "scripts/check_update_parity.mjs"
+      - "tests/update_parity.lua"
+      - ".github/workflows/update-parity.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compare-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: LastCircle
+        uses: actions/checkout@v4
+      - name: Pinned original Survev
+        uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install both Lua runtimes
+        run: sudo apt-get update && sudo apt-get install -y lua5.4 luajit
+      - name: Verify full UpdateMsg wire format with Lua 5.4
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_update_parity.mjs \
+            _reference/reference/survev lua5.4
+      - name: Verify full UpdateMsg wire format with LuaJIT
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_update_parity.mjs \
+            _reference/reference/survev luajit
