@@ -1,8 +1,9 @@
--- Live packet visualization for porting, NOT a substitute for the original
--- Survev renderer. Uses the ORIGINAL player-base-01 artwork (SVG -> PNG).
--- Coordinates, player positions and map dimensions are server-authoritative.
+-- Live Survev terrain renderer / state inspector. Coastline, river/lake
+-- polygons, map palettes, patches and grid are ported from ORIGINAL code.
+-- Map objects remain diagnostic markers, not final original sprites.
 local Camera=require("src.survev.camera")
 local Objects=require("src.survev.object_serialize_fns")
+local MapRenderer=require("src.survev.map_renderer")
 local V={}
 V.__index=V
 local function image(path)
@@ -16,7 +17,8 @@ function V.new()
     return setmetatable({
         camera=Camera.new(),
         player=image("assets/survev/img/player/player-base-01.png"),
-        warning="DIAGNOSTICO DE DADOS - RENDERIZADOR SURVEV AINDA NAO PORTADO",
+        terrainMap=nil,terrainRenderer=nil,
+        warning="TERRENO ORIGINAL | OBJETOS/INTERIORES AINDA EM PORTABILIDADE",
     },V)
 end
 local function drawCentered(asset,x,y,dia,angle)
@@ -50,15 +52,14 @@ function V:draw(state,w,h)
     else
         cam.m_pos={x=map.width/2,y=map.height/2}
     end
-    local origin=cam:m_pointToScreen({x=0,y=0})
-    g.setColor(.24,.31,.25)
-    g.rectangle("fill",origin.x,origin.y-map.height*cam:m_z(),
-        map.width*cam:m_z(),map.height*cam:m_z())
-    g.setColor(.52,.70,.56,.9)
-    g.setLineWidth(2)
-    g.rectangle("line",origin.x,origin.y-map.height*cam:m_z(),
-        map.width*cam:m_z(),map.height*cam:m_z())
-    g.setLineWidth(1)
+    -- Cache tessellated meshes for the entire session, not on each frame.
+    if self.terrainMap~=map then
+        if self.terrainRenderer then self.terrainRenderer:release() end
+        self.terrainRenderer=MapRenderer.new(map)
+        self.terrainMap=map
+    end
+    self.terrainRenderer:draw(cam,w,h)
+    g.setColor(1,1,1)
 
     -- Debug markers intentionally do not pretend to reproduce object graphics.
     for _,obj in pairs(state.objects) do
