@@ -1,6 +1,5 @@
 -- Byte-aligned multi-message dispatcher for the original Survev MsgStream format.
--- Deliberately rejects unknown/unported message types: without a length prefix
--- there is no safe way to skip them. UpdateMsg requires its own full port.
+-- Rejects unknown/unported message types; there is no length prefix for skipping.
 local Net=require("src.survev.net")
 local Registry=require("src.survev.type_registry")
 local types=Net.MsgType
@@ -10,6 +9,7 @@ local classes={
     [types.Input]=require("src.survev.input_msg"),
     [types.Joined]=require("src.survev.joined_msg"),
     [types.Map]=require("src.survev.map_msg"),
+    [types.Update]=require("src.survev.update_msg"),
     [types.Kill]=require("src.survev.kill_msg"),
     [types.Pickup]=require("src.survev.pickup_msg"),
     [types.AliveCounts]=require("src.survev.alive_counts_msg"),
