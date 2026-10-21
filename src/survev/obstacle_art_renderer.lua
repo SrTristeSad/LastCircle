@@ -1,9 +1,11 @@
 -- Obstacle sprite renderer from Survev client/src/objects/obstacle.ts.
 -- Metadata generated from actual MapObjectDefs and original public/img files.
 -- Static/damaged sprite selection, tint, rotation and scale ported.
--- Doors/animations and four rendering layers remain incomplete.
+-- Door visual interpolation and casing are ported; full layering pending.
 local Registry=require("src.survev.map_obstacle_art")
 local Objects=require("src.survev.object_serialize_fns")
+local DoorVisual=require("src.survev.door_visual")
+local Biomes=require("src.survev.map_colors")
 local Art={}
 Art.__index=Art
 local PI2=math.pi*.5
@@ -13,7 +15,7 @@ local function rgb(tint)
         tint%256/255
 end
 function Art.new()
-    return setmetatable({cache={},missing={},drawn=0,unavailable=0},Art)
+    return setmetatable({cache={},missing={},doors=DoorVisual.new(),drawn=0,unavailable=0},Art)
 end
 function Art:image(path)
     if self.cache[path]~=nil then return self.cache[path] or nil end
@@ -33,6 +35,18 @@ function Art:image(path)
     self.cache[path]=texture
     return texture
 end
+function Art:update(objects,dt)
+    self.doors:update(objects,dt)
+end
+local function adjustTint(tint,mapName)
+    local map=mapName and Biomes[mapName]
+    local brightness=map and map.valueAdjust or 1
+    if brightness>=1 then return tint end
+    local r=math.floor((math.floor(tint/65536)%256)*brightness+.5)
+    local g=math.floor((math.floor(tint/256)%256)*brightness+.5)
+    local b=math.floor((tint%256)*brightness+.5)
+    return r*65536+g*256+b
+end
 local function selectTexture(meta,obj)
     if obj.dead then return meta.residue end
     if obj.isButton and obj.button then
@@ -46,7 +60,7 @@ local function screenVisible(camera,pos,width,height,margin)
     return pt.x>=-margin and pt.x<=width+margin and
         pt.y>=-margin and pt.y<=height+margin,pt
 end
-function Art:draw(objects,camera,width,height)
+function Art:draw(objects,camera,width,height,mapName)
     local graphics=love.graphics
     local visible={}
     self.drawn,self.unavailable=0,0
@@ -66,6 +80,9 @@ function Art:draw(objects,camera,width,height)
     end)
     for _,entry in ipairs(visible) do
         local meta,obj,pt=entry.meta,entry.obj,entry.pt
+        local isDoor=meta and meta.door~=nil
+        local model=isDoor and self.doors:visual(obj) or nil
+        if model then pt=camera:m_pointToScreen(model.pos) end
         local path=meta and selectTexture(meta,obj)
         local sprite=path and self:image(path)
         if sprite then
@@ -73,15 +90,28 @@ function Art:draw(objects,camera,width,height)
             local screenScale=camera:m_pixels((obj.scale or 1)*meta.imageScale)
             local flipX=meta.mirrorX and -1 or 1
             local flipY=meta.mirrorY and -1 or 1
-            local originalRotation=(obj.ori or 0)*PI2
+            local originalRotation=model and model.rot or (obj.ori or 0)*PI2
             local offset=meta.randomRotation and math.rad((obj.__id or 0)%360) or 0
             local anchor=meta.doorAnchor or {x=.5,y=.5}
-            local r,g,b=rgb(meta.tint)
+            local r,g,b=rgb(adjustTint(meta.tint,mapName))
             graphics.setColor(r,g,b,meta.alpha or 1)
             graphics.draw(sprite,pt.x,pt.y,-originalRotation+offset,
                 screenScale*flipX,screenScale*flipY,
                 iw*anchor.x,ih*anchor.y)
             self.drawn=self.drawn+1
+            if isDoor and not obj.dead then
+                local casing=self.doors:casing(obj,meta)
+                local casingSprite=casing and casing.img.asset
+                    and self:image(casing.img.asset)
+                if casingSprite then
+                    local x,y=casingSprite:getDimensions()
+                    local p=camera:m_pointToScreen(casing.pos)
+                    local s=camera:m_pixels((obj.scale or 1)*casing.img.scale)
+                    local cr,cg,cb=rgb(adjustTint(casing.img.tint,mapName))
+                    graphics.setColor(cr,cg,cb,casing.img.alpha)
+                    graphics.draw(casingSprite,p.x,p.y,-casing.rot,s,s,x*.5,y*.5)
+                end
+            end
         else
             -- Explicit diagnostic, never a fake stand-in for original art.
             graphics.setColor(1,.55,.33,.7)
