@@ -8,11 +8,12 @@ local V=require("src.survev.v2")
 local HALF_PI=math.pi*.5
 local Surfaces={}
 
-local function transform(col,origin,ori)
+local function transform(col,origin,ori,scale)
     local angle=(ori or 0)*HALF_PI
+    scale=scale or 1
     if col.type==0 then
-        local center=V.add(origin,V.rotate(col.pos,angle))
-        return {type=0,pos=center,rad=col.rad}
+        local center=V.add(origin,V.rotate(V.mul(col.pos,scale),angle))
+        return {type=0,pos=center,rad=col.rad*scale}
     end
     assert(col.type==1,"Unsupported source collider type")
     local pts={
@@ -23,7 +24,7 @@ local function transform(col,origin,ori)
     }
     local minx,miny,maxx,maxy=math.huge,math.huge,-math.huge,-math.huge
     for _,p in ipairs(pts) do
-        local t=V.add(origin,V.rotate(p,angle))
+        local t=V.add(origin,V.rotate(V.mul(p,scale),angle))
         minx=math.min(minx,t.x);miny=math.min(miny,t.y)
         maxx=math.max(maxx,t.x);maxy=math.max(maxy,t.y)
     end
