@@ -1,0 +1,56 @@
+name: Espelhar codigo original Survev
+
+# O ramo de referencia recebe uma copia exata dos arquivos do projeto original.
+# O porte Lua fica no ramo main. Nunca confundir um com o outro.
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/mirror-survev.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+      - name: Clonar commit original fixado
+        run: |
+          git clone --depth=1 https://github.com/survev/survev.git /tmp/survev-original
+          test "$(git -C /tmp/survev-original rev-parse HEAD)" = "c6185e31fe25a4a07def77a2bb25b1710bda90ac"
+      - name: Criar ramo de referencia sem modificar o cliente Lua
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin referencia-survev >/dev/null 2>&1; then
+            git fetch origin referencia-survev
+            git switch -c referencia-survev --track origin/referencia-survev
+          else
+            git switch -c referencia-survev
+          fi
+          mkdir -p reference/survev
+          rsync -a --delete --exclude=.git /tmp/survev-original/ reference/survev/
+          cp /tmp/survev-original/LICENSE reference/SURVEV-LICENSE
+          cp /tmp/survev-original/client/public/attribution.txt reference/ATTRIBUTION.txt
+          echo 'Upstream: https://github.com/survev/survev' > reference/ORIGEM.txt
+          echo 'Commit: c6185e31fe25a4a07def77a2bb25b1710bda90ac' >> reference/ORIGEM.txt
+          echo 'Os arquivos originais permanecem em reference/survev.' >> reference/ORIGEM.txt
+          git add reference/
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteracao."
+          else
+            git commit -m "vendor: espelhar fontes e recursos Survev no ramo de referencia"
+            git push origin HEAD:referencia-survev
+          fi
+          test -f reference/survev/client/src/game.ts
+          test -f reference/survev/client/public/attribution.txt
+          test -f reference/survev/shared/gameConfig.ts
+          test -f reference/survev/server/package.json
+          echo "Fonte de referencia presente; nao e porte Lua."
