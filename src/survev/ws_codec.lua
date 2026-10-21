@@ -24,7 +24,10 @@ local function bor(a,b)
     return (a + b - band(a,b))%MOD
 end
 local function bnot(a) return 4294967295 - a%MOD end
-local function rol(a,n) return (a*2^n + math.floor(a/2^(32-n)))%MOD end
+local function rol(a,n)
+    -- Avoid >53-bit intermediates: Lua numbers cannot precisely represent them.
+    return (a%2^(32-n))*2^n + math.floor(a/2^(32-n))
+end
 local function fourBytes(n)
     return string.char(math.floor(n/16777216)%256,math.floor(n/65536)%256,
         math.floor(n/256)%256,n%256)
