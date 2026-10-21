@@ -24,3 +24,7 @@ jobs:
         run: |
           lua5.4 tests/survev_parity.lua
           luajit tests/survev_parity.lua
+      - name: Headless LÖVE UI bootstrap checks
+        run: |
+          lua5.4 tests/main_smoke.lua
+          luajit tests/main_smoke.lua
