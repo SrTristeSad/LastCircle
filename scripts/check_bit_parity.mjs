@@ -59,6 +59,15 @@ join.loadout.outfit = "outfitBase";
 const joinStream = new MsgStream(new ArrayBuffer(256));
 joinStream.serializeMsg(MsgType.Join,join);
 const joinHex = msgHex(joinStream);
+const nonAscii=new JoinMsg();
+nonAscii.protocol=GameConfig.protocolVersion;
+nonAscii.joinToken="abc";
+nonAscii.name="José";
+nonAscii.loadout.outfit="outfitBase";
+const unicodeStream=new MsgStream(new ArrayBuffer(256));
+unicodeStream.serializeMsg(MsgType.Join,nonAscii);
+const unicodeJoinHex=msgHex(unicodeStream);
+
 
 const input = new InputMsg();
 input.seq=31;
@@ -164,10 +173,11 @@ const batchHex=msgHex(messages);
 
 console.log("original Node TypeScript reference:", commit);
 console.log("JoinMsg    " + joinHex);
+console.log("Join UTF16 " + unicodeJoinHex);
 console.log("InputMsg   " + inputHex);
 console.log("MapMsg     " + mapHex);
 console.log("Msg batch  " + batchHex);
-const result = spawnSync(lua, ["tests/bitstream_parity.lua",plain,joinHex,inputHex,mapHex], {
+const result = spawnSync(lua, ["tests/bitstream_parity.lua",plain,joinHex,inputHex,mapHex,unicodeJoinHex], {
   encoding: "utf8", cwd: process.cwd()
 });
 process.stdout.write(result.stdout);
