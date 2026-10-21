@@ -25,6 +25,9 @@ assert(state.localId==7 and state.activeId==7 and state.teamMode==1)
 assert(state.map.mapName=="main" and state.map.seed==321)
 assert(state.map.width==720 and state.map.height==640)
 assert(math.abs(state.localData.health-80)<.3)
+assert(state.objects[7] and state.objects[7].outfit=="outfitBase",
+    "real TS player full snapshot missing")
+assert(math.abs(state.objects[7].pos.x-120)<.05)
 assert(c.packetCount>=1 and c.session.sentBytes>0)
 
 local input=Input.new()
@@ -44,6 +47,9 @@ for i=1,140 do
     socket.sleep(.015)
 end
 assert(gotAck,"original server UpdateMsg ack was not applied")
+assert(state.objects[7] and math.abs(state.objects[7].pos.x-125)<.05)
+assert(state.objects[7].outfit=="outfitBase",
+    "player full metadata lost after partial movement delta")
 assert(c.session.ping and c.session.ping>=0)
 assert(not c.error,"unexpected network error "..tostring(c.error))
 c:close()
