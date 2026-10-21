@@ -21,8 +21,13 @@ function V.new()
         player=image("assets/survev/img/player/player-base-01.png"),
         terrainMap=nil,terrainRenderer=nil,obstacleArt=ObstacleArt.new(),
         buildingArt=BuildingArt.new(),
-        warning="PISOS E TETOS ORIGINAIS | VISIBILIDADE DE INTERIORES AINDA PARCIAL",
+        warning="INTERIORES/PISOS ORIGINAIS | REVELACAO COM RAIOS/LOS PENDENTE",
     },V)
+end
+function V:update(state,dt)
+    if not state or not state.objects then return end
+    local active=state.objects[state.activeId]
+    self.buildingArt:updateVisibility(dt,state.objects,active)
 end
 local function drawCentered(asset,x,y,dia,angle)
     local w,h=asset:getDimensions()
