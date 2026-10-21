@@ -7,6 +7,7 @@ local Meta=require("src.survev.map_building_art")
 local ObjectTypes=require("src.survev.object_serialize_fns").Type
 local V2=require("src.survev.v2")
 local Visibility=require("src.survev.building_visibility")
+local Biomes=require("src.survev.map_colors")
 local Building={}
 Building.__index=Building
 local HALF_PI=math.pi/2
@@ -98,9 +99,10 @@ function Building:commands(objects,camera,phase)
     return cmds
 end
 
-function Building:drawPhase(objects,camera,phase,width,height)
+function Building:drawPhase(objects,camera,phase,width,height,mapName)
     local graphics=love.graphics
     local commands=self:commands(objects,camera,phase)
+    local brightness=mapName and Biomes[mapName] and Biomes[mapName].valueAdjust or 1
     self.drawn[phase]=0
     self.notFound[phase]=0
     for _,entry in ipairs(commands) do
@@ -114,7 +116,15 @@ function Building:drawPhase(objects,camera,phase,width,height)
                 local margin=maxDimension*.75
                 if entry.x>=-margin and entry.x<=width+margin
                     and entry.y>=-margin and entry.y<=height+margin then
-                    local r,g,b=colorParts(entry.tint)
+                    local tint=entry.tint
+                    if brightness<1 then
+                        -- Exact util.adjustValue: Math.round(channel * value)
+                        local red=math.floor(math.floor(tint/65536)%256*brightness+.5)
+                        local green=math.floor(math.floor(tint/256)%256*brightness+.5)
+                        local blue=math.floor(tint%256*brightness+.5)
+                        tint=red*65536+green*256+blue
+                    end
+                    local r,g,b=colorParts(tint)
                     graphics.setColor(r,g,b,entry.alpha)
                     graphics.draw(img,entry.x,entry.y,entry.angle,
                         entry.sx,entry.sy,iw*.5,ih*.5)
