@@ -1,0 +1,56 @@
+name: WebSocket Survev Integration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/survev/ws_*.lua"
+      - "src/survev/network_client.lua"
+      - "src/survev/protocol_session.lua"
+      - "src/survev/client_state.lua"
+      - "tests/ws_*.lua"
+      - "tests/ws_fixture_server.mjs"
+      - ".github/workflows/websocket-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  real-loopback-websocket:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install LuaSocket, Lua and LuaJIT
+        run: sudo apt-get update && sudo apt-get install -y lua5.4 lua-socket luajit
+      - name: RFC6455 unit tests with both runtimes
+        run: |
+          lua5.4 tests/ws_frame.lua
+          luajit tests/ws_frame.lua
+      - name: Real socket with Survev original TS packets (Lua 5.4)
+        run: |
+          export SURVEV_ROOT="_reference/reference/survev"
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            tests/ws_fixture_server.mjs > /tmp/survev-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; cat /tmp/survev-server.log' EXIT
+          sleep 2
+          lua5.4 tests/ws_network.lua
+          sleep 1
+      - name: Real socket with Survev original TS packets (LuaJIT)
+        run: |
+          export SURVEV_ROOT="_reference/reference/survev"
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            tests/ws_fixture_server.mjs > /tmp/survev-server-jit.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; cat /tmp/survev-server-jit.log' EXIT
+          sleep 2
+          luajit tests/ws_network.lua
+          sleep 1
