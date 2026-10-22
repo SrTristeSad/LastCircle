@@ -15,6 +15,7 @@ local Minimap=require("src.survev.minimap")
 local InteractionHint=require("src.survev.interaction_hint")
 local InventoryPanel=require("src.survev.inventory_panel")
 local Hud=require("src.survev.hud")
+local ResultsOverlay=require("src.survev.results_overlay")
 
 local camera=Camera.new()
 local screen="demo"
@@ -361,6 +362,7 @@ local function drawNetwork(w,h)
         InteractionHint.draw(state,w,h)
         inventoryPanel:draw(state,w,h)
         minimap:draw(state,w,h,live.terrainRenderer)
+        ResultsOverlay.draw(state,w,h)
         local statusText="Conexao: "..client.state..
             " | MapMsg: "..tostring(state and state.map and state.map.mapName or "aguardando")..
             " | Atualizacoes: "..tostring(state and state.updateCount or 0)
