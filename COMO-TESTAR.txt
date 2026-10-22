@@ -8,11 +8,13 @@ LASTCIRCLE - TESTE LOCAL DO CLIENTE LUA (SURVEV)
 
 O teste entra diretamente em um MAPA LOCAL, SEM SERVIDOR.
 Isso permite avaliar o desenho REAL do terreno, dos rios, das casas,
-das arvores, dos itens de mapa e das portas com artes Survev originais.
+das arvores, das portas e do PERSONAGEM (corpo, maos, roupas e poses
+originais do Survev).
 
 TECLAS:
   WASD    - mover o personagem de teste.
   MOUSE   - mirar / mostrar direcao.
+  CLIQUE ESQUERDO - animacao de soco original (VISUAL, sem causar dano).
   F       - abrir ou fechar uma porta proxima, usando a regra original.
   R / F5  - reiniciar o teste local.
   F6      - painel para conectar a um servidor SURVEV compativel.
@@ -28,7 +30,9 @@ IMPORTANTE:
 - O servidor Moo-Quest (1 ou 2) usa protocolo diferente e NAO funciona
   como servidor do LastCircle.
 - O teste local NAO precisa de Node.js, login, token ou internet.
-- Ainda faltam HUD, player completo, armas, itens e camadas/masks finais.
+- O personagem ja usa roupa, corpo e maos originais, mas falta o restante
+  das animacoes, armas/efeitos e a composicao final por camadas/masks.
+- Ainda faltam HUD completo, combate, inventario e servidor multiplayer.
 
 Repositorio: https://github.com/SrTristeSad/LastCircle
 Origem: https://github.com/survev/survev
