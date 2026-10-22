@@ -53,7 +53,9 @@ for(const key of GameObjectDefs.getAllTypes()){
         weapons[key]={
             type:def.type,name:def.name??key,
             idlePose:def.anim?.idlePose??null,
-            isDual:!!def.isDual,
+            isDual:!!def.isDual,pistol:!!def.pistol,
+            isBullpup:!!def.isBullpup,isLauncher:!!def.isLauncher,
+            isMinigun:!!def.isMinigun,
             world:world?{
                 sprite,asset:file,
                 tint:world.tint??0xffffff,scale:world.scale??null,
