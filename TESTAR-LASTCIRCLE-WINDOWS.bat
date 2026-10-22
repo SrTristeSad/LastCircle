@@ -1,14 +1,14 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title LastCircle - teste LOCAL do cliente Survev em Lua
+title LastCircle - cliente Survev em Lua (porte em desenvolvimento)
 echo.
 echo =========================================================
-echo LASTCIRCLE - TESTE VISUAL LOCAL SEM SERVIDOR
+echo LASTCIRCLE - CLIENTE SURVEV LUA / BUSCA DE PARTIDAS ORIGINAL
 echo =========================================================
 echo.
 echo Este programa abre o cliente Lua REAL no LÖVE 2D.
-echo Nao inicia Moo-Quest e NAO necessita de token ou internet.
+echo Nao inicia Moo-Quest. Para multiplayer, informe a URL real da API Survev.
 echo.
 if not exist "%~dp0LastCircle-Lua.love" (
   echo [ERRO] LastCircle-Lua.love nao encontrado ao lado deste BAT.
@@ -28,9 +28,9 @@ if not defined LOVEEXE (
   pause
   exit /b 1
 )
-echo [OK] Abrindo TESTE OFFLINE do Survev Lua...
-echo [CONTROLES] WASD andar - mouse mirar - F porta.
-echo [CONTROLES] F5 reiniciar - F6 rede real - F7 artes - ESC sair.
+echo [OK] Abrindo cliente Lua. Tela inicial: API /api/site_info e /api/find_game_v2.
+echo [MENU] ENTER: encontrar partida real, F1/F2/F3: modo, SHIFT+ENTER: URL/token direto.
+echo [MENU] F5: demonstracao local offline, F7: artes, F8: diagnostico, ESC: sair.
 echo.
 "%LOVEEXE%" "%~dp0LastCircle-Lua.love"
 set "CODE=%ERRORLEVEL%"
