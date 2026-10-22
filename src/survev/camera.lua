@@ -37,6 +37,27 @@ function Camera:m_screenToPoint(screen)
     }
 end
 
+-- Original client/src/game.ts camera target:
+-- maxScreenDim=max(min(w,h)*16/9,max(w,h)),
+-- target=(maxScreenDim*.5)/(activePlayer.m_getZoom()*ppu).
+-- Source math.lerp(t,a,b) does NOT clamp t.
+function Camera:m_updateZoom(serverZoom,dt,fast)
+    if type(serverZoom)~="number" or serverZoom<=0 or
+        serverZoom~=serverZoom or serverZoom==math.huge or
+        self.m_screenWidth<=1 or self.m_screenHeight<=1 then
+        return false
+    end
+    local minDim=math.min(self.m_screenWidth,self.m_screenHeight)
+    local maxDim=math.max(self.m_screenWidth,self.m_screenHeight)
+    local maxScreenDim=math.max(minDim*(16/9),maxDim)
+    self.m_targetZoom=(maxScreenDim*.5)/(serverZoom*self.m_ppu)
+    local speed=fast and 3 or
+        (self.m_targetZoom>self.m_zoom and 2 or 1.4)
+    local fraction=math.max(0,dt or 0)*speed
+    self.m_zoom=self.m_zoom*(1-fraction)+
+        self.m_targetZoom*fraction
+    return true
+end
 function Camera:m_pixels(p)
     return p * self.m_zoom
 end
