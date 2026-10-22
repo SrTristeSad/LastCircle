@@ -51,7 +51,8 @@ function V:update(state,dt)
     self.buildingArt:updateVisibility(dt,state.objects,active,state.updateCount)
     self.obstacleArt:update(state.objects,dt)
 end
-function V:draw(state,w,h)
+function V:draw(state,w,h,showDebug)
+    if showDebug==nil then showDebug=true end
     local g=love.graphics
     g.setColor(.11,.14,.14)
     g.rectangle("fill",0,0,w,h)
@@ -106,11 +107,11 @@ function V:draw(state,w,h)
                     -- player.container AFTER the body. Draw immediately after
                     -- the correct owner; world hit particles stay zOrd 20.
                     self.impactFx:drawAttached(obj,cam,w,h,state.objects)
-                    if rendered==0 then
+                    if showDebug and rendered==0 then
                         g.setColor(.96,.93,.75)
                         g.circle("line",pt.x,pt.y,cam:m_z())
                     end
-                elseif obj.__type~=Objects.Type.Obstacle and
+                elseif showDebug and obj.__type~=Objects.Type.Obstacle and
                     obj.__type~=Objects.Type.Building and
                     obj.__type~=Objects.Type.Loot then
                     g.setColor(.84,.86,.62)
@@ -134,6 +135,7 @@ function V:draw(state,w,h)
     -- other high foliage use a structural mask with holes over bunkers.
     self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"stairsOverlay",tracked)
 
+    if not showDebug then return end
     local active=state.objects[state.activeId]
     local info=(state.offlinePreview and "CENARIO LOCAL: " or "MAPA: ")..tostring(map.mapName)..
         " | SEED: "..tostring(map.seed)..
