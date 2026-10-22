@@ -4,7 +4,7 @@
 local Json=require("src.survev.json")
 local Match=require("src.survev.matchmaking")
 local Config=require("src.survev.game_config")
-local data=Json.decode([=[{"a":true,"b":false,"c":null,"d":["ok",42,-3.75e2],"unicode":"\\uD83D\\uDE00"}]=])
+local data=Json.decode([=[{"a":true,"b":false,"c":null,"d":["ok",42,-3.75e2],"unicode":"\uD83D\uDE00"}]=])
 assert(data.a==true and data.b==false and data.c==Json.null)
 assert(data.d[3]==-375)
 assert(data.unicode=="\240\159\152\128","surrogate pairs decoded as UTF-8")
