@@ -17,10 +17,11 @@ local InteractionHint=require("src.survev.interaction_hint")
 local InventoryPanel=require("src.survev.inventory_panel")
 local Hud=require("src.survev.hud")
 local ResultsOverlay=require("src.survev.results_overlay")
+local PickupFeedback=require("src.survev.pickup_feedback")
 
 local camera=Camera.new()
 local screen="demo"
-local tile,logo,selected,live,demo,hud,minimap,inventoryPanel
+local tile,logo,selected,live,demo,hud,minimap,inventoryPanel,pickupFeedback
 local smokeFrames=0
 local screenshotRequested=false
 local equipmentScreenshotRequested=false
@@ -98,6 +99,7 @@ function love.load()
     hud=Hud.new()
     minimap=Minimap.new()
     inventoryPanel=InventoryPanel.new()
+    pickupFeedback=PickupFeedback.new()
     demo=OfflineDemo.new()
 end
 function love.resize(w,h)
@@ -266,6 +268,7 @@ function love.update(dt)
     if not client then return end
     client:poll()
     local world=client:getGameState()
+    pickupFeedback:update(world,dt)
     if world and world.map then live:update(world,dt) end
     if screen~="network" or not connected() or not client:getGameState()
         or not client:getGameState().joined then return end
@@ -368,6 +371,7 @@ local function drawNetwork(w,h)
         InteractionHint.draw(state,w,h)
         inventoryPanel:draw(state,w,h)
         minimap:draw(state,w,h,live.terrainRenderer)
+        pickupFeedback:draw(w,h)
         ResultsOverlay.draw(state,w,h)
         local statusText="Conexao: "..client.state..
             " | MapMsg: "..tostring(state and state.map and state.map.mapName or "aguardando")..
