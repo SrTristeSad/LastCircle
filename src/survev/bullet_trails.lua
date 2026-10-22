@@ -1,6 +1,7 @@
 -- Survev client/src/objects/bullet.ts: BulletBarn.addBullet/m_update/m_render.
 -- Visual-only port. Positions originate ONLY from server UpdateMsg.bullets.
--- Server-authoritative hit physics/obstacle collision is NOT ported here.
+-- Visual collision against known obstacle/player colliders is ported;
+-- authoritative damage, projectile physics and impacts remain server-owned.
 local Art=require("src.survev.bullet_art")
 local Collision=require("src.survev.bullet_collision")
 local Trails={}
