@@ -103,7 +103,7 @@ function V:draw(state,w,h)
     self.buildingArt:drawPhase(state.objects,cam,"ceiling",w,h,map.mapName)
 
     local active=state.objects[state.activeId]
-    local info="MAPA: "..tostring(map.mapName)..
+    local info=(state.offlinePreview and "CENARIO LOCAL: " or "MAPA: ")..tostring(map.mapName)..
         " | SEED: "..tostring(map.seed)..
         " | "..tostring(map.width).."x"..tostring(map.height)
     g.setColor(.05,.10,.1,.88)
@@ -117,9 +117,13 @@ function V:draw(state,w,h)
         end)())..
         "   UpdateMsg: "..tostring(state.updateCount),18,32)
     if active and active.pos then
-        g.print(string.format("Posicao recebida: %.2f, %.2f",active.pos.x,active.pos.y),18,54)
+        local label=state.offlinePreview and "Posicao simulada local" or "Posicao recebida"
+        g.print(string.format("%s: %.2f, %.2f",label,active.pos.x,active.pos.y),18,54)
     end
     g.setColor(.98,.57,.38)
-    g.printf(self.warning,0,h-39,w,"center")
+    local warning=state.offlinePreview and
+        "TESTE OFFLINE: movimento simulado; combate, inventario e partida real pendentes"
+        or self.warning
+    g.printf(warning,0,h-30,w,"center")
 end
 return V
