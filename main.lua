@@ -48,6 +48,7 @@ local client
 local status=""
 local actionQueue={}
 local fireStart=false
+local pendingWheelActions={}
 local font
 local function loadImage(path)
     if not love.filesystem.getInfo(path) then return nil end
@@ -87,7 +88,11 @@ local function setConnection()
     else status="WebSocket conectado. Aguardando JoinedMsg..." end
 end
 local function addAction(id)
-    actionQueue[#actionQueue+1]=id
+    if type(id)~="number" then return end
+    for _,existing in ipairs(actionQueue) do
+        if existing==id then return end
+    end
+    if #actionQueue<7 then actionQueue[#actionQueue+1]=id end
 end
 function love.load()
     love.window.setTitle("LastCircle - Teste Local do Survev Lua")
@@ -135,10 +140,14 @@ function love.keypressed(key)
         return
     end
     if key=="f5" then
+        actionQueue={}
+        fireStart=false
         demo=OfflineDemo.new()
         screen="demo"
         return
     elseif key=="f6" then
+        actionQueue={}
+        fireStart=false
         screen=screen=="network" and "demo" or "network"
         return
     elseif key=="f7" then
@@ -197,6 +206,11 @@ function love.keypressed(key)
         m=Binds.Input.ToggleMap,
     }
     if keyActions[key] then addAction(keyActions[key]) end
+end
+function love.wheelmoved(dx,dy)
+    if screen~="network" or not connected() then return end
+    if dy>0 then addAction(Binds.Input.EquipPrevWeap)
+    elseif dy<0 then addAction(Binds.Input.EquipNextWeap) end
 end
 function love.mousepressed(x,y,button)
     if screen=="demo" then
@@ -267,6 +281,11 @@ function love.update(dt)
     if world and world.map then live:update(world,dt) end
     if screen~="network" or not connected() or not client:getGameState()
         or not client:getGameState().joined then return end
+    if client:getGameState().gameOver then
+        actionQueue={}
+        fireStart=false
+        return
+    end
     local state=client:getGameState()
     local player=state.objects[state.activeId]
     if not player or not player.pos then return end
