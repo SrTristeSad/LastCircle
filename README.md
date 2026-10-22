@@ -42,6 +42,9 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 **Atalhos no HUD multiplayer:** clique esquerdo em um slot conhecido para enviar `EquipPrimary/Secondary/Melee/Throwable`; clique direito em arma elegivel, capacete ou colete para solicitar `DropItemMsg`. A selecao e o descarte dependem da confirmacao do servidor, sem alterar o inventario antecipadamente. [Controles e limites de rede](docs/NETWORK.md).
 
+
+**Animações multiplayer (2026-10-22):** `player_animation.lua` lê sequências `animSeq` autorizadas pelo Survev e aplica os keyframes originais dos golpes de **punhos** e **frigideira** ao `player_renderer.lua`. `action_progress.lua` mostra recarga, uso de itens e reviver quando o servidor fornece tipo e tempo da ação. Nenhum movimento implica dano local, nem substitui animações de armas ainda não portadas. Consulte [status do porte](docs/PORT_STATUS.md).
+
 **Ainda não portado:** API oficial para descobrir partidas/tokens, composição final das quatro camadas e máscaras, interação de portas com o servidor, animações completas de jogadores, **HUD final (saque/equipamento completos, feed, menus e layout final do minimapa/inventário)**, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
 ### Testar agora sem servidor (Windows / LÖVE)
