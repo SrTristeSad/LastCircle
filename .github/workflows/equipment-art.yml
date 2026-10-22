@@ -7,6 +7,8 @@ on:
       - scripts/generate_equipment_art.mjs
       - src/survev/equipment_renderer.lua
       - tests/equipment_smoke.lua
+      - scripts/check_equipment_parity.mjs
+      - tests/equipment_parity.lua
       - .github/workflows/equipment-art.yml
 permissions:
   contents: write
@@ -39,6 +41,14 @@ jobs:
             lua5.4 tests/equipment_smoke.lua
             luajit tests/equipment_smoke.lua
           fi
+      - name: Compare source TypeScript equipped sprite geometry in Lua 5.4
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_equipment_parity.mjs _reference/reference/survev lua5.4
+      - name: Compare source TypeScript equipped sprite geometry in LuaJIT
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_equipment_parity.mjs _reference/reference/survev luajit
       - name: Commit generated original-equipment metadata
         run: |
           git config user.name "github-actions[bot]"
