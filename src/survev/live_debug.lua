@@ -102,6 +102,10 @@ function V:draw(state,w,h)
                     local pose=self.playerAnimations:poseFor(obj)
                     local recoil=self.shotRecoil:forPlayer(obj)
                     local rendered=self.players:draw(obj,cam,map.mapName,pose,recoil)
+                    -- In the original client bloodSplat is added to the
+                    -- player.container AFTER the body. Draw immediately after
+                    -- the correct owner; world hit particles stay zOrd 20.
+                    self.impactFx:drawAttached(obj,cam,w,h,state.objects)
                     if rendered==0 then
                         g.setColor(.96,.93,.75)
                         g.circle("line",pt.x,pt.y,cam:m_z())
