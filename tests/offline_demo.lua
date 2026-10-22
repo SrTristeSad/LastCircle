@@ -17,6 +17,30 @@ assert(#state.map.rivers==1 and #state.map.groundPatches==1)
 assert(#state.map.objects>=13)
 assert(state.objects[1].__type==Obj.Player)
 assert(state.objects[1].outfit=="outfitBase")
+assert(state.objects[1].backpack=="backpack02")
+assert(state.objects[1].helmet=="helmet02")
+assert(state.objects[1].chest=="chest02")
+for i,typeName in ipairs({"fists","pan","m9","ak47","m9_dual"}) do
+    assert(d:equip(i),"source weapon preview switch "..typeName)
+    assert(state.objects[1].activeWeapon==typeName)
+    assert(state.localData.health==100,
+        "equipment is visual only; no invented health/damage")
+end
+assert(not d:equip(6),"invalid non-Survev slot must be rejected")
+assert(not d:punch(),"no client-side weapon damage/action while armed")
+assert(d:equip(1),"re-equip fists to test original animation")
+assert(d:toggleGear(),"hide original protection")
+assert(state.objects[1].chest=="" and state.objects[1].helmet=="" and
+    state.objects[1].backpack=="")
+assert(d:toggleGear(),"restore official protective items")
+assert(state.objects[1].chest=="chest02" and
+    state.objects[1].helmet=="helmet02")
+local changed=d:cycleOutfit()
+assert(changed=="outfitDemo" and state.objects[1].outfit==changed)
+for i=1,3 do d:cycleOutfit() end
+assert(state.objects[1].outfit=="outfitBase",
+    "source skins must cycle without leaking across reset")
+
 assert(state.localData.health==100)
 assert(d:punch(),"mouse click must start source fist animation")
 assert(not d:punch(),"animation must not restart every frame")
