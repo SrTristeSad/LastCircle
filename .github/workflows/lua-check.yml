@@ -72,6 +72,10 @@ jobs:
         run: |
           lua5.4 tests/shot_recoil_smoke.lua
           luajit tests/shot_recoil_smoke.lua
+      - name: Survev original bullet tracers and visual trajectory
+        run: |
+          lua5.4 tests/bullet_trails_smoke.lua
+          luajit tests/bullet_trails_smoke.lua
       - name: Source-authoritative reload and item action HUD progress
         run: |
           lua5.4 tests/action_progress_smoke.lua
