@@ -45,7 +45,7 @@ function Fx.new()
         world=nil,sequence=0,particles={},soundEvents={},
         spriteCache={},missingSprites={},lastSound={},voices={},
         soundPrototypes={},
-        muted=false,
+        muted=false,bloodEnabled=true,
     },Fx)
 end
 function Fx:reset()
@@ -59,7 +59,8 @@ function Fx:reset()
     self.lastSound={}
     self.voices={}
 end
-function Fx:emit(kind,pos,normal,layer)
+function Fx:emit(kind,pos,normal,layer,parent)
+    if kind=="bloodSplat" and not self.bloodEnabled then return false end
     local def=Source[kind]
     if not def or not pos then return false end
     local r,g,b=color(def)
@@ -70,12 +71,24 @@ function Fx:emit(kind,pos,normal,layer)
     local angle=(math.random()-.5)*math.pi/3
     local cs,sn=math.cos(angle),math.sin(angle)
     local img=def.images[math.random(1,#def.images)]
+    -- In upstream bullet.ts bloodSplat is a child of player.container,
+    -- whose position follows the actor but does NOT rotate with the body.
+    -- Local pixel offset uses camera.m_ppu, then inherits camera.m_zoom.
+    local localPx=nil
+    if parent and parent.pos and parent.__id then
+        localPx={
+            x=(pos.x-parent.pos.x)*16,
+            y=(parent.pos.y-pos.y)*16,
+        }
+    end
     local rotVel=sample(def.rotVel)
     local drag=sample(def.drag)
     if math.random()<.5 then rotVel=-rotVel end
     self.particles[#self.particles+1]={
         kind=kind,image=img,
         pos={x=pos.x,y=pos.y},
+        parentId=localPx and parent.__id or nil,
+        localPx=localPx,
         vel={x=(velocity.x*cs-velocity.y*sn)*9.5,
              y=(velocity.x*sn+velocity.y*cs)*9.5},
         layer=layer or 0,
@@ -130,8 +143,12 @@ function Fx:advance(dt)
         else
             p.vel.x=p.vel.x/(1+dt*p.drag)
             p.vel.y=p.vel.y/(1+dt*p.drag)
-            p.pos.x=p.pos.x+p.vel.x*dt
-            p.pos.y=p.pos.y+p.vel.y*dt
+            -- Parent blood splats stay at a local sprite offset, while
+            -- free-world sparks drift with their upstream velocity.
+            if not p.parentId then
+                p.pos.x=p.pos.x+p.vel.x*dt
+                p.pos.y=p.pos.y+p.vel.y*dt
+            end
             p.rotVel=p.rotVel/(1+dt*p.rotDrag)
             p.rot=p.rot+p.rotVel*dt
         end
@@ -151,6 +168,17 @@ function Fx:update(state,trails,dt)
     end
     self.sequence=state.bulletSeq or 0
     self:advance(math.max(0,dt or 0))
+    -- Orphaned child particles must not linger after a server removes
+    -- their player or reports the player's death.
+    for i=#self.particles,1,-1 do
+        local p=self.particles[i]
+        if p.parentId then
+            local parent=state.objects[p.parentId]
+            if not parent or parent.dead or not parent.pos then
+                table.remove(self.particles,i)
+            end
+        end
+    end
     for _,bullet in ipairs(trails.trails or {}) do
         if bullet.collided and bullet.impactKind and
             not bullet.impactFxSent then
@@ -160,7 +188,8 @@ function Fx:update(state,trails,dt)
                 local dir=bullet.impactNormal or
                     {x=-(bullet.dir.x or 0),
                      y=-(bullet.dir.y or 0)}
-                self:emit(part,bullet.pos,dir,bullet.layer)
+                self:emit(part,bullet.pos,dir,bullet.layer,
+                    bullet.impactKind=="player" and obj or nil)
             end
             if snd and snd~="none" then
                 self:queueSound(snd,bullet.pos,bullet.layer)
@@ -168,43 +197,64 @@ function Fx:update(state,trails,dt)
         end
     end
 end
-function Fx:draw(camera,w,h)
+-- Parent particles are drawn directly after their owner's original
+-- PlayerRenderer pass, just as player.container children render in PIXI.
+-- World impacts remain on the BulletBarn zOrd=20 layer.
+function Fx:project(p,camera,objects)
+    if p.parentId then
+        local actor=objects and objects[p.parentId]
+        if not actor or actor.dead or not actor.pos then return nil end
+        local center=camera:m_pointToScreen(actor.pos)
+        local zoom=camera:m_pixels(1)
+        return {
+            x=center.x+p.localPx.x*zoom,
+            y=center.y+p.localPx.y*zoom,
+        }
+    end
+    return camera:m_pointToScreen(p.pos)
+end
+function Fx:draw(camera,w,h,parentId,objects)
     if not love or not love.graphics or not love.filesystem then return 0 end
     local g=love.graphics
     local drawn=0
     for _,p in ipairs(self.particles) do
-        local point=camera:m_pointToScreen(p.pos)
-        if point.x>-80 and point.x<w+80 and
-            point.y>-80 and point.y<h+80 then
-            local img=self.spriteCache[p.image]
-            if not img and not self.missingSprites[p.image] then
-                local file="assets/survev/img/"..p.image
-                if love.filesystem.getInfo(file) then
-                    local ok,loaded=pcall(g.newImage,file)
-                    if ok then
-                        img=loaded
-                        self.spriteCache[p.image]=img
-                        img:setFilter("linear","linear")
+        if p.parentId==parentId then
+            local point=self:project(p,camera,objects)
+            if point and point.x>-80 and point.x<w+80 and
+                point.y>-80 and point.y<h+80 then
+                local img=self.spriteCache[p.image]
+                if not img and not self.missingSprites[p.image] then
+                    local file="assets/survev/img/"..p.image
+                    if love.filesystem.getInfo(file) then
+                        local ok,loaded=pcall(g.newImage,file)
+                        if ok and loaded then
+                            img=loaded
+                            self.spriteCache[p.image]=img
+                            img:setFilter("linear","linear")
+                        end
                     end
+                    if not img then self.missingSprites[p.image]=true end
                 end
-                if not img then self.missingSprites[p.image]=true end
-            end
-            if img then
-                local def=Source[p.kind]
-                local t=math.min(1,p.age/p.life)
-                local scale=remap(t,p.scaleLerp,p.scaleStart,p.scaleEnd)
-                local alpha=remap(t,p.alphaLerp,p.alphaStart,p.alphaEnd)
-                local width,height=img:getDimensions()
-                g.setColor(p.red,p.green,p.blue,alpha)
-                g.draw(img,point.x,point.y,p.rot,
-                    camera:m_pixels(scale),camera:m_pixels(scale),
-                    width/2,height/2)
-                drawn=drawn+1
+                if img then
+                    local t=math.min(1,p.age/p.life)
+                    local scale=remap(t,p.scaleLerp,p.scaleStart,p.scaleEnd)
+                    local alpha=remap(t,p.alphaLerp,p.alphaStart,p.alphaEnd)
+                    local width,height=img:getDimensions()
+                    g.setColor(p.red,p.green,p.blue,alpha)
+                    g.draw(img,point.x,point.y,p.rot,
+                        camera:m_pixels(scale),camera:m_pixels(scale),
+                        width/2,height/2)
+                    drawn=drawn+1
+                end
             end
         end
     end
     g.setColor(1,1,1,1)
     return drawn
+end
+function Fx:drawAttached(player,camera,w,h,objects)
+    if not player or not player.__id then return 0 end
+    return self:draw(camera,w,h,player.__id,objects)
 end
 -- Audio files are upstream MP3s. If the installed LÖVE decoder does not
 -- support the format, skip rather than play a substitute.
