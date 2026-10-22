@@ -75,6 +75,9 @@ O teste `tests/matchmaking_smoke.lua` cobre a API JSON original e as respostas r
 
 **Camadas de folhagem e residuos (2026-10-22):** `obstacle_art_renderer.lua` reproduz as regras de `obstacle.ts` para `zOrd=5` em obstaculos mortos, residuos com opacidade 75% e prioridades dependentes de escala. Arvores e arbustos altos sobre o solo sao promovidos a uma passagem superior depois dos tetos; `StructureDefs.mask` recorta-os nas areas estruturais do mapa com stencil LÖVE. `tests/foliage_layer_smoke.lua` verifica as regras em Lua 5.4/LuaJIT. **A composicao completa dos quatro planos originais ainda nao foi portada.**
 
+
+**Espectador original e morte (2026-10-22):** apos o servidor informar a morte, **B** ou o botao na tela solicitam `SpectateMsg.Begin`; durante a observacao, setas **esquerda/direita** ou os botoes solicitam `Prev/Next`. A camera so acompanha um novo alvo quando o servidor informa `UpdateMsg.activePlayerId`. Ao morrer, o cliente envia um `InputMsg` neutro para soltar movimentos/tiros retidos e nao controla o personagem acompanhado. O estado `GameOverMsg.gameOver=false` agora preserva a partida; `true` indica encerramento. Testes Lua/LuaJIT e uma fixture WebSocket com serializadores originais TypeScript validam a cadeia espectador; **ainda nao atestam multiplayer integral em um servidor de producao**.
+
 **Ainda não portado:** API oficial para descobrir partidas/tokens, composição final das quatro camadas e máscaras, interação de portas com o servidor, animações completas de jogadores, **HUD final (saque/equipamento completos, feed, menus e layout final do minimapa/inventário)**, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
 ### Testar agora sem servidor (Windows / LÖVE)
