@@ -11,11 +11,13 @@ local Input=require("src.survev.input_msg")
 local Network=require("src.survev.network_client")
 local LiveDebug=require("src.survev.live_debug")
 local OfflineDemo=require("src.survev.offline_demo")
+local Minimap=require("src.survev.minimap")
+local InteractionHint=require("src.survev.interaction_hint")
 local Hud=require("src.survev.hud")
 
 local camera=Camera.new()
 local screen="demo"
-local tile,logo,selected,live,demo,hud
+local tile,logo,selected,live,demo,hud,minimap
 local smokeFrames=0
 local screenshotRequested=false
 local equipmentScreenshotRequested=false
@@ -92,6 +94,7 @@ function love.load()
     selectImage()
     live=LiveDebug.new()
     hud=Hud.new()
+    minimap=Minimap.new()
     demo=OfflineDemo.new()
 end
 function love.resize(w,h)
@@ -114,6 +117,13 @@ local function backspace(str)
     return str:sub(1,-2)
 end
 function love.keypressed(key)
+    if (screen=="demo" or screen=="network") and key=="m" then
+        minimap:toggleExpanded()
+        return
+    elseif (screen=="demo" or screen=="network") and key=="n" then
+        minimap:toggleVisible()
+        return
+    end
     if key=="f5" then
         demo=OfflineDemo.new()
         screen="demo"
@@ -295,6 +305,7 @@ end
 local function drawDemo(w,h)
     live:draw(demo:getGameState(),w,h)
     hud:draw(demo:getGameState(),w,h)
+    InteractionHint.draw(demo:getGameState(),w,h)
     local g=love.graphics
     g.setColor(.025,.07,.06,.92)
     g.rectangle("fill",math.max(0,(w-980)/2),h-167,math.min(980,w),129,9)
@@ -303,9 +314,10 @@ local function drawDemo(w,h)
     g.setColor(.75,.88,.78)
     g.printf("WASD mover  •  mouse mirar  •  clique: soco visual  •  F porta",0,h-133,w,"center")
     g.printf("1 Punhos  |  2 Frigideira  |  3 M9  |  4 AK-47  |  5 M9 duplas",0,h-109,w,"center")
-    g.printf("G equipamentos  •  C roupa  •  R/F5 reiniciar  •  F6 rede  •  F7 artes",0,h-86,w,"center")
+    g.printf("G protecao  •  C roupa  •  M mapa  •  N ocultar  •  R/F5 reiniciar",0,h-86,w,"center")
     g.setColor(.99,.84,.52)
     g.printf(demo.message,0,h-61,w,"center")
+    minimap:draw(demo:getGameState(),w,h,live.terrainRenderer)
 end
 
 local function drawNetwork(w,h)
@@ -325,6 +337,8 @@ local function drawNetwork(w,h)
 
     if connected() then
         local state=client:getGameState()
+        InteractionHint.draw(state,w,h)
+        minimap:draw(state,w,h,live.terrainRenderer)
         local statusText="Conexao: "..client.state..
             " | MapMsg: "..tostring(state and state.map and state.map.mapName or "aguardando")..
             " | Atualizacoes: "..tostring(state and state.updateCount or 0)
