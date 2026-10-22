@@ -89,3 +89,7 @@ O Survev é distribuído sob licença GNU GPL-3.0-or-later. `LICENSE` e `ATTRIBU
 ## Tela de resultados (2026-10-22)
 
 `src/survev/results_overlay.lua` projeta exclusivamente `GameOverMsg` recebido do servidor: encerramento, vitoria e classificacao da equipe. Integrado em `main.lua` na tela de rede. Nao calcula danos, kills ou classificacoes locais, nem substitui o menu final original do Survev. Teste de regressao: `lua scripts/test_results_overlay.lua` (requer Lua e modulos locais; executa sem LÖVE). **Pendente:** renderizacao fiel do resultado original, dados detalhados por jogador e teste de integracao com partida real.
+
+### Estatisticas de encerramento — etapa adicional
+
+A tela de resultados agora le `GameOverMsg.playerStats` para mostrar por jogador `playerId`, `kills`, `damageDealt`, `damageTaken` e `timeAlive`, sem calcular nenhum valor local. `scripts/test_results_overlay.lua` valida derrota, vitoria, estatisticas e reset. O workflow `.github/workflows/lua-check.yml` executa o teste com Lua 5.4 e LuaJIT. O layout ainda e uma adaptacao LÖVE, nao pixel-paridade da interface original. A execucao da CI precisa ser conferida no GitHub Actions.
