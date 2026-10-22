@@ -46,6 +46,14 @@ input:drain(msg)
 assert(#msg.inputs==1 and msg.inputs[1]==bind.EquipPrimary)
 assert(HUD.slotAt(state,1280,720,1106,425).item=="fists")
 assert(HUD.slotAt(state,1280,720,1187,425)==nil)
+assert(HUD.containsUi(state,1280,720,945,425))
+assert(HUD.containsUi(state,1280,720,1187,425),
+    "empty weapon slots remain UI, not shooting areas")
+assert(HUD.containsUi(state,1280,720,940,360),
+    "backpack badge is noncombat UI")
+assert(HUD.containsUi(state,1280,720,640,480),
+    "health and boost panel must consume mouse clicks")
+assert(not HUD.containsUi(state,1280,720,200,200))
 local primary=assert(HUD.hitTest(state,1280,720,945,425))
 assert(primary.kind=="weapon" and primary.slot==0 and primary.item=="ak47")
 local secondary=assert(HUD.hitTest(state,1280,720,1028,425))
