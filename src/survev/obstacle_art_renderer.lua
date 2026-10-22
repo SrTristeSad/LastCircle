@@ -1,7 +1,7 @@
 -- Obstacle sprite renderer from Survev client/src/objects/obstacle.ts.
 -- Metadata generated from actual MapObjectDefs and original public/img files.
 -- Static/damaged sprite selection, tint, rotation and scale ported.
--- Door visual interpolation and casing are ported; full layering pending.
+-- Door movement and source zOrd strata are ported; PIXI masks remain pending.
 local Registry=require("src.survev.map_obstacle_art")
 local Objects=require("src.survev.object_serialize_fns")
 local DoorVisual=require("src.survev.door_visual")
@@ -60,7 +60,18 @@ local function screenVisible(camera,pos,width,height,margin)
     return pt.x>=-margin and pt.x<=width+margin and
         pt.y>=-margin and pt.y<=height+margin,pt
 end
-function Art:draw(objects,camera,width,height,mapName)
+-- Coarse ordered render strata from the ORIGINAL Survev zOrd values.
+-- Player objects have zOrd=18 and most building roofs approximately 750.
+-- The final PIXI layer/mask compositor is still a separate future port.
+local function inStratum(z,part)
+    if not part or part=="all" then return true end
+    if part=="belowPlayer" then return z<18 end
+    if part=="betweenPlayerAndRoof" then return z>=18 and z<750 end
+    if part=="aboveRoof" then return z>=750 end
+    error("unknown upstream obstacle stratum "..tostring(part))
+end
+Art.inStratum=inStratum
+function Art:draw(objects,camera,width,height,mapName,part)
     local graphics=love.graphics
     local visible={}
     self.drawn,self.unavailable=0,0
@@ -68,9 +79,9 @@ function Art:draw(objects,camera,width,height,mapName)
         if obj.__type==Objects.Type.Obstacle and obj.pos and obj.type then
             local meta=Registry[obj.type]
             local ok,pt=screenVisible(camera,obj.pos,width,height,200)
-            if ok then
-                visible[#visible+1]={obj=obj,meta=meta,pt=pt,
-                    z=meta and meta.zIdx or 0}
+            local z=meta and meta.zIdx or 0
+            if ok and inStratum(z,part) then
+                visible[#visible+1]={obj=obj,meta=meta,pt=pt,z=z}
             end
         end
     end
