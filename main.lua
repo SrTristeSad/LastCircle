@@ -8,6 +8,7 @@ local Camera=require("src.survev.camera")
 local Binds=require("src.survev.input_bindings")
 local Config=require("src.survev.game_config")
 local Input=require("src.survev.input_msg")
+local LiveInput=require("src.survev.live_input")
 local Network=require("src.survev.network_client")
 local LiveDebug=require("src.survev.live_debug")
 local OfflineDemo=require("src.survev.offline_demo")
@@ -46,7 +47,7 @@ local fields={
 local focus=1
 local client
 local status=""
-local actionQueue={}
+local pendingInput=LiveInput.new()
 local fireStart=false
 local font
 local function loadImage(path)
@@ -85,13 +86,6 @@ local function setConnection()
     })
     if not ok then status="Falha na conexao: "..tostring(err)
     else status="WebSocket conectado. Aguardando JoinedMsg..." end
-end
-local function addAction(id)
-    if type(id)~="number" then return end
-    for _,existing in ipairs(actionQueue) do
-        if existing==id then return end
-    end
-    if #actionQueue<7 then actionQueue[#actionQueue+1]=id end
 end
 function love.load()
     love.window.setTitle("LastCircle - Teste Local do Survev Lua")
@@ -139,13 +133,13 @@ function love.keypressed(key)
         return
     end
     if key=="f5" then
-        actionQueue={}
+        pendingInput:clear()
         fireStart=false
         demo=OfflineDemo.new()
         screen="demo"
         return
     elseif key=="f6" then
-        actionQueue={}
+        pendingInput:clear()
         fireStart=false
         screen=screen=="network" and "demo" or "network"
         return
@@ -154,6 +148,8 @@ function love.keypressed(key)
         return
     end
     if key=="escape" then
+        pendingInput:clear()
+        fireStart=false
         if client and client.connection and client.connection.state=="open" then
             client:close()
             status="Desconectado."
@@ -193,23 +189,16 @@ function love.keypressed(key)
         end
         return
     end
-    -- Original Survev action IDs from shared/gameConfig.ts
-    local keyActions={
-        r=Binds.Input.Reload,f=Binds.Input.Interact,
-        e=Binds.Input.StowWeapons,
-        ["1"]=Binds.Input.EquipPrimary,["2"]=Binds.Input.EquipSecondary,
-        ["3"]=Binds.Input.EquipMelee,["4"]=Binds.Input.EquipThrowable,
-        ["7"]=Binds.Input.UseBandage,["8"]=Binds.Input.UseHealthKit,
-        ["9"]=Binds.Input.UseSoda,["0"]=Binds.Input.UsePainkiller,
-        q=Binds.Input.EquipLastWeap,t=Binds.Input.SwapWeapSlots,
-        m=Binds.Input.ToggleMap,
-    }
-    if keyActions[key] then addAction(keyActions[key]) end
+    -- The authoritative Survev server accepts inputs only after JoinedMsg.
+    local state=client and client:getGameState()
+    if not state or not state.joined or state.gameOver then return end
+    pendingInput:keypressed(key)
 end
 function love.wheelmoved(dx,dy)
-    if screen~="network" or not connected() then return end
-    if dy>0 then addAction(Binds.Input.EquipPrevWeap)
-    elseif dy<0 then addAction(Binds.Input.EquipNextWeap) end
+    local state=client and client:getGameState()
+    if screen~="network" or not connected() or not state or
+        not state.joined or state.gameOver then return end
+    pendingInput:wheelmoved(dy)
 end
 function love.mousepressed(x,y,button)
     if screen=="demo" then
@@ -281,7 +270,7 @@ function love.update(dt)
     if screen~="network" or not connected() or not client:getGameState()
         or not client:getGameState().joined then return end
     if client:getGameState().gameOver then
-        actionQueue={}
+        pendingInput:clear()
         fireStart=false
         return
     end
@@ -303,8 +292,7 @@ function love.update(dt)
         msg.toMouseDir={x=dx/dist,y=dy/dist}
         msg.toMouseLen=math.min(64,dist)
     end
-    for _,id in ipairs(actionQueue) do msg:addInput(id) end
-    actionQueue={}
+    pendingInput:drain(msg)
     fireStart=false
     local ok,err=pcall(function() client:sendInput(msg,dt) end)
     if not ok then status="Falha no envio: "..tostring(err) end
