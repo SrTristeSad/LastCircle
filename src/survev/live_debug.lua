@@ -87,7 +87,7 @@ function V:draw(state,w,h)
     g.setColor(1,1,1)
     -- Original building floor textures precede players and ceiling layers.
     self.buildingArt:drawPhase(state.objects,cam,"floor",w,h,map.mapName)
-    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"belowPlayer")
+    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"belowPlayer",tracked)
     -- Survev original Loot renderer zOrd=13 (below Player zOrd=18).
     self.lootArt:draw(state.objects,cam,w,h)
 
@@ -127,9 +127,12 @@ function V:draw(state,w,h)
     self.bulletTrails:draw(cam,w,h)
     self.impactFx:draw(cam,w,h)
     self.impactFx:playSounds(cam)
-    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"betweenPlayerAndRoof")
+    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"betweenPlayerAndRoof",tracked)
     self.buildingArt:drawPhase(state.objects,cam,"ceiling",w,h,map.mapName)
-    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"aboveRoof")
+    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"aboveRoof",tracked)
+    -- Original layer 2 renders after layer 0. Ground-floor trees and
+    -- other high foliage use a structural mask with holes over bunkers.
+    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"stairsOverlay",tracked)
 
     local active=state.objects[state.activeId]
     local info=(state.offlinePreview and "CENARIO LOCAL: " or "MAPA: ")..tostring(map.mapName)..
