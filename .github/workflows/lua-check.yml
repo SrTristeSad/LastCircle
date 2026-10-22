@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Lua 5.4 and LuaJIT (same family as LÖVE)
-        run: sudo apt-get update && sudo apt-get install -y lua5.4 luajit
+        run: sudo apt-get update && sudo apt-get install -y lua5.4 luajit lua-socket lua-sec
       - name: Lua syntax checks (every port module)
         run: |
           set -e
@@ -24,6 +24,15 @@ jobs:
         run: |
           lua5.4 tests/matchmaking_smoke.lua
           luajit tests/matchmaking_smoke.lua
+      - name: Real LuaSocket HTTP matchmaking to a local original-protocol test server
+        run: |
+          python3 tests/fixtures/survev_matchmaking_server.py > /tmp/survev-matchmaking.log 2>&1 &
+          for attempt in 1 2 3 4 5 6 7 8; do
+            if python3 -c 'import socket;s=socket.create_connection(("127.0.0.1",17983),.5);s.close()' 2>/dev/null; then break; fi
+            sleep .3
+          done
+          lua5.4 tests/matchmaking_http_smoke.lua
+          luajit tests/matchmaking_http_smoke.lua
       - name: Shared camera, controls and constants parity
         run: |
           lua5.4 tests/survev_parity.lua
