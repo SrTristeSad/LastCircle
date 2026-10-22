@@ -1,0 +1,56 @@
+name: Survev Equipment Artwork Fidelity
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/generate_equipment_art.mjs
+      - src/survev/equipment_renderer.lua
+      - tests/equipment_smoke.lua
+      - .github/workflows/equipment-art.yml
+permissions:
+  contents: write
+jobs:
+  equipment-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Extract original Survev world images and gear types
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/generate_equipment_art.mjs \
+            _reference/reference/survev src/survev/equipment_art.lua
+      - name: Validate source-driven Lua metadata
+        run: |
+          sudo apt-get update && sudo apt-get install -y lua5.4 luajit
+          luac5.4 -p src/survev/equipment_art.lua
+          lua5.4 -e 'local m=require("src.survev.equipment_art");assert(m.weapons.pan.world.asset and m.gear.chest01.skin.asset);print("Survev equipment verified")'
+          luajit -e 'local m=require("src.survev.equipment_art");assert(m.weapons.fists and m.gear.helmet01)'
+          if test -f tests/equipment_smoke.lua; then
+            lua5.4 tests/equipment_smoke.lua
+            luajit tests/equipment_smoke.lua
+          fi
+      - name: Commit generated original-equipment metadata
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/survev/equipment_art.lua
+          if ! git diff --cached --quiet; then
+            git commit -m "port: generated original Survev weapon and protective gear images"
+            for attempt in 1 2 3 4; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then exit 0; fi
+              sleep 2
+            done
+            exit 1
+          fi
