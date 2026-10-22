@@ -184,6 +184,9 @@ const listen=net.createServer(socket=>{
           dropSeen=true;
           const delta=update();
           delta.ack=0;delta.fullObjects=[];
+          // The source protocol only updates health on a healthDirty delta.
+          // Dropping ammunition must not silently reset a healed player.
+          delta.activePlayerData.healthDirty=false;
           delta.activePlayerData.inventoryDirty=true;
           delta.activePlayerData.scope="1xscope";
           delta.activePlayerData.inventory={bandage:1,"9mm":0};
@@ -230,8 +233,8 @@ const listen=net.createServer(socket=>{
             const delta=update();
             delta.ack=input.seq;delta.fullObjects=[];
             delta.partObjects=[playerPayload(120+combatStep*3,140,false)];
-            delta.activePlayerData.healthDirty=true;
-            delta.activePlayerData.health=combatStep>=5?90:80;
+            delta.activePlayerData.healthDirty=combatStep===5;
+            if(combatStep===5)delta.activePlayerData.health=90;
             if(combatStep===5) {
               delta.activePlayerData.inventoryDirty=true;
               delta.activePlayerData.scope="1xscope";
