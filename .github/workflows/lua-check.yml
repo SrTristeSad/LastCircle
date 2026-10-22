@@ -41,6 +41,10 @@ jobs:
         run: |
           lua5.4 tests/survev_parity.lua
           luajit tests/survev_parity.lua
+      - name: Original server-driven Survev scope and camera zoom
+        run: |
+          lua5.4 tests/camera_zoom_smoke.lua
+          luajit tests/camera_zoom_smoke.lua
       - name: Original-source offline demo movement and doors
         run: |
           lua5.4 tests/offline_demo.lua
