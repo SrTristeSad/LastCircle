@@ -261,7 +261,13 @@ function love.mousepressed(x,y,button)
                 return
             end
         end
-        if button==1 then fireStart=true end
+        if button==1 then
+            local width,height=love.graphics.getDimensions()
+            if Hud.containsUi(client:getGameState(),width,height,x,y) then
+                return
+            end
+            fireStart=true
+        end
         return
     end
     local w=love.graphics.getWidth()
