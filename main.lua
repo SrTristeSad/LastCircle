@@ -13,11 +13,12 @@ local LiveDebug=require("src.survev.live_debug")
 local OfflineDemo=require("src.survev.offline_demo")
 local Minimap=require("src.survev.minimap")
 local InteractionHint=require("src.survev.interaction_hint")
+local InventoryPanel=require("src.survev.inventory_panel")
 local Hud=require("src.survev.hud")
 
 local camera=Camera.new()
 local screen="demo"
-local tile,logo,selected,live,demo,hud,minimap
+local tile,logo,selected,live,demo,hud,minimap,inventoryPanel
 local smokeFrames=0
 local screenshotRequested=false
 local equipmentScreenshotRequested=false
@@ -96,6 +97,7 @@ function love.load()
     live=LiveDebug.new()
     hud=Hud.new()
     minimap=Minimap.new()
+    inventoryPanel=InventoryPanel.new()
     demo=OfflineDemo.new()
 end
 function love.resize(w,h)
@@ -118,6 +120,11 @@ local function backspace(str)
     return str:sub(1,-2)
 end
 function love.keypressed(key)
+    if (screen=="demo" or (screen=="network" and connected())) and
+        (key=="i" or key=="tab") then
+        inventoryPanel:toggle()
+        return
+    end
     if (screen=="demo" or screen=="network") and key=="m" then
         minimap:toggleExpanded()
         return
@@ -317,9 +324,10 @@ local function drawDemo(w,h)
     g.setColor(.75,.88,.78)
     g.printf("WASD mover  •  mouse mirar  •  clique: soco visual  •  F porta",0,h-133,w,"center")
     g.printf("1 Punhos  |  2 Frigideira  |  3 M9  |  4 AK-47  |  5 M9 duplas",0,h-109,w,"center")
-    g.printf("G protecao  •  C roupa  •  M mapa  •  N ocultar  •  R/F5 reiniciar",0,h-86,w,"center")
+    g.printf("G protecao • C roupa • I/TAB inventario • M mapa • R/F5 reiniciar",0,h-86,w,"center")
     g.setColor(.99,.84,.52)
     g.printf(demo.message,0,h-61,w,"center")
+    inventoryPanel:draw(demo:getGameState(),w,h)
     minimap:draw(demo:getGameState(),w,h,live.terrainRenderer)
 end
 
@@ -341,6 +349,7 @@ local function drawNetwork(w,h)
     if connected() then
         local state=client:getGameState()
         InteractionHint.draw(state,w,h)
+        inventoryPanel:draw(state,w,h)
         minimap:draw(state,w,h,live.terrainRenderer)
         local statusText="Conexao: "..client.state..
             " | MapMsg: "..tostring(state and state.map and state.map.mapName or "aguardando")..
