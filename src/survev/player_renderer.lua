@@ -18,6 +18,31 @@ end
 local function drawOrder(obj)
     return obj.downed and "downed" or "fists"
 end
+-- Survev client/src/animData.ts:Animations.fists hand-R keyframes.
+-- This reproduces the visible idle -> punch -> idle pose ONLY. It never
+-- creates a hit, damage, particles or sound without a real game server.
+local function mix(a,b,t) return a+(b-a)*t end
+function Player.fistPose(t)
+    local frames=Metadata.animations and Metadata.animations.fists
+    if not frames or type(t)~="number" or t<0 then return nil end
+    if t>=frames[#frames].time then return nil end
+    local start,finish=frames[1],frames[2]
+    for idx=2,#frames do
+        if t<=frames[idx].time then
+            start,finish=frames[idx-1],frames[idx]
+            break
+        end
+    end
+    local weight=(t-start.time)/(finish.time-start.time)
+    local a,b=start.handR,finish.handR
+    return {
+        pivot={x=mix(a.pivot.x,b.pivot.x,weight),
+            y=mix(a.pivot.y,b.pivot.y,weight)},
+        pos={x=mix(a.pos.x,b.pos.x,weight),
+            y=mix(a.pos.y,b.pos.y,weight)},
+        rot=mix(a.rot,b.rot,weight),
+    }
+end
 local function worldPose(pose,bodyCenter,bodyRotation,bodyScale)
     local boneRot=pose.rot or 0
     local original=V.add(pose.pos,
@@ -92,7 +117,8 @@ function Player:commands(obj,camera,mapName)
         append("handL",outfit.handLAsset,hand,Metadata.sprites.handScale,poses.HandL)
     end
     if poses.HandR then
-        append("handR",outfit.handRAsset,hand,Metadata.sprites.handScale,poses.HandR)
+        local punch=(obj.offlinePreview and Player.fistPose(obj.previewFistTicker)) or nil
+        append("handR",outfit.handRAsset,hand,Metadata.sprites.handScale,punch or poses.HandR)
     end
     return output
 end
