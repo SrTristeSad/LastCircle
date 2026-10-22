@@ -21,6 +21,7 @@ local tile,logo,selected,live,demo,hud,minimap
 local smokeFrames=0
 local screenshotRequested=false
 local equipmentScreenshotRequested=false
+local mapScreenshotRequested=false
 local index=1
 local imageErrors={}
 local sampleFiles={
@@ -229,9 +230,11 @@ function love.update(dt)
             -- Exercise both the original fists and a real AK-47 world sprite
             -- in the same real LÖVE2D/OpenGL test, without fake combat.
             if smokeFrames==9 then assert(demo:equip(4)) end
+            if smokeFrames==16 then minimap:toggleExpanded() end
             if smokeFrames>=25
                 and love.filesystem.getInfo("LastCircle-demo.png")
-                and love.filesystem.getInfo("LastCircle-equipped.png") then
+                and love.filesystem.getInfo("LastCircle-equipped.png")
+                and love.filesystem.getInfo("LastCircle-fullmap.png") then
                 print("LASTCIRCLE_OFFLINE_DEMO_SUCCESS")
                 love.event.quit(0)
             elseif smokeFrames>=120 then
@@ -396,5 +399,10 @@ function love.draw()
         and smokeFrames>=11 and not equipmentScreenshotRequested then
         equipmentScreenshotRequested=true
         love.graphics.captureScreenshot("LastCircle-equipped.png")
+    end
+    if screen=="demo" and os.getenv("LASTCIRCLE_DEMO_SMOKE")=="1"
+        and smokeFrames>=18 and not mapScreenshotRequested then
+        mapScreenshotRequested=true
+        love.graphics.captureScreenshot("LastCircle-fullmap.png")
     end
 end
