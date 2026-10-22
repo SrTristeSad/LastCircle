@@ -7,6 +7,10 @@ on:
     paths:
       - "src/survev/ws_*.lua"
       - "src/survev/network_client.lua"
+      - "src/survev/matchmaking.lua"
+      - "src/survev/json.lua"
+      - "tests/matchmaking_*.lua"
+      - "tests/fixtures/survev_matchmaking_server.py"
       - "src/survev/protocol_session.lua"
       - "src/survev/client_state.lua"
       - "tests/ws_*.lua"
@@ -41,8 +45,12 @@ jobs:
             tests/ws_fixture_server.mjs > /tmp/survev-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true; cat /tmp/survev-server.log' EXIT
+          python3 tests/fixtures/survev_matchmaking_server.py > /tmp/survev-matcher.log 2>&1 &
+          matcher_pid=$!
           sleep 2
           lua5.4 tests/ws_network.lua
+          lua5.4 tests/ws_matchmaking_network.lua
+          kill "$matcher_pid" 2>/dev/null || true
           sleep 1
       - name: Real socket with Survev original TS packets (LuaJIT)
         run: |
@@ -51,6 +59,10 @@ jobs:
             tests/ws_fixture_server.mjs > /tmp/survev-server-jit.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true; cat /tmp/survev-server-jit.log' EXIT
+          python3 tests/fixtures/survev_matchmaking_server.py > /tmp/survev-matcher-jit.log 2>&1 &
+          matcher_pid=$!
           sleep 2
           luajit tests/ws_network.lua
+          luajit tests/ws_matchmaking_network.lua
+          kill "$matcher_pid" 2>/dev/null || true
           sleep 1
