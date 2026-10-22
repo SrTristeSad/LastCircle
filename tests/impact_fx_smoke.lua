@@ -97,7 +97,7 @@ fx:update(state,{trails={}},1.6)
 assert(#fx.particles==0 and #fx.soundEvents==3)
 
 -- Draw original PNGs; no placeholder colored circle.
-local calls={new=0,draw=0,play=0,stop=0}
+local calls={new=0,draw=0,play=0,stop=0,audioNew=0}
 love={filesystem={
     getInfo=function(path)
         return path:match("^assets/survev/img/particles/") or
@@ -121,7 +121,11 @@ love={filesystem={
 },audio={
     newSource=function(path,kind)
         assert(path:match("^assets/survev/audio/hits/") and kind=="static")
+        calls.audioNew=calls.audioNew+1
         local voice={volume=0,playing=false}
+        function voice:clone()
+            return setmetatable({volume=0,playing=false},{__index=self})
+        end
         function voice:setVolume(value)
             assert(value>=0 and value<=1)
             self.volume=value
@@ -149,6 +153,7 @@ assert(visual:playSounds(camera)==0)
 visual:tickSound(.05)
 assert(visual:queueSound("pan_bullet",{x=100,y=200},0))
 assert(visual:playSounds(camera)==1)
+assert(calls.audioNew==1,"upstream MP3 should be decoded and cached once")
 visual.muted=true
 assert(visual:queueSound("pan_bullet",{x=100,y=200},0))
 assert(visual:playSounds(camera)==0 and #visual.soundEvents==0)
@@ -163,4 +168,5 @@ assert(#visual.particles==0 and #visual.soundEvents==0)
 state.offlinePreview=true
 visual:update(state,{trails={}},0)
 assert(#visual.particles==0 and #visual.soundEvents==0)
+assert(calls.stop>=1,"changing match must stop all old impact voices")
 print("Survev source impact particles and original MP3 sound groups passed")
