@@ -10,6 +10,7 @@ local Config=require("src.survev.game_config")
 local Input=require("src.survev.input_msg")
 local LiveInput=require("src.survev.live_input")
 local Network=require("src.survev.network_client")
+local Match=require("src.survev.matchmaking")
 local LiveDebug=require("src.survev.live_debug")
 local OfflineDemo=require("src.survev.offline_demo")
 local Minimap=require("src.survev.minimap")
@@ -21,7 +22,7 @@ local PickupFeedback=require("src.survev.pickup_feedback")
 local EquipmentTracker=require("src.survev.equipment_tracker")
 
 local camera=Camera.new()
-local screen="demo"
+local screen=os.getenv("LASTCIRCLE_DEMO_SMOKE")=="1" and "demo" or "network"
 local tile,logo,selected,live,demo,hud,minimap,inventoryPanel,pickupFeedback,equipmentTracker
 local smokeFrames=0
 local screenshotRequested=false
@@ -39,14 +40,18 @@ local sampleFiles={
     {"loot/loot-medical-healthkit.png","Loot: loot-medical-healthkit.svg"},
     {"gui/crosshair.png","Interface: crosshair.svg"},
 }
--- User supplies matchmaking-provided URL and token. The token never goes to disk.
+-- The original client starts by requesting /api/find_game_v2. Direct
+-- URL+token is retained only as an advanced local-server test option.
 local fields={
-    {label="Servidor WebSocket (ws/wss)",value="",placeholder="ws://127.0.0.1:PORTA/jogo"},
-    {label="Join token fornecido pelo matchmaking",value="",placeholder="Token de entrada",secret=true},
+    {label="URL DA API SURVEV",value="",placeholder="http://127.0.0.1:8000"},
+    {label="WebSocket direto (avancado)",value="",placeholder="ws://127.0.0.1:PORTA/jogo"},
+    {label="Join token direto (avancado)",value="",placeholder="Token real do servidor",secret=true},
     {label="Nome do jogador",value="Jogador Lua",placeholder="Nome"},
-    {label="CA confiavel para wss:// (LuaSec)",value="",placeholder="Caminho do arquivo de certificados",optional=true},
+    {label="CA confiavel para HTTPS/WSS (LuaSec)",value="",placeholder="Arquivo de certificados (opcional em HTTP local)"},
+    {label="Regiao Survev",value="na",placeholder="ID original de regiao, ex.: na"},
 }
 local focus=1
+local gameModeIdx=0
 local client
 local status=""
 local pendingInput=LiveInput.new()
@@ -74,23 +79,54 @@ local function connected()
         or client.state=="finished") and client.connection
         and client.connection.state=="open"
 end
+local function optionsForConnect()
+    local options={timeout=5}
+    if fields[5].value~="" then options.caFile=fields[5].value end
+    return options
+end
 local function setConnection()
-    if fields[1].value=="" then status="Informe o endereco WebSocket real.";return end
-    if fields[2].value=="" then
-        status="Informe um joinToken valido do servidor Survev.";return
+    if fields[2].value=="" or fields[3].value=="" then
+        status="Modo direto exige URL e token REAIS.";return
     end
-    local options={timeout=4}
-    if fields[4].value~="" then options.caFile=fields[4].value end
-    client=Network.new(options)
-    local ok,err=client:connect(fields[1].value,{
-        name=fields[3].value,joinToken=fields[2].value,
+    client=Network.new(optionsForConnect())
+    local ok,err=client:connect(fields[2].value,{
+        name=fields[4].value,joinToken=fields[3].value,
         useTouch=false,isMobile=false,
     })
-    if not ok then status="Falha na conexao: "..tostring(err)
+    if not ok then status="Conexao direta: "..tostring(err)
     else status="WebSocket conectado. Aguardando JoinedMsg..." end
 end
+local function quickPlay()
+    if fields[1].value=="" then
+        status="Informe a URL real da API Survev.";return
+    end
+    status="Consultando /api/find_game_v2..."
+    local options=optionsForConnect()
+    options.region=fields[6].value
+    options.gameModeIdx=gameModeIdx
+    options.zones={}
+    local result,reason=Match.request(fields[1].value,options)
+    if not result then
+        if reason=="invalid_captcha" then
+            status="Este servidor exige Turnstile; login/captcha ainda nao portados."
+        else
+            status="Matchmaking: "..tostring(reason)
+        end
+        return
+    end
+    client=Network.new(options)
+    local connected,where=client:connectMatch(result,{
+        name=fields[4].value,useTouch=false,isMobile=false,
+    })
+    if not connected then
+        status="Falha nos enderecos da partida: "..tostring(where)
+    else
+        status="Conectado a "..tostring(where)..
+            "; aguardando JoinedMsg..."
+    end
+end
 function love.load()
-    love.window.setTitle("LastCircle - Teste Local do Survev Lua")
+    love.window.setTitle("LastCircle - Survev Lua (cliente em desenvolvimento)")
     font=love.graphics.newFont(16)
     love.graphics.setFont(font)
     tile=loadImage("assets/survev/img/intro/map_tile.png")
@@ -184,8 +220,16 @@ function love.keypressed(key)
         return
     end
     if not connected() then
+        if key=="f1" then gameModeIdx=0;return
+        elseif key=="f2" then gameModeIdx=1;return
+        elseif key=="f3" then gameModeIdx=2;return end
         if key=="tab" then focus=focus%#fields+1
-        elseif key=="return" or key=="kpenter" then setConnection()
+        elseif key=="return" or key=="kpenter" then
+            if love.keyboard.isDown("lshift","rshift") then
+                setConnection()
+            else
+                quickPlay()
+            end
         elseif key=="backspace" then fields[focus].value=backspace(fields[focus].value)
         elseif key=="v" and love.keyboard.isDown("lctrl","rctrl") then
             local pasted=love.system.getClipboardText() or ""
@@ -273,7 +317,7 @@ function love.mousepressed(x,y,button)
     local w=love.graphics.getWidth()
     local x0=w/2-300
     for i=1,#fields do
-        local sy=164+(i-1)*74
+        local sy=160+(i-1)*55
         if x>=x0 and x<=x0+600 and y>=sy and y<=sy+39 then
             focus=i
             break
@@ -423,9 +467,9 @@ local function drawNetwork(w,h)
     g.setColor(.03,.07,.07,.92)
     g.rectangle("fill",w/2-355,40,710,80,8)
     g.setColor(.95,.96,.90)
-    g.printf("SURVEV LUA - DIAGNOSTICO DE CONEXAO",0,57,w,"center")
+    g.printf("SURVEV LUA - ENTRAR EM PARTIDA REAL",0,57,w,"center")
     g.setColor(.78,.87,.78)
-    g.printf("F6: Artes originais | ESC: desconectar/voltar",0,88,w,"center")
+    g.printf("ENTER: jogar via API | SHIFT+ENTER: URL e token diretos | F5: ambiente local",0,88,w,"center")
 
     if connected() then
         local state=client:getGameState()
@@ -445,7 +489,7 @@ local function drawNetwork(w,h)
     end
     local x=w/2-300
     for i,field in ipairs(fields) do
-        local y=164+(i-1)*74
+        local y=160+(i-1)*55
         g.setColor(.92,.96,.91)
         g.print(field.label,x,y-24)
         g.setColor(.09,.14,.14,.95)
@@ -461,19 +505,22 @@ local function drawNetwork(w,h)
         g.setScissor()
     end
     g.setColor(.91,.94,.82)
-    g.printf("Clique no campo, digite e pressione ENTER para conectar.",0,485,w,"center")
+    g.printf("F1: modo 0 | F2: modo 1 | F3: modo 2  (modo atual: "..gameModeIdx..")",
+        0,505,w,"center")
     g.setColor(.78,.89,.78)
-    g.printf("URLs/token reais vem do matchmaking. wss:// exige LuaSec e CA confiavel.",
-        0,510,w,"center")
+    g.printf("ENTER: POST /api/find_game_v2 + token e URLs do servidor real",
+        0,528,w,"center")
+    g.printf("HTTPS/WSS: LuaSec e certificado de CA; HTTP/WS so em localhost.",
+        0,550,w,"center")
     if client then
         g.setColor(client.error and {.98,.42,.38} or {.72,.91,.71})
         g.printf("Estado: "..client.state..
-            (client.error and (" | "..client.error) or ""),20,558,w-40,"center")
+            (client.error and (" | "..client.error) or ""),20,592,w-40,"center")
     elseif status~="" then
-        g.setColor(.96,.59,.4);g.printf(status,20,558,w-40,"center")
+        g.setColor(.96,.59,.4);g.printf(status,20,592,w-40,"center")
     end
     g.setColor(.98,.54,.37)
-    g.printf("A interface e de diagnostico. A renderizacao original ainda sera portada.",
+    g.printf("Porte Lua em andamento. Entrar na partida depende do servidor original.",
         0,h-58,w,"center")
 end
 function love.draw()
