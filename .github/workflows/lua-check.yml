@@ -46,6 +46,12 @@ jobs:
         run: |
           lua5.4 scripts/test_results_overlay.lua
           luajit scripts/test_results_overlay.lua
+      - name: Survev InputMsg consumables and PickupMsg feedback
+        run: |
+          lua5.4 tests/live_input_smoke.lua
+          luajit tests/live_input_smoke.lua
+          lua5.4 tests/pickup_feedback_smoke.lua
+          luajit tests/pickup_feedback_smoke.lua
       - name: Headless LÖVE UI bootstrap checks
         run: |
           lua5.4 tests/main_smoke.lua
