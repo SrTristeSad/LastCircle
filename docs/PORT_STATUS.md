@@ -37,6 +37,8 @@ O código original está integralmente espelhado em [referencia-survev](https://
 | `client/src/objects/player.ts` (sprites/equipamento) | `player_renderer.lua`, `live_debug.lua` | **Corpo/mãos/pés, armas de fogo/melee, magazine, coletes, capacetes e mochilas originais**; posições e escalas provenientes de `GameObjectDefs`; disparos/recoil/efeitos ainda pendentes |
 | `client/src/animData.ts` e `outfitDefs.ts` | `player_art.lua` | **90 outfits, 16 poses, 3 quadros do soco**, gerados automaticamente e comparados com o TypeScript original |
 | `client/src/ui/ui2.ts` e `shared/net/updateMsg.ts` | `hud.lua` | **4 espaços de armas reais, vida, 4 segmentos de boost, ammo e reserva a partir de UpdateMsg**; layout LÖVE parcial, sem simular inventário real de servidor |
+| `client/src/objects/loot.ts` e `shared/gameConfig.ts` | `loot_art.lua`, `loot_renderer.lua` | **337 tipos de loot, 232 imagens originais distintas**, sprites/bordas/cor/escala e seleção por raio/camada/dono; posicionamento no zOrd 13 antes do personagem |
+| `client/src/ui/ui2.ts` (inventário e interação) | `inventory_panel.lua`, `interaction_hint.lua`, `offline_demo.lua` | **25 categorias e 5 níveis de capacidade por categoria**, inventário visual expansível I/TAB e simulação offline de coleta limitada a pilhas; valores reais vêm de UpdateMsg |
 | `shared/defs/gameObjects/{gun,melee,gear}Defs.ts` | `equipment_art.lua` | **Imagens e dados autênticos de armas, carregadores e armaduras**, gerados do registro TypeScript fixado e validados em Lua 5.4/LuaJIT |
 | `shared/utils/terrainGen.ts` e `util.seededRand` | `terrain_gen.lua` | Curvas de costa, praia/grama e ground patches: pontos comparados com original em Lua 5.4 e LuaJIT |
 | `shared/utils/spline.ts` | `spline.lua` | Splines Catmull–Rom, normais, comprimentos e proximidade, testados contra fonte original |
@@ -73,7 +75,7 @@ Ainda faltam matchmaking oficial, camadas subterrâneas/máscaras PIXI, animaç�
 1. **Matchmaking/API:** obter endereço e `joinToken` da API original e testar a sessão com um servidor Survev de verdade. `ws://` local já funciona; `wss://` exige LuaSec e CA confiável. O teste atual é contra servidor local que emite pacotes do TS original.
 2. **Mapa e edifícios:** costa, rios, biomas, pisos/tetos, **raios de visibilidade contra paredes** e **portas animadas visualmente** estão portados. Faltam compor as quatro camadas com máscaras, interação real de portas, física/colisão funcional e sons de pisos.
 3. **Personagens:** sprites básicos do corpo, mãos, roupas e armas já são desenhados; faltam animações completas, loot, disparo, feedback de combate e efeitos. O estado de entidades recebido pelo servidor já pode ser mantido.
-4. **Interface:** HUD básico e minimapa de objetos do Survev estão portados, inclusive ampliação e indicador de portas. Faltam o layout final, inventário expansível, loot, menus, tela de morte/resultado, controles mobile, áudio e partículas.
+4. **Interface:** HUD, minimapa, indicador de portas, loot no chão e inventário expansível de 25 categorias já estão implementados. Faltam coleta/equipagem completas em partida real, layout final PIXI/CSS, menus, tela de morte/resultado, controles mobile, áudio e partículas.
 5. **Integração:** testar entrada na partida, renderização e movimento, dano, troca de arma e saída, com servidor multiplayer original.
 
 **O `UpdateMsg` e a camada WebSocket possuem testes aprovados; os bloqueadores principais agora são matchmaking real, renderização completa e teste ponta a ponta em partida.**
