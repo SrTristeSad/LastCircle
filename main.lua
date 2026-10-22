@@ -229,6 +229,22 @@ function love.mousepressed(x,y,button)
             -- Clicking UI never fires a gun or issues an unbound world action.
             return
         end
+        if button==2 then
+            local width,height=love.graphics.getDimensions()
+            local target=Hud.hitTest(client:getGameState(),width,height,x,y)
+            if target then
+                local packet,reason
+                if target.kind=="weapon" then
+                    packet,reason=client:dropWeaponSlot(target.slot)
+                elseif target.kind=="armor" then
+                    packet,reason=client:dropArmor(target.field)
+                end
+                hud:flash(packet and
+                    ("Descarte solicitado: "..target.name)
+                    or ("Nao enviado: "..tostring(reason)))
+                return
+            end
+        end
         if button==1 then fireStart=true end
         return
     end
@@ -245,6 +261,7 @@ end
 local atan2=math.atan2 or math.atan
 function love.update(dt)
     inventoryPanel:update(dt)
+    hud:update(dt)
     if screen=="demo" then
         local state=demo:getGameState()
         local player=state.objects[state.activeId]
