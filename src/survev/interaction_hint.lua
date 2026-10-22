@@ -8,6 +8,8 @@ local Shapes=require("src.survev.building_surfaces")
 local Geometry=require("src.survev.los_geometry")
 local Type=require("src.survev.object_serialize_fns").Type
 local Hint={}
+local Loot=require("src.survev.loot_renderer")
+local LootDefs=require("src.survev.loot_art")
 function Hint.scan(state)
     if not state or not state.objects then return nil end
     local player=state.objects[state.activeId]
@@ -40,13 +42,37 @@ function Hint.scan(state)
             end
         end
     end
+    -- UiManager2 selects loot after objects, so it supersedes the door
+    -- prompt when in reach. This does not collect anything on the client.
+    local ground=Loot.nearest(state)
+    if ground then
+        local data=ground.def
+        local actor=state.objects[state.activeId]
+        local d=state.localData or {}
+        local slots=d.weapons or {}
+        local fullGuns=(slots[1] and slots[1].type~="") and
+            (slots[2] and slots[2].type~="")
+        local activeGun=actor and actor.activeWeapon and
+            LootDefs.loot[actor.activeWeapon] and
+            LootDefs.loot[actor.activeWeapon].type=="gun"
+        local usable=data.type~="gun" or not fullGuns or activeGun
+        if state.offlinePreview and not LootDefs.bagSizes[ground.object.type] then
+            usable=false -- show gear only; no fake server pickup.
+        end
+        return {
+            id=ground.id,obj=ground.object,type=ground.object.type,
+            action=data.name..(ground.object.count>1 and
+                (" ("..ground.object.count..")") or ""),
+            key="F",usable=not not usable,kind="loot",
+        }
+    end
     return best
 end
 function Hint.draw(state,width,height)
     local target=Hint.scan(state)
     if not target then return false end
     local g=love.graphics
-    local w=210
+    local w=270
     local x=(width-w)*.5
     local y=height-225
     g.setColor(.035,.095,.10,.90)
@@ -54,8 +80,11 @@ function Hint.draw(state,width,height)
     g.setColor(target.usable and {.93,.84,.49} or {.89,.51,.47})
     g.rectangle("line",x+.5,y+.5,w-1,38,8,8)
     g.setColor(1,1,1,.96)
-    g.printf(target.usable and "F   "..target.action or "Porta trancada",
-        x,y+9,w,"center")
+    local label=target.kind=="loot" and
+        (target.usable and ("F   Coletar: "..target.action)
+            or ("Item: "..target.action.." (visual)")) or
+        (target.usable and "F   "..target.action or "Porta trancada")
+    g.printf(label,x,y+9,w,"center")
     g.setColor(1,1,1,1)
     return true
 end
