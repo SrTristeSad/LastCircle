@@ -64,7 +64,10 @@ jobs:
           find "$XDG_DATA_HOME" -name 'LastCircle-demo.png' -size +10k \
             -exec cp {} LastCircle-preview.png \; -quit
           test -s LastCircle-preview.png
-          echo 'PASS: real LÖVE generated the offline Survev scene and screenshot'
+          find "$XDG_DATA_HOME" -name 'LastCircle-equipped.png' -size +10k \
+            -exec cp {} LastCircle-equipped-preview.png \; -quit
+          test -s LastCircle-equipped-preview.png
+          echo 'PASS: real LÖVE generated original equipment and default Survev scenes'
       - name: Gerar ZIP para Windows com um clique
         run: |
           python3 - <<'PY'
@@ -75,6 +78,7 @@ jobs:
               Path("TESTAR-LASTCIRCLE-WINDOWS.bat"),
               Path("COMO-TESTAR.txt"),
               Path("LastCircle-preview.png"),
+              Path("LastCircle-equipped-preview.png"),
               Path("LICENSE"),
               Path("ATTRIBUTION-SURVEV.txt"),
           ]
@@ -98,7 +102,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: LastCircle-Preview
-          path: LastCircle-preview.png
+          path: |
+            LastCircle-preview.png
+            LastCircle-equipped-preview.png
           if-no-files-found: warn
           retention-days: 14
       - name: Disponibilizar pacote de testes
