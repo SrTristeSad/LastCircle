@@ -152,8 +152,9 @@ function Fx:update(state,trails,dt)
             bullet.impactFxSent=true
             local part,snd,obj=validImpact(state,bullet)
             if part and Source[part] then
-                local dir={x=-(bullet.dir.x or 0),
-                    y=-(bullet.dir.y or 0)}
+                local dir=bullet.impactNormal or
+                    {x=-(bullet.dir.x or 0),
+                     y=-(bullet.dir.y or 0)}
                 self:emit(part,bullet.pos,dir,bullet.layer)
             end
             if snd and snd~="none" then
