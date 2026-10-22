@@ -21,14 +21,15 @@ assert(state.localData.health==100)
 assert(d:punch(),"mouse click must start source fist animation")
 assert(not d:punch(),"animation must not restart every frame")
 assert(state.objects[1].previewFistTicker==0)
-d:update(.1,0,0)
+d:update(.05,0,0)
+d:update(.05,0,0)
 assert(math.abs(state.objects[1].previewFistTicker-.1)<1e-9)
 assert(state.localData.health==100,"animation must not invent damage")
-d:update(.16,0,0)
+for i=1,4 do d:update(.05,0,0) end
 assert(state.objects[1].previewFistTicker==nil,
     "animation must finish at upstream fists cooldown 0.25 seconds")
 assert(d:punch(),"punch may restart once original cooldown ends")
-d:update(.3,0,0)
+for i=1,6 do d:update(.05,0,0) end
 assert(state.objects[1].previewFistTicker==nil)
 
 assert(state.objects[10].__type==Obj.Building and Buildings.shack_01)
