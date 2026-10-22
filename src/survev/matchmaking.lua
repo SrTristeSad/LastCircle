@@ -113,8 +113,14 @@ local function httpSend(url,body,opts,method)
     return table.concat(chunks),tonumber(status),statusLine or headers
 end
 local function prepareBase(base,options)
-    local url,baseError=prepareBase(base,options)
-    if not url then return nil,baseError end
+    local ok,url,scheme,host=pcall(cleanBase,base)
+    if not ok then return nil,tostring(url) end
+    if scheme=="http" and not options.allowInsecure and not
+        (host=="localhost" or host:match("^localhost:%d+$")
+        or host=="127.0.0.1" or host:match("^127%.0%.0%.1:%d+$")
+        or host=="[::1]" or host:match("^%[::1%]:%d+$")) then
+        return nil,"Remote API requires HTTPS (HTTP only for localhost)"
+    end
     return url
 end
 function Match.siteInfo(base,options,sender)
@@ -148,14 +154,8 @@ function Match.siteInfo(base,options,sender)
 end
 function Match.request(base,options,sender)
     options=options or {}
-    local ok,url,scheme,host=pcall(cleanBase,base)
-    if not ok then return nil,tostring(url) end
-    if scheme=="http" and not options.allowInsecure and not
-        (host=="localhost" or host:match("^localhost:%d+$")
-        or host=="127.0.0.1" or host:match("^127%.0%.0%.1:%d+$")
-        or host=="[::1]" or host:match("^%[::1%]:%d+$")) then
-        return nil,"Remote API requires HTTPS (HTTP only for localhost)"
-    end
+    local url,baseError=prepareBase(base,options)
+    if not url then return nil,baseError end
     local bodyOk,body=pcall(Match.buildBody,
         options.region or "na",options.gameModeIdx or 0,
         options.zones or {},options.turnstileToken)
