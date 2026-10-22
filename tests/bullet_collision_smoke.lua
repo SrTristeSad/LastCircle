@@ -86,6 +86,29 @@ single[8].isSkin=false
 single[8].layer=1
 assert(not C.firstHit(C.snapshot(single,ignored),bullet,start,finish))
 
+-- Broad-phase culling must never change the near collision result.
+-- Hundreds of distant obstacles are deliberately present.
+local registry={near_wall={
+    collision={type=1,min={x=-.3,y=0},max={x=.3,y=4}},
+    height=10,collidable=true,
+},far_wall={
+    collision={type=0,pos={x=0,y=0},rad=1},
+    height=10,collidable=true,
+}}
+local crowded={
+    [3]={__type=Types.Obstacle,__id=3,type="near_wall",
+        pos={x=6,y=0},ori=0,scale=1,layer=0}
+}
+for i=4,250 do
+    crowded[i]={__type=Types.Obstacle,__id=i,type="far_wall",
+        pos={x=50+i,y=1000+i},ori=0,scale=1,layer=0}
+end
+local crowdedHit=assert(C.firstHit(C.snapshot(crowded,registry),
+    bullet,start,finish))
+assert(crowdedHit.kind=="obstacle" and crowdedHit.id==3)
+near(crowdedHit.point.x,5.7,"broad phase must not skip near wall")
+-- The near-axis delta used by the original segment algorithm is tiny,
+-- so the conservative sweep may not discard a grazing geometry.
 -- Integrate with the exact UpdateMsg-driven BulletTrails port.
 local state=State.new()
 state:applyMessage(Net.MsgType.Joined,{teamMode=1,playerId=1,started=true})
