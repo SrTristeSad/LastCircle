@@ -121,6 +121,7 @@ function Trails:update(state,dt)
                 bullet.collided=true
                 bullet.impactKind=hit.kind
                 bullet.impactId=hit.id
+                bullet.impactNormal=hit.normal
             else
                 bullet.traveled=bullet.traveled+travel
                 bullet.pos.x,bullet.pos.y=finish.x,finish.y
