@@ -75,11 +75,13 @@ function Fx:emit(kind,pos,normal,layer,parent)
     -- whose position follows the actor but does NOT rotate with the body.
     -- Local pixel offset uses camera.m_ppu, then inherits camera.m_zoom.
     local localPx=nil
+    local localWorld=nil
     if parent and parent.pos and parent.__id then
-        localPx={
-            x=(pos.x-parent.pos.x)*16,
-            y=(parent.pos.y-pos.y)*16,
+        localWorld={
+            x=pos.x-parent.pos.x,
+            y=parent.pos.y-pos.y,
         }
+        localPx={x=localWorld.x*16,y=localWorld.y*16}
     end
     local rotVel=sample(def.rotVel)
     local drag=sample(def.drag)
@@ -88,7 +90,7 @@ function Fx:emit(kind,pos,normal,layer,parent)
         kind=kind,image=img,
         pos={x=pos.x,y=pos.y},
         parentId=localPx and parent.__id or nil,
-        localPx=localPx,
+        localPx=localPx,localWorld=localWorld,
         vel={x=(velocity.x*cs-velocity.y*sn)*9.5,
              y=(velocity.x*sn+velocity.y*cs)*9.5},
         layer=layer or 0,
@@ -192,7 +194,11 @@ function Fx:update(state,trails,dt)
                     bullet.impactKind=="player" and obj or nil)
             end
             if snd and snd~="none" then
-                self:queueSound(snd,bullet.pos,bullet.layer)
+                -- The upstream client plays player_bullet_hit at the
+                -- actor's position, not at the blood-splat child offset.
+                local soundPos=(bullet.impactKind=="player"
+                    and obj.pos) or bullet.pos
+                self:queueSound(snd,soundPos,obj.layer or bullet.layer)
             end
         end
     end
@@ -205,10 +211,10 @@ function Fx:project(p,camera,objects)
         local actor=objects and objects[p.parentId]
         if not actor or actor.dead or not actor.pos then return nil end
         local center=camera:m_pointToScreen(actor.pos)
-        local zoom=camera:m_pixels(1)
+        local pixels=camera:m_z()
         return {
-            x=center.x+p.localPx.x*zoom,
-            y=center.y+p.localPx.y*zoom,
+            x=center.x+p.localWorld.x*pixels,
+            y=center.y+p.localWorld.y*pixels,
         }
     end
     return camera:m_pointToScreen(p.pos)
