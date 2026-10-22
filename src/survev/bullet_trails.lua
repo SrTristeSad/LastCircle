@@ -125,6 +125,9 @@ function Trails:update(state,dt)
                 bullet.traveled=bullet.traveled+travel
                 bullet.pos.x,bullet.pos.y=finish.x,finish.y
             end
+            -- Original BulletBarn tests structure stairs/masks after hit
+            -- clipping, promoting the tracer to the mixed stair layer.
+            Collision.updateLayer(self.colliders,bullet,start,bullet.pos)
             if bullet.suppressed and bullet.alphaRate then
                 bullet.alpha=math.max(
                     bullet.alphaMin,bullet.alpha*bullet.alphaRate)
