@@ -109,6 +109,19 @@ end
 local function contains(px,py,x,y,w,h)
     return px>=x and px<x+w and py>=y and py<y+h
 end
+-- HUD surfaces must consume mouse clicks even on empty weapon slots,
+-- equipment labels and health/boost gauges. UI clicks never fire a weapon.
+function HUD.containsUi(state,w,h,px,py)
+    if not HUD.project(state) then return false end
+    local bx=math.max(8,w-355)
+    local by=math.max(105,h-343)
+    if contains(px,py,bx,by,343,153) or
+        contains(px,py,bx,by-23,343,23) then return true end
+    local gaugeX=math.max(14,w*.5-182)
+    local gaugeY=math.max(100,h-260)
+    local gaugeW=math.min(364,w-28)
+    return contains(px,py,gaugeX,gaugeY,gaugeW,83)
+end
 -- Only the original weapon slots and currently equipped helmet/chest
 -- can be selected for a live server DropItemMsg. Bag rows use their own UI.
 function HUD.slotAt(state,w,h,px,py)
