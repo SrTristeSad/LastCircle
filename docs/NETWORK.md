@@ -91,4 +91,6 @@ O HUD/mundo **F6** utiliza eventos de disparo `shotFx` recebidos do servidor, n�
 
 O mundo em **F6** desenha rastros de projeteis vindos de `UpdateMsg.bullets`, em cima dos personagens. A aparencia vem da arte original `player-bullet-trail-02` e das definicoes originais de 63 balas, com velocidade, alcance, cor e largura. Disparos nao sao criados pelo clique local. Mensagens WebSocket recebidas no mesmo quadro nao sao perdidas: os rastros sao armazenados em uma fila de no maximo 512 eventos.
 
-**Ainda pendente:** colisoes visuais com obstaculos e jogadores, ricochete e efeitos de impacto, flares, acoes sonoras, cores especificas de biomas e validacao end-to-end. Sem essas colisões a parte visual pode atravessar paredes, o que nao indica que o servidor aceitou um acerto.
+**Portado parcialmente:** rastros param visualmente ao atravessar colliders solidos de portas, paredes e jogadores conhecidos por UpdateMsg. Isso nao comprova um acerto real nem gera dano. **Ainda pendente:** colisao completa com escadas/mascaras e frigideira, ricochetes criados visualmente, particulas/sons de impacto, flares, cores especificas de biomas e validacao ponta a ponta.
+
+As intersecoes sao verificadas apenas contra geometrias reconhecidas no estado do servidor; objetos sem definicao visual/colisao, camadas especiais e situacoes de porta/estrutura ainda nao representadas podem produzir divergencias. A fase de detecao descartará objetos fora da caixa envolvente do trajeto para reduzir custo de CPU.
