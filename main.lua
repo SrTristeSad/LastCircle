@@ -52,6 +52,7 @@ local fields={
 }
 local focus=1
 local gameModeIdx=0
+local showDebug=false
 local client
 local status=""
 local pendingInput=LiveInput.new()
@@ -160,6 +161,7 @@ local function backspace(str)
     return str:sub(1,-2)
 end
 function love.keypressed(key)
+    if key=="f8" then showDebug=not showDebug;return end
     if (screen=="demo" or (screen=="network" and connected())) and
         (key=="i" or key=="tab") then
         inventoryPanel:toggle()
@@ -459,18 +461,11 @@ end
 local function drawNetwork(w,h)
     local g=love.graphics
     if client and client:getGameState() and client:getGameState().map then
-        live:draw(client:getGameState(),w,h)
+        live:draw(client:getGameState(),w,h,showDebug)
         hud:draw(client:getGameState(),w,h)
     else
         g.clear(.13,.17,.16)
     end
-    g.setColor(.03,.07,.07,.92)
-    g.rectangle("fill",w/2-355,40,710,80,8)
-    g.setColor(.95,.96,.90)
-    g.printf("SURVEV LUA - ENTRAR EM PARTIDA REAL",0,57,w,"center")
-    g.setColor(.78,.87,.78)
-    g.printf("ENTER: jogar via API | SHIFT+ENTER: URL e token diretos | F5: ambiente local",0,88,w,"center")
-
     if connected() then
         local state=client:getGameState()
         InteractionHint.draw(state,w,h)
@@ -482,11 +477,19 @@ local function drawNetwork(w,h)
         local statusText="Conexao: "..client.state..
             " | MapMsg: "..tostring(state and state.map and state.map.mapName or "aguardando")..
             " | Atualizacoes: "..tostring(state and state.updateCount or 0)
-        g.setColor(.95,.97,.87)
-        g.printf(statusText,0,128,w,"center")
-        g.printf("WASD / mouse: envia InputMsg original; servidor e autoridade.",0,h-88,w,"center")
+        if showDebug then
+            g.setColor(.95,.97,.87)
+            g.printf(statusText,0,128,w,"center")
+            g.printf("WASD / mouse: envia InputMsg original; servidor e autoridade.",0,h-88,w,"center")
+        end
         return
     end
+    g.setColor(.03,.07,.07,.92)
+    g.rectangle("fill",w/2-355,40,710,80,8)
+    g.setColor(.95,.96,.90)
+    g.printf("SURVEV LUA - ENTRAR EM PARTIDA REAL",0,57,w,"center")
+    g.setColor(.78,.87,.78)
+    g.printf("ENTER: jogar via API | SHIFT+ENTER: URL e token diretos | F5: ambiente local",0,88,w,"center")
     local x=w/2-300
     for i,field in ipairs(fields) do
         local y=160+(i-1)*55
