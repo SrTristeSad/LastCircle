@@ -129,7 +129,10 @@ function Art:draw(objects,camera,width,height,mapName,part,activePlayer)
             local accepted=(part=="stairsOverlay" and order.high)
                 or (part~="stairsOverlay" and
                     not order.high and inStratum(order.z,part))
-            if ok and accepted then
+            -- The original sprite becomes invisible when a dead object
+            -- has no residue; never draw a diagnostic placeholder for it.
+            if ok and accepted and
+                (not meta or selectTexture(meta,obj)~=nil) then
                 visible[#visible+1]={
                     obj=obj,meta=meta,pt=pt,
                     z=order.z,zIdx=order.zIdx,
@@ -161,7 +164,7 @@ function Art:draw(objects,camera,width,height,mapName,part,activePlayer)
             local offset=meta.randomRotation and math.rad((obj.__id or 0)%360) or 0
             local anchor=meta.doorAnchor or {x=.5,y=.5}
             local r,g,b=rgb(adjustTint(meta.tint,mapName))
-            graphics.setColor(r,g,b,meta.alpha or 1)
+            graphics.setColor(r,g,b,obj.dead and .75 or (meta.alpha or 1))
             graphics.draw(sprite,pt.x,pt.y,-originalRotation+offset,
                 screenScale*flipX,screenScale*flipY,
                 iw*anchor.x,ih*anchor.y)
