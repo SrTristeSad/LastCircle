@@ -32,6 +32,12 @@ jobs:
         run: |
           lua5.4 tests/hud_smoke.lua
           luajit tests/hud_smoke.lua
+      - name: Source Survev minimap and interaction prompt
+        run: |
+          lua5.4 tests/minimap_smoke.lua
+          luajit tests/minimap_smoke.lua
+          lua5.4 tests/interaction_hint.lua
+          luajit tests/interaction_hint.lua
       - name: Headless LÖVE UI bootstrap checks
         run: |
           lua5.4 tests/main_smoke.lua
