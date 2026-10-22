@@ -77,3 +77,10 @@ NOVO: INVENTARIO MULTIPLAYER (SOMENTE SE CONECTADO AO SURVEV)
   cliques nao efetuam disparos.
 - Teclas 7/8/9/0: usar bandagem/kit/soda/analgesico via InputMsg.useItem.
 - Servidores ainda nao testados com partida multiplayer completa.
+
+CONTROLES DO HUD MULTIPLAYER (F6, apos entrar na partida)
+- Clique ESQUERDO em um slot de arma: envia selecao de equipamento.
+- Clique DIREITO em uma arma real ou no nome do capacete/colete:
+  solicita descarte via DropItemMsg.
+- Mochila, punhos e slots vazios nao sao descartados.
+- O inventario e a arma equipada so mudam apos UpdateMsg do servidor.
