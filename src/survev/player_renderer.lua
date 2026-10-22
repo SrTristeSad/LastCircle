@@ -4,6 +4,7 @@
 -- Does not pretend to implement weapons, recoil, full action animations,
 -- armour, particles, water submersion or final PIXI render-layer sorting.
 local Metadata=require("src.survev.player_art")
+local Equipment=require("src.survev.equipment_art")
 local Config=require("src.survev.game_config")
 local Palettes=require("src.survev.map_colors")
 local V=require("src.survev.v2")
@@ -15,8 +16,22 @@ local function color(color)
         math.floor(color/256)%256/255,
         color%256/255
 end
-local function drawOrder(obj)
-    return obj.downed and "downed" or "fists"
+-- Source client/src/objects/player.ts:selectIdlePose.
+function Player.poseFor(obj)
+    if obj.downed then return "downed" end
+    local item=Equipment.weapons[obj.activeWeapon or "fists"]
+    if not item then return "fists" end
+    if item.idlePose and Metadata.idlePoses[item.idlePose] then
+        return item.idlePose
+    end
+    if item.type=="gun" then
+        if item.pistol then return item.isDual and "dualPistol" or "pistol" end
+        if item.isBullpup then return "bullpup" end
+        if item.isLauncher then return "launcher" end
+        if item.isMinigun then return "minigun" end
+        return item.isDual and "dualRifle" or "rifle"
+    end
+    return "fists"
 end
 -- Survev client/src/animData.ts:Animations.fists hand-R keyframes.
 -- This reproduces the visible idle -> punch -> idle pose ONLY. It never
@@ -83,7 +98,7 @@ function Player:commands(obj,camera,mapName)
     local center=camera:m_pointToScreen(obj.pos)
     -- Original player.ts: camera.m_pixels(1) * (m_bodyRad / player.radius).
     local bodyScale=camera:m_pixels(1)*(obj.scale or 1)/Config.player.radius
-    local poses=assert(Metadata.idlePoses[drawOrder(obj)])
+    local poses=assert(Metadata.idlePoses[Player.poseFor(obj)])
     local palette=Palettes[mapName or "main"]
     local ghillieColor=palette and palette.colors.playerGhillie
     local primary=outfit.ghillie and ghillieColor or outfit.baseTint
