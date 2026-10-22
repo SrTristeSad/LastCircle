@@ -49,7 +49,6 @@ function Demo.new()
         teamMode=Config.TeamMode.Solo,playerId=1,started=true,emotes={}
     })
     local map=dummyMap()
-    state:applyMessage(Net.MsgType.Map,map)
     local spawn={x=355,y=321}
     local units={
         -- The sprite names, original image scales and rotations are looked
@@ -105,6 +104,7 @@ function Demo.new()
             pos=V.copy(entity.pos),ori=entity.ori,scale=1,type=entity.type
         }
     end
+    state:applyMessage(Net.MsgType.Map,map)
     state:applyMessage(Net.MsgType.Update,{
         ack=0,activePlayerIdDirty=true,activePlayerId=1,
         fullObjects=all,
@@ -211,14 +211,10 @@ function Demo:interact()
     self.state:applyMessage(Net.MsgType.Update,{
         ack=0,
         partObjects={{__type=Obj.Obstacle,__id=best.__id,
-            pos=newPos,ori=newOri}},
-        fullObjects={},
+            pos=newPos,ori=newOri,door=copyDoor}},
     })
-    -- Full metadata is authoritative in real UpdateMsg; this is only
-    -- a local sandbox change, so apply the door's source-equivalent state.
-    best=self.state.objects[best.__id]
-    best.door=copyDoor
-    self.state.updateCount=self.state.updateCount+1
+    -- The local-only state update reproduces the source toggleDoor
+    -- behavior but is never represented as a server packet.
     self.interactions=self.interactions+1
     self.message=opening and "Porta de teste aberta." or "Porta de teste fechada."
     return true
