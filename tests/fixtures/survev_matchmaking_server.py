@@ -23,7 +23,7 @@ class Handler(BaseHTTPRequestHandler):
             }, body
             payload = json.dumps({
                 "type": "success",
-                "res": {"urls": ["ws://127.0.0.1:17984/play"],
+                "res": {"urls": ["ws://127.0.0.1:19998/relay?test=1"],
                         "joinToken": "AUTHENTIC-FIXTURE-TOKEN"},
             }).encode()
             self.send_response(200)
