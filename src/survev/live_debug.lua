@@ -120,10 +120,9 @@ function V:draw(state,w,h)
         local label=state.offlinePreview and "Posicao simulada local" or "Posicao recebida"
         g.print(string.format("%s: %.2f, %.2f",label,active.pos.x,active.pos.y),18,54)
     end
-    g.setColor(.98,.57,.38)
-    local warning=state.offlinePreview and
-        "TESTE OFFLINE: movimento simulado; combate, inventario e partida real pendentes"
-        or self.warning
-    g.printf(warning,0,h-30,w,"center")
+    if not state.offlinePreview then
+        g.setColor(.98,.57,.38)
+        g.printf(self.warning,0,h-30,w,"center")
+    end
 end
 return V
