@@ -10,6 +10,7 @@ on:
       - "scripts/prepare_assets.py"
       - "TESTAR-LASTCIRCLE-WINDOWS.bat"
       - "COMO-TESTAR.txt"
+      - "README.md"
       - ".github/workflows/build-love.yml"
   workflow_dispatch:
 
