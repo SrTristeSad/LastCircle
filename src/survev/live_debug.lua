@@ -7,6 +7,7 @@ local MapRenderer=require("src.survev.map_renderer")
 local ObstacleArt=require("src.survev.obstacle_art_renderer")
 local BuildingArt=require("src.survev.building_renderer")
 local PlayerArt=require("src.survev.player_renderer")
+local PlayerAnimation=require("src.survev.player_animation")
 local LootArt=require("src.survev.loot_renderer")
 local V={}
 V.__index=V
@@ -21,6 +22,7 @@ function V.new()
     return setmetatable({
         camera=Camera.new(),
         players=PlayerArt.new(),
+        playerAnimations=PlayerAnimation.new(),
         lootArt=LootArt.new(),
         terrainMap=nil,terrainRenderer=nil,obstacleArt=ObstacleArt.new(),
         buildingArt=BuildingArt.new(),
@@ -28,6 +30,7 @@ function V.new()
     },V)
 end
 function V:update(state,dt)
+    self.playerAnimations:update(state,dt)
     if not state or not state.objects then return end
     if self.lastUpdateMap~=state.map then
         self.lastUpdateMap=state.map
@@ -86,7 +89,8 @@ function V:draw(state,w,h)
                 if obj.__type==Objects.Type.Player then
                     -- The player now uses source-sized body and TWO actual
                     -- fist-pose hand sprites, not a stretched debug texture.
-                    local rendered=self.players:draw(obj,cam,map.mapName)
+                    local pose=self.playerAnimations:poseFor(obj)
+                    local rendered=self.players:draw(obj,cam,map.mapName,pose)
                     if rendered==0 then
                         g.setColor(.96,.93,.75)
                         g.circle("line",pt.x,pt.y,cam:m_z())
