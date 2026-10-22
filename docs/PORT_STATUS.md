@@ -97,3 +97,10 @@ A tela de resultados agora le `GameOverMsg.playerStats` para mostrar por jogador
 ### Controles de rede (2026-10-22)
 
 `main.lua` encaminha rolagem da roda do mouse aos IDs originais `EquipPrevWeap` e `EquipNextWeap` apenas durante a conexao de jogo. A fila de ações enviadas respeita o limite de sete entradas do `InputMsg` e elimina duplicatas. Trocas de modo e `GameOverMsg` limpam entradas pendentes para evitar comandos atrasados. O teste de inicializacao `tests/main_smoke.lua` exercita os callbacks sem servidor. **Nao validado contra uma partida multiplayer real.**
+
+### InputMsg e confirmacao de coleta (2026-10-22)
+
+* A referencia Survev `client/src/game.ts` envia atalhos de cura por `InputMsg.useItem`, e nao como entradas `Input.UseBandage` etc. `src/survev/live_input.lua` corrige a transmissao de `7` (bandage), `8` (healthkit), `9` (soda) e `0` (painkiller), mantendo limite de 7 acoes distintas por pacote, F/Interact, cancelar, trocar arma e rodinha do mouse.
+* O estado de rede numera respostas `PickupMsg` recebidas do servidor (`pickupSeq`); `pickup_feedback.lua` apresenta por tres segundos os seis avisos de falha definidos no `client/src/ui/ui2.ts`. `PickupMsgType.Success` nao inventa um item no inventario nem exibe sucesso grafico falso: a atualizacao de inventario deve vir de `UpdateMsg`.
+* `tests/live_input_smoke.lua` verifica serializacao binaria de InputMsg com `useItem`; `tests/pickup_feedback_smoke.lua` verifica avisos, expiração, reset e ausencia de coleta otimista. `lua-check.yml` testa os dois scripts em Lua 5.4 e LuaJIT.
+* Pendencias: captura de uma partida multiplayer real, efeitos sonoros de coleta, outras interacoes (reviver/usar objetos) e equipamentos finais. Os resultados locais e a CI nao comprovam compatibilidade completa com servidores publicos.
