@@ -54,7 +54,7 @@ function Recoil:update(state,dt)
             local world=def and def.world
             local amount=world and world.recoil
             if obj and obj.__type==Types.Player and not obj.dead
-                and def.type=="gun" and type(amount)=="number"
+                and def and def.type=="gun" and type(amount)=="number"
                 and amount>0 then
                 local value=self.hands[shot.playerId]
                 if not value then
