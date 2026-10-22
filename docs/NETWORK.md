@@ -91,6 +91,11 @@ O HUD/mundo **F6** utiliza eventos de disparo `shotFx` recebidos do servidor, n�
 
 O mundo em **F6** desenha rastros de projeteis vindos de `UpdateMsg.bullets`, em cima dos personagens. A aparencia vem da arte original `player-bullet-trail-02` e das definicoes originais de 63 balas, com velocidade, alcance, cor e largura. Disparos nao sao criados pelo clique local. Mensagens WebSocket recebidas no mesmo quadro nao sao perdidas: os rastros sao armazenados em uma fila de no maximo 512 eventos.
 
-**Portado parcialmente:** rastros param visualmente ao atravessar colliders solidos de portas, paredes e jogadores conhecidos por UpdateMsg. Isso nao comprova um acerto real nem gera dano. **Ainda pendente:** colisao completa com escadas/mascaras e frigideira, ricochetes criados visualmente, particulas/sons de impacto, flares, cores especificas de biomas e validacao ponta a ponta.
+**Portado parcialmente:** rastros param visualmente em obstaculos, jogadores e superfícies de frigideira, e trocam a camada visual em escadas que nao sao exclusivas para loot, desde que nao atravessem mascaras. Isso nao comprova acerto real nem gera dano. **Ainda pendente:** reflexoes que geram novos projeteis, outros efeitos especiais, particulas/sons de impacto, flares, cores de biomas e validacao ponta a ponta.
 
 As intersecoes sao verificadas apenas contra geometrias reconhecidas no estado do servidor; objetos sem definicao visual/colisao, camadas especiais e situacoes de porta/estrutura ainda nao representadas podem produzir divergencias. A fase de detecao descartará objetos fora da caixa envolvente do trajeto para reduzir custo de CPU.
+
+
+### Colisao da frigideira e transicao de escadas
+
+Ao receber `UpdateMsg` contendo um jogador com frigideira, o cliente testa os segmentos exatos de reflexao, diferentes para o item equipado ou na cintura. A animacao de ataque da frigideira desativa a sua defesa quando nao estiver guardada. Em estruturas, os colliders de escadas e mascaras foram gerados do `StructureDefs` original, e as escadas `lootOnly` nao mudam a camada da bala. **Nao existe fisica de ricochete autoritativa no cliente**: essas operacoes so alteram os rastros locais. Testes: `tests/pan_collision_smoke.lua` e `tests/structure_layer_smoke.lua`.
