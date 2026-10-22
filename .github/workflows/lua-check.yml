@@ -88,6 +88,10 @@ jobs:
         run: |
           lua5.4 tests/bullet_collision_smoke.lua
           luajit tests/bullet_collision_smoke.lua
+      - name: Survev obstacle, player and pan impact particles and original hit audio
+        run: |
+          lua5.4 tests/impact_fx_smoke.lua
+          luajit tests/impact_fx_smoke.lua
       - name: Source-authoritative reload and item action HUD progress
         run: |
           lua5.4 tests/action_progress_smoke.lua
