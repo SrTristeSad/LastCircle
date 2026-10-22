@@ -81,3 +81,7 @@ No modo de rede, o **clique esquerdo** em um slot de arma conhecido (inclusive o
 O renderizador de rede agora processa `animSeq`/`animType` do próprio jogador e usa quadros originais para golpes de **punhos** e **frigideira**. Essas animações não simulam acerto nem dano. Outras animações de combate ainda usam a pose de espera.
 
 O HUD apresenta o tempo de **recarga**, **uso de itens** e **reviver** se a atualização completa do jogador informar `actionType`/`actionItem` e o servidor enviar `activePlayerData.action.time/duration`. Não há contador local sem dados do servidor. O indicador é uma adaptação visual; o indicador circular original ainda precisa ser portado.
+
+### Recuo visual ao disparar (2026-10-22)
+
+O HUD/mundo **F6** utiliza eventos de disparo `shotFx` recebidos do servidor, não o clique local. O sprite da arma acompanha a mão deslocada pelo recuo, inclusive em pistolas duplas. O recuo diminui pela equação original de `player.ts`. A fila de eventos numerados preserva disparos caso o WebSocket entregue múltiplos `UpdateMsg` antes de desenhar um novo quadro (limite: 256 eventos). A troca de partida, dados inválidos e morte cancelam o efeito. Isso não representa implementação de balística, dano, projéteis completos ou efeitos sonoros.
