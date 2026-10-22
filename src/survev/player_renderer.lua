@@ -161,7 +161,7 @@ function Player:commands(obj,camera,mapName)
     local world=weap and weap.world
     local leftPose=poses.HandL
     local rightPose=poses.HandR
-    if obj.offlinePreview and obj.activeWeapon=="fists" and rightPose then
+    if obj.offlinePreview and (not obj.activeWeapon or obj.activeWeapon=="fists") and rightPose then
         rightPose=Player.fistPose(obj.previewFistTicker) or rightPose
     end
     -- Source player.ts:updateRotation: left-hand gun-specific offset.
