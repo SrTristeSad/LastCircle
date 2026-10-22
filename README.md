@@ -39,6 +39,9 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 **Atualizacao de rede (2026-10-22):** `equipment_tracker.lua` exibe mudancas em armas, mochilas, capacetes e coletes **somente apos `UpdateMsg`**, sem confundir recarga de municao com novo equipamento. No modo **F6**, o inventario aberto por **I/TAB** agora aceita **botao direito em um item de bolsa** para solicitar seu descarte com o `DropItemMsg` original; a quantidade **so muda quando o servidor informar a atualizacao**. As teclas **7/8/9/0** enviam os quatro consumiveis pelo campo `InputMsg.useItem`, como no TypeScript fixado. Existem testes de protocolo e de UI em Lua/LuaJIT, mas descarte, equipamento e coleta ainda nao foram validados em uma partida multiplayer completa. Consulte [rede](docs/NETWORK.md) e [status](docs/PORT_STATUS.md).
 
+
+**Atalhos no HUD multiplayer:** clique esquerdo em um slot conhecido para enviar `EquipPrimary/Secondary/Melee/Throwable`; clique direito em arma elegivel, capacete ou colete para solicitar `DropItemMsg`. A selecao e o descarte dependem da confirmacao do servidor, sem alterar o inventario antecipadamente. [Controles e limites de rede](docs/NETWORK.md).
+
 **Ainda não portado:** API oficial para descobrir partidas/tokens, composição final das quatro camadas e máscaras, interação de portas com o servidor, animações completas de jogadores, **HUD final (saque/equipamento completos, feed, menus e layout final do minimapa/inventário)**, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
 ### Testar agora sem servidor (Windows / LÖVE)
