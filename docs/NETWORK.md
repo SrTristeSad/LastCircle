@@ -70,3 +70,7 @@ No modo de rede `F6` conectado, **clique com o botao direito sobre os slots de a
 Os itens, indices e tipos sao lidos do `UpdateMsg`; a acao nao altera o estado local. O servidor decide se o pedido e permitido, inclusive regras especificas sobre itens que nao podem ser soltos. A mensagem na interface indica **pedido enviado**, nunca um sucesso nao confirmado.
 
 `tests/equipment_drop_smoke.lua` verifica a serializacao binaria do DropItemMsg, os indices corretos, cliques nos slots, blindagem contra slots vazios ou invalidos, observadores, jogadores caidos e ausencia de mutacao otimista. `lua-check.yml` executa o teste em Lua 5.4 e LuaJIT. **Ainda falta validar o fluxo contra uma partida multiplayer real**.
+
+### Selecao de armas pelo HUD
+
+No modo de rede, o **clique esquerdo** em um slot de arma conhecido (inclusive os punhos) envia a acao `Input.EquipPrimary/Secondary/Melee/Throwable` do Survev, em vez de disparar. Um slot desconhecido ou vazio nao produz comando de equipamento. O **clique direito** continua enviando pedidos de descarte de armas e armaduras elegiveis. Nenhum clique altera o equipamento no cliente ate o `UpdateMsg` do servidor. O HUD de teste offline continua apenas demonstrativo.
