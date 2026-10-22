@@ -127,6 +127,7 @@ function love.keypressed(key)
     if (screen=="demo" or (screen=="network" and connected())) and
         (key=="i" or key=="tab") then
         inventoryPanel:toggle()
+        if inventoryPanel.visible then fireStart=false end
         return
     end
     if (screen=="demo" or screen=="network") and key=="m" then
@@ -307,7 +308,7 @@ function love.update(dt)
     msg.moveUp=love.keyboard.isDown("w")
     msg.moveDown=love.keyboard.isDown("s")
     msg.shootStart=fireStart
-    msg.shootHold=love.mouse.isDown(1)
+    msg.shootHold=not inventoryPanel.visible and love.mouse.isDown(1)
     local mx,my=love.mouse.getPosition()
     local pos=live.camera:m_screenToPoint({x=mx,y=my})
     local dx,dy=pos.x-player.pos.x,pos.y-player.pos.y
