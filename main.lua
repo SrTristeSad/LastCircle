@@ -101,6 +101,14 @@ local function setConnection()
     if not ok then status="Conexao direta: "..tostring(err)
     else status="WebSocket conectado. Aguardando JoinedMsg..." end
 end
+local function disconnectForModeChange()
+    -- Never keep a WebSocket running while the offline inspector stops
+    -- polling it. The original game actively closes on quit.
+    if client and client.connection and client.connection.state=="open" then
+        client:close()
+    end
+    client=nil
+end
 local function quickPlay()
     if client and client.connection then client:close() end
     client=nil
@@ -201,17 +209,21 @@ function love.keypressed(key)
         return
     end
     if key=="f5" then
+        disconnectForModeChange()
         pendingInput:clear()
         fireStart=false
         demo=OfflineDemo.new()
         screen="demo"
         return
     elseif key=="f6" then
+        if connected() then return end
+        disconnectForModeChange()
         pendingInput:clear()
         fireStart=false
         screen=screen=="network" and "demo" or "network"
         return
     elseif key=="f7" then
+        disconnectForModeChange()
         screen=screen=="assets" and "demo" or "assets"
         return
     end
