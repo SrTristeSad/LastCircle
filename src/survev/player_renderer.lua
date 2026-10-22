@@ -158,7 +158,7 @@ function Player:commands(obj,camera,mapName)
     end
 
     local weap=Equipment.weapons[obj.activeWeapon or "fists"]
-    local world=weap and weap.world
+    local world=(not obj.downed) and weap and weap.world or nil
     local leftPose=poses.HandL
     local rightPose=poses.HandR
     if obj.offlinePreview and (not obj.activeWeapon or obj.activeWeapon=="fists") and rightPose then
