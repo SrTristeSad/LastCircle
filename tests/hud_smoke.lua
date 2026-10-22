@@ -73,7 +73,7 @@ love={graphics=graphics,filesystem={getInfo=function() return true end}}
 local renderer=HUD.new()
 assert(renderer:draw(demo:getGameState(),1280,720))
 assert(renderer:draw(demo:getGameState(),1280,720))
-assert(images>=1 and images<=3)
+assert(images>=1 and images<=3,"source HUD images loaded="..images)
 assert(draws>=2)
 assert(not renderer:draw({joined=false},1280,720))
 print("Survev 4-slot HUD projection, health/boost, ammo authority and cached artwork passed")
