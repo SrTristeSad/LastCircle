@@ -49,6 +49,7 @@ jobs:
           matcher_pid=$!
           sleep 2
           lua5.4 tests/ws_network.lua
+          lua5.4 tests/ws_combat_network.lua
           lua5.4 tests/ws_spectate_network.lua
           lua5.4 tests/ws_matchmaking_network.lua
           kill "$matcher_pid" 2>/dev/null || true
@@ -64,6 +65,7 @@ jobs:
           matcher_pid=$!
           sleep 2
           luajit tests/ws_network.lua
+          luajit tests/ws_combat_network.lua
           luajit tests/ws_spectate_network.lua
           luajit tests/ws_matchmaking_network.lua
           kill "$matcher_pid" 2>/dev/null || true
