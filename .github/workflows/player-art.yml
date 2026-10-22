@@ -6,6 +6,9 @@ on:
     branches: [main]
     paths:
       - "scripts/generate_player_art.mjs"
+      - "scripts/check_player_parity.mjs"
+      - "tests/player_parity.lua"
+      - "src/survev/player_renderer.lua"
       - ".github/workflows/player-art.yml"
 
 permissions:
@@ -36,6 +39,14 @@ jobs:
           luac5.4 -p src/survev/player_art.lua
           lua5.4 -e 'local p=require("src.survev.player_art");assert(p.outfits.outfitBase.baseAsset=="player/player-base-01.png" and p.idlePoses.fists.HandL.pivot.x==14); print("Source player outfits/poses verified")'
           luajit -e 'local p=require("src.survev.player_art");assert(p.outfits.outfitBase.baseTint==0xf8c574)'
+      - name: Compare all player sprite geometry in Lua 5.4
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_player_parity.mjs _reference/reference/survev lua5.4
+      - name: Compare all player sprite geometry in LuaJIT
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_player_parity.mjs _reference/reference/survev luajit
       - name: Commit source-generated player metadata to main
         run: |
           git config user.name "github-actions[bot]"
