@@ -1,0 +1,26 @@
+-- Source: pinned original client/src/soundDefs.ts, hits channel only.
+-- All paths belong to upstream audio/hits and are packaged as original MP3.
+return {
+  ["ammo_crate_bullet"]={"audio/hits/plastic_bullet_hit_01.mp3"},
+  ["barrel_bullet"]={"audio/hits/metal_bullet_hit_03.mp3"},
+  ["bush_bullet"]={"audio/hits/bush_bullet_hit_01.mp3"},
+  ["cloth_bullet"]={"audio/hits/cloth_hit_02.mp3"},
+  ["cobalt_bullet"]={"audio/hits/metal_bullet_hit_02.mp3"},
+  ["concrete_hit"]={"audio/hits/concrete_hit_01.mp3"},
+  ["egg_hit"]={"audio/hits/egg_hit_01.mp3"},
+  ["glass_bullet"]={"audio/hits/glass_bullet_hit_01.mp3"},
+  ["organic_hit"]={"audio/hits/organic_hit_01.mp3"},
+  ["pan_bullet"]={"audio/hits/pan_bullet_hit_01.mp3"},
+  ["piano_hit"]={"audio/hits/piano_hit_01.mp3","audio/hits/piano_hit_02.mp3"},
+  ["player_bullet_hit"]={"audio/hits/player_bullet_hit_01.mp3"},
+  ["silo_bullet"]={"audio/hits/metal_bullet_hit_04.mp3"},
+  ["stone_bullet"]={"audio/hits/stone_bullet_hit_01.mp3"},
+  ["toilet_metal_bullet"]={"audio/hits/toilet_bullet_hit_02.mp3"},
+  ["toilet_porc_bullet"]={"audio/hits/toilet_bullet_hit_01.mp3"},
+  ["tree_bullet"]={"audio/hits/wood_bullet_hit_01.mp3"},
+  ["wall_brick_bullet"]={"audio/hits/brick_bullet_hit_01.mp3"},
+  ["wall_bullet"]={"audio/hits/metal_bullet_hit_01.mp3"},
+  ["wall_wood_bullet"]={"audio/hits/wood_bullet_hit_02.mp3"},
+  ["wood_crate_bullet"]={"audio/hits/wood_bullet_hit_04.mp3"},
+  ["wood_prop_bullet"]={"audio/hits/wood_bullet_hit_03.mp3"},
+}
