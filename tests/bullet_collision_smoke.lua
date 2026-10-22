@@ -25,6 +25,8 @@ assert(#geometry.obstacles==1 and #geometry.players==2)
 local hit=assert(C.firstHit(geometry,bullet,start,finish))
 assert(hit.kind=="obstacle" and hit.id==3)
 near(hit.point.x,5.7,"closed door visual collision")
+assert(hit.normal and hit.normal.x==-1 and hit.normal.y==0,
+    "original door collider provides outward face normal")
 near(hit.distance,5.7,"door travel distance")
 -- The closest hit must win, not whichever object was inserted first.
 objects[3]=nil
@@ -32,6 +34,8 @@ geometry=C.snapshot(objects)
 hit=assert(C.firstHit(geometry,bullet,start,finish))
 assert(hit.kind=="player" and hit.id==2)
 near(hit.point.x,8,"player radius")
+assert(hit.normal and hit.normal.x==-1 and hit.normal.y==0,
+    "player collision normal points away from the character")
 objects[2].scale=2
 geometry=C.snapshot(objects)
 near(assert(C.firstHit(geometry,bullet,start,finish)).point.x,7,
@@ -132,6 +136,8 @@ local rendered=renderer.trails[1]
 assert(rendered.collided and rendered.impactKind=="obstacle"
     and rendered.impactId==3)
 near(rendered.pos.x,5.7,"rendered door stops projectile")
+assert(rendered.impactNormal and rendered.impactNormal.x==-1,
+    "particle emitter must receive source obstacle surface normal")
 assert(rendered.traveled<10)
 assert(not worldTarget.damage and not wall.damage,
     "the renderer must never apply local damage")
