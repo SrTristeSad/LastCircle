@@ -7,6 +7,8 @@ LASTCIRCLE - TESTE LOCAL DO CLIENTE LUA (SURVEV)
    Alternativa: arraste LastCircle-Lua.love para love.exe.
 
 O teste entra diretamente em um MAPA LOCAL, SEM SERVIDOR.
+O HUD mostra vida, boost, quatro slots, carregadores e reservas.
+Esses valores no teste local sao EXEMPLOS, sem combate de verdade.
 Isso permite avaliar o desenho REAL do terreno, dos rios, das casas,
 das arvores, das portas e do PERSONAGEM (corpo, maos, roupas e poses
 originais do Survev).
@@ -38,8 +40,8 @@ IMPORTANTE:
   como servidor do LastCircle.
 - O teste local NAO precisa de Node.js, login, token ou internet.
 - O personagem usa roupas, armas, coletes, capacetes e mochilas originais.
-- TROCAR EQUIPAMENTO no teste e apenas visual e NAO reproduz o inventario
-  ou a municao de uma partida multiplayer verdadeira.
+- TROCAR EQUIPAMENTO no teste e apenas visual. O HUD usa os slots e as
+  capacidades originais, mas nao reproduz o inventario de servidor real.
 - Ainda faltam disparos, recoil, efeitos, animacoes adicionais e a
   composicao final por camadas/masks.
 - Ainda faltam HUD completo, combate, inventario e servidor multiplayer.
