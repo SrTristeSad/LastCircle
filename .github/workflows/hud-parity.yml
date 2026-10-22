@@ -1,0 +1,34 @@
+name: Original Survev HUD Health And Boost Fidelity
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - src/survev/hud.lua
+      - scripts/check_hud_parity.mjs
+      - tests/hud_parity.lua
+      - .github/workflows/hud-parity.yml
+permissions:
+  contents: read
+jobs:
+  source-hud:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install Lua runtimes
+        run: sudo apt-get update && sudo apt-get install -y lua5.4 luajit
+      - name: Compare original Survev UI gradient and boost in Lua 5.4
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_hud_parity.mjs _reference/reference/survev lua5.4
+      - name: Compare original Survev UI gradient and boost in LuaJIT
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_hud_parity.mjs _reference/reference/survev luajit
