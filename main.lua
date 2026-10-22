@@ -48,7 +48,6 @@ local client
 local status=""
 local actionQueue={}
 local fireStart=false
-local pendingWheelActions={}
 local font
 local function loadImage(path)
     if not love.filesystem.getInfo(path) then return nil end
