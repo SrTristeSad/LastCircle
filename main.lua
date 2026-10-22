@@ -53,6 +53,8 @@ local fields={
 local focus=1
 local gameModeIdx=0
 local showDebug=false
+local siteInfo=nil
+local siteInfoOrigin=nil
 local client
 local status=""
 local pendingInput=LiveInput.new()
@@ -105,11 +107,30 @@ local function quickPlay()
     if fields[1].value=="" then
         status="Informe a URL real da API Survev.";return
     end
-    status="Consultando /api/find_game_v2..."
     local options=optionsForConnect()
     options.region=fields[6].value
     options.gameModeIdx=gameModeIdx
     options.zones={}
+    if siteInfoOrigin~=fields[1].value or not siteInfo then
+        status="Consultando /api/site_info..."
+        local loaded,why=Match.siteInfo(fields[1].value,options)
+        if not loaded then
+            status="Falha ao buscar modos do servidor: "..tostring(why)
+            return
+        end
+        siteInfo=loaded
+        siteInfoOrigin=fields[1].value
+    end
+    local mode=siteInfo.modes[gameModeIdx+1]
+    if not mode or not mode.enabled then
+        status="Modo "..gameModeIdx.." nao esta disponivel no servidor."
+        return
+    end
+    if siteInfo.captchaEnabled then
+        status="Este servidor exige Turnstile; autenticacao web ainda nao portada."
+        return
+    end
+    status="Consultando /api/find_game_v2..."
     local result,reason=Match.request(fields[1].value,options)
     if not result then
         if reason=="invalid_captcha" then
@@ -512,7 +533,15 @@ local function drawNetwork(w,h)
         g.setScissor()
     end
     g.setColor(.91,.94,.82)
-    g.printf("F1: modo 0 | F2: modo 1 | F3: modo 2  (modo atual: "..gameModeIdx..")",
+    local modeLabel="modo "..gameModeIdx
+    if siteInfo and siteInfoOrigin==fields[1].value then
+        local mode=siteInfo.modes[gameModeIdx+1]
+        if mode then
+            modeLabel=modeLabel.." / "..mode.mapName.." / equipe "..mode.teamMode..
+                (mode.enabled and "" or " [DESATIVADO]")
+        end
+    end
+    g.printf("F1: modo 0 | F2: modo 1 | F3: modo 2  ("..modeLabel..")",
         0,505,w,"center")
     g.setColor(.78,.89,.78)
     g.printf("ENTER: POST /api/find_game_v2 + token e URLs do servidor real",
