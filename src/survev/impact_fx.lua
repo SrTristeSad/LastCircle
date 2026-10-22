@@ -71,6 +71,7 @@ function Fx:emit(kind,pos,normal,layer)
     local cs,sn=math.cos(angle),math.sin(angle)
     local img=def.images[math.random(1,#def.images)]
     local rotVel=sample(def.rotVel)
+    local drag=sample(def.drag)
     if math.random()<.5 then rotVel=-rotVel end
     self.particles[#self.particles+1]={
         kind=kind,image=img,
@@ -79,14 +80,14 @@ function Fx:emit(kind,pos,normal,layer)
              y=(velocity.x*sn+velocity.y*cs)*9.5},
         layer=layer or 0,
         life=sample(def.life),age=0,
-        drag=sample(def.drag),rotDrag=sample(def.drag)/2,
+        drag=drag,rotDrag=drag/2,
         rotVel=rotVel,rot=math.random()*2*math.pi,
         scaleStart=sample(def.scaleStart),
         scaleEnd=sample(def.scaleEnd),
-        scaleLerp={sample(def.scaleLerp),sample(def.scaleLerp)},
+        scaleLerp=def.scaleLerp,
         alphaStart=sample(def.alphaStart),
         alphaEnd=sample(def.alphaEnd),
-        alphaLerp={sample(def.alphaLerp),sample(def.alphaLerp)},
+        alphaLerp=def.alphaLerp,
         red=r,green=g,blue=b,
     }
     if #self.particles>256 then table.remove(self.particles,1) end
