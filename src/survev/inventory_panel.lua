@@ -46,7 +46,9 @@ function Inventory:toggle()
 end
 -- The inventory's grid is shared by rendering and mouse hit testing.
 local function geometry(width,height)
-    local x,y,w,h,rowsPerColumn,rowHeight,slotW=geometry(width,height)
+    local w=math.min(680,width-32)
+    local h=math.min(570,height-92)
+    local x,y=(width-w)*.5,(height-h)*.5
     local perCol=math.ceil(#Source.bagKeys/2)
     local rowHeight=math.min(34,(h-136)/perCol)
     local slotW=(w-34)/2
@@ -105,9 +107,7 @@ function Inventory:draw(state,width,height)
     local projected=Inventory.project(state)
     if not projected then return false end
     local g=love.graphics
-    local w=math.min(680,width-32)
-    local h=math.min(570,height-92)
-    local x,y=(width-w)*.5,(height-h)*.5
+    local x,y,w,h,rowsPerColumn,rowHeight,slotW=geometry(width,height)
     g.setColor(.025,.07,.08,.96)
     g.rectangle("fill",x,y,w,h,10,10)
     g.setColor(.68,.82,.70,.9)
