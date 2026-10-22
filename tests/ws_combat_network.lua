@@ -30,6 +30,7 @@ assert(state.localId==7 and state.objects[7].pos.x>119)
 assert(state.localData.inventory.bandage==2)
 assert(state.localData.inventory["9mm"]==15)
 assert(math.abs(state.localData.health-80)<.6)
+assert(state.localData.zoom==50,"original TS zoomDirty must reach Lua camera")
 
 local buffered=Buffer.new()
 local function sendAndAck(msg,step)
