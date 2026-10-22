@@ -83,6 +83,32 @@ function Client:connect(url,joinOptions)
     end
     return self.state=="connected" or self.state=="joined"
 end
+-- Survev main.ts joinGame(matchData) tries all server-issued URLs in
+-- order. The join token is never synthesized or stored by the client.
+function Client:connectMatch(match,options)
+    assert(type(match)=="table" and type(match.joinToken)=="string" and
+        #match.joinToken>0 and type(match.urls)=="table" and
+        #match.urls>0,"A real matchmaking result is required")
+    options=options or {}
+    local errors={}
+    for _,url in ipairs(match.urls) do
+        if type(url)=="string" and url:match("^wss?://") then
+            local join={
+                name=options.name or "Jogador Lua",
+                joinToken=match.joinToken,
+                useTouch=options.useTouch or false,
+                isMobile=options.isMobile or false,
+                loadout=options.loadout,
+            }
+            local ok,result,err=pcall(self.connect,self,url,join)
+            if ok and result then return true,url end
+            errors[#errors+1]=url..": "..tostring(ok and err or result)
+        end
+    end
+    self.state="error"
+    self.error=table.concat(errors," | ")
+    return nil,self.error~="" and self.error or "No usable game address"
+end
 function Client:poll()
     if self.connection then self.connection:poll() end
 end
