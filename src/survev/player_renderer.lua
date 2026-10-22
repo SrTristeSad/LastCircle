@@ -2,7 +2,7 @@
 -- Original source: updateVisuals(), updateRotation(), render(); idle poses
 -- generated from client/src/animData.ts, tints/skins from outfitDefs.ts.
 -- Ports source armour/backpacks, melee and gun WORLD sprites with their
--- actual transforms. Firing, recoil physics, water masks and final PIXI
+-- actual transforms. Shot recoil uses server shotFx; water masks and final PIXI
 -- layer sorting remain separate and are NOT simulated.
 local Metadata=require("src.survev.player_art")
 local Equipment=require("src.survev.equipment_art")
@@ -87,7 +87,7 @@ function Player:load(path)
     self.images[path]=img
     return img
 end
-function Player:commands(obj,camera,mapName,animation)
+function Player:commands(obj,camera,mapName,animation,recoil)
     if not obj or not obj.pos or obj.dead then return {} end
     local outfit=Metadata.outfits[obj.outfit or "outfitBase"]
     if not outfit then
@@ -170,6 +170,25 @@ function Player:commands(obj,camera,mapName,animation)
     if obj.offlinePreview and (not obj.activeWeapon or obj.activeWeapon=="fists") and rightPose then
         rightPose=Player.fistPose(obj.previewFistTicker) or rightPose
     end
+    -- player.ts:updateRotation: gunRecoilL/R move the corresponding hand
+    -- container by -recoil*1.125 along its local X axis. The gun is parented
+    -- to that hand, so both the gun sprite and fingers inherit the offset.
+    -- Never mutate shared idle pose metadata or the inbound packet.
+    local function shifted(pose,amount)
+        if not pose or type(amount)~="number" or amount<=0 then
+            return pose
+        end
+        return {
+            pos={x=(pose.pos and pose.pos.x or 0)-amount*1.125,
+                 y=(pose.pos and pose.pos.y or 0)},
+            pivot=pose.pivot,rot=pose.rot,
+        }
+    end
+    if recoil and world and weap.type=="gun" and not obj.downed
+        and not obj.offlinePreview then
+        leftPose=shifted(leftPose,recoil.left)
+        rightPose=shifted(rightPose,recoil.right)
+    end
     -- Source player.ts:updateRotation: left-hand gun-specific offset.
     if world and weap.type=="gun" and leftPose and world.leftHandOffset then
         leftPose={
@@ -251,8 +270,8 @@ function Player:commands(obj,camera,mapName,animation)
     return output
 end
 
-function Player:draw(obj,camera,mapName,animation)
-    local commands,err=self:commands(obj,camera,mapName,animation)
+function Player:draw(obj,camera,mapName,animation,recoil)
+    local commands,err=self:commands(obj,camera,mapName,animation,recoil)
     if not commands then
         self.unavailable=self.unavailable+1
         return 0,err
