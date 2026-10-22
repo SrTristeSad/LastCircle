@@ -213,7 +213,7 @@ function Player:commands(obj,camera,mapName)
 
     -- Hand containers: gun sprite below hand by default, unless handsBelow;
     -- melee image above hand only if worldImg.renderOnHand is true.
-    local function hand(side,pose)
+    local function drawHand(side,pose)
         if not pose then return end
         local drawGunSide=world and weap.type=="gun"
             and (side=="R" or weap.isDual)
@@ -226,11 +226,11 @@ function Player:commands(obj,camera,mapName)
         if drawGunSide and world.handsBelow then drawGun(side,pose) end
     end
     if weap and weap.type=="melee" and world and world.leftHandOntop then
-        hand("R",rightPose)
-        hand("L",leftPose)
+        drawHand("R",rightPose)
+        drawHand("L",leftPose)
     else
-        hand("L",leftPose)
-        hand("R",rightPose)
+        drawHand("L",leftPose)
+        drawHand("R",rightPose)
     end
 
     -- Helmet above body and hands, using source -3.33/+3.33 local offset.
