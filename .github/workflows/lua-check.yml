@@ -92,6 +92,10 @@ jobs:
         run: |
           lua5.4 tests/impact_fx_smoke.lua
           luajit tests/impact_fx_smoke.lua
+      - name: Survev source obstacle zOrd, tree stairs-mask composition
+        run: |
+          lua5.4 tests/foliage_layer_smoke.lua
+          luajit tests/foliage_layer_smoke.lua
       - name: Parent-local player blood splats and real sprite layering
         run: |
           lua5.4 tests/attached_blood_smoke.lua
