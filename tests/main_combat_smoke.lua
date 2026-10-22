@@ -42,7 +42,7 @@ Network.new=function()
         sent[#sent+1]={
             moveLeft=msg.moveLeft,moveRight=msg.moveRight,
             shootStart=msg.shootStart,shootHold=msg.shootHold,
-            inputs={unpack(msg.inputs)},useItem=msg.useItem,
+            inputs={(table.unpack or unpack)(msg.inputs)},useItem=msg.useItem,
             portrait=msg.portrait,
             toMouseLen=msg.toMouseLen,toMouseDir=msg.toMouseDir,
         }
