@@ -8,6 +8,8 @@ on:
       - "conf.lua"
       - "src/survev/**"
       - "scripts/prepare_assets.py"
+      - "TESTAR-LASTCIRCLE-WINDOWS.bat"
+      - "COMO-TESTAR.txt"
       - ".github/workflows/build-love.yml"
   workflow_dispatch:
 
@@ -46,6 +48,56 @@ jobs:
                   bundle.write(path, str(path).replace("\\", "/"))
           print("Arquivo LÖVE:", name, "Arquivos:", len(paths))
           PY
+      - name: Executar modo local em LÖVE REAL (OpenGL)
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y love xvfb xauth libgl1-mesa-dri
+          export XDG_DATA_HOME="$PWD/.ci-love-data"
+          mkdir -p "$XDG_DATA_HOME"
+          export SDL_AUDIODRIVER=dummy
+          export LIBGL_ALWAYS_SOFTWARE=1
+          export LASTCIRCLE_DEMO_SMOKE=1
+          timeout 45s xvfb-run -a -s "-screen 0 1280x720x24" \
+            love LastCircle-Lua.love 2>&1 | tee /tmp/lastcircle-offline.log
+          grep -q LASTCIRCLE_OFFLINE_DEMO_SUCCESS /tmp/lastcircle-offline.log
+          find "$XDG_DATA_HOME" -name 'LastCircle-demo.png' -size +10k -print -quit \
+            | grep -q LastCircle-demo.png
+          echo 'PASS: real LÖVE generated the offline Survev scene and screenshot'
+      - name: Gerar ZIP para Windows com um clique
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          files=[
+              Path("LastCircle-Lua.love"),
+              Path("TESTAR-LASTCIRCLE-WINDOWS.bat"),
+              Path("COMO-TESTAR.txt"),
+              Path("LICENSE"),
+              Path("ATTRIBUTION-SURVEV.txt"),
+          ]
+          name=Path("LastCircle-Teste-Windows.zip")
+          with zipfile.ZipFile(name,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6) as z:
+              for f in files:
+                  assert f.is_file(), f
+                  z.write(f,f.name)
+          with zipfile.ZipFile(name) as z:
+              assert z.testzip() is None
+              assert len(z.namelist())==len(files)
+          print("WINDOWS ZIP VERIFIED:",name,name.stat().st_size,"bytes")
+          PY
+      - name: Disponibilizar ZIP de teste local para Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: LastCircle-Teste-Windows
+          path: LastCircle-Teste-Windows.zip
+          retention-days: 14
+      - name: Salvar screenshot do teste real
+        uses: actions/upload-artifact@v4
+        with:
+          name: LastCircle-Preview
+          path: .ci-love-data/**/LastCircle-demo.png
+          if-no-files-found: warn
+          retention-days: 14
       - name: Disponibilizar pacote de testes
         uses: actions/upload-artifact@v4
         with:
