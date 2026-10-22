@@ -17,6 +17,7 @@ local V=require("src.survev.v2")
 local Palettes=require("src.survev.map_colors")
 local Equipment=require("src.survev.equipment_art")
 local Outfits=require("src.survev.player_art").outfits
+local Hint=require("src.survev.interaction_hint")
 local Demo={}
 Demo.__index=Demo
 
@@ -275,16 +276,9 @@ end
 -- server/src/game/objects/obstacle.ts:toggleDoor().
 function Demo:interact()
     local player=self.state.objects[1]
-    local best,bestDistance=nil,Config.player.maxInteractionRad
-    for id,origin in pairs(self.doorOrigins) do
-        local door=self.state.objects[id]
-        if door and door.isDoor and door.door.canUse and not door.door.locked then
-            local distance=V.distance(door.pos,player.pos)
-            if distance<bestDistance then
-                best,bestDistance=door,distance
-            end
-        end
-    end
+    local choice=Hint.scan(self.state)
+    local best=choice and choice.usable and self.doorOrigins[choice.id]
+        and self.state.objects[choice.id] or nil
     if not best then
         self.message="Nenhuma porta do Survev esta ao alcance (F)."
         return false
