@@ -72,8 +72,8 @@ Ainda faltam matchmaking oficial, camadas subterrâneas/máscaras PIXI, animaç�
 
 1. **Matchmaking/API:** obter endereço e `joinToken` da API original e testar a sessão com um servidor Survev de verdade. `ws://` local já funciona; `wss://` exige LuaSec e CA confiável. O teste atual é contra servidor local que emite pacotes do TS original.
 2. **Mapa e edifícios:** costa, rios, biomas, pisos/tetos, **raios de visibilidade contra paredes** e **portas animadas visualmente** estão portados. Faltam compor as quatro camadas com máscaras, interação real de portas, física/colisão funcional e sons de pisos.
-3. **Personagens:** portar `client/src/objects/player.ts`, sprites, animações, armas, loot, feedback de combate e efeitos. O estado das entidades recebido pelo servidor já pode ser mantido.
-4. **Interface:** menus, HUD, inventário, loot, tela de morte/resultado, controles mobile, áudio e partículas.
+3. **Personagens:** sprites básicos do corpo, mãos, roupas e armas já são desenhados; faltam animações completas, loot, disparo, feedback de combate e efeitos. O estado de entidades recebido pelo servidor já pode ser mantido.
+4. **Interface:** HUD básico e minimapa de objetos do Survev estão portados, inclusive ampliação e indicador de portas. Faltam o layout final, inventário expansível, loot, menus, tela de morte/resultado, controles mobile, áudio e partículas.
 5. **Integração:** testar entrada na partida, renderização e movimento, dano, troca de arma e saída, com servidor multiplayer original.
 
 **O `UpdateMsg` e a camada WebSocket possuem testes aprovados; os bloqueadores principais agora são matchmaking real, renderização completa e teste ponta a ponta em partida.**
