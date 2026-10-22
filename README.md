@@ -63,6 +63,9 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 **Sangue anexado ao jogador (2026-10-22):** `impact_fx.lua` conserva o offset original `bloodSplat` como filho de `player.container`. Em movimento ou com zoom diferente, o sangue segue o personagem. O desenho fica no passe do corpo, em vez da camada geral de rastros. A textura e descartada quando o ator morre ou sai do estado recebido. `tests/attached_blood_smoke.lua` confirma tambem a mudanca de PPU e o som ancorado no jogador. Sem dano local e sem reivindicar multiplayer completo.
 
+
+**Camadas de folhagem e residuos (2026-10-22):** `obstacle_art_renderer.lua` reproduz as regras de `obstacle.ts` para `zOrd=5` em obstaculos mortos, residuos com opacidade 75% e prioridades dependentes de escala. Arvores e arbustos altos sobre o solo sao promovidos a uma passagem superior depois dos tetos; `StructureDefs.mask` recorta-os nas areas estruturais do mapa com stencil LÖVE. `tests/foliage_layer_smoke.lua` verifica as regras em Lua 5.4/LuaJIT. **A composicao completa dos quatro planos originais ainda nao foi portada.**
+
 **Ainda não portado:** API oficial para descobrir partidas/tokens, composição final das quatro camadas e máscaras, interação de portas com o servidor, animações completas de jogadores, **HUD final (saque/equipamento completos, feed, menus e layout final do minimapa/inventário)**, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
 ### Testar agora sem servidor (Windows / LÖVE)
