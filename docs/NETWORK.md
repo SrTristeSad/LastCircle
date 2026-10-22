@@ -54,3 +54,11 @@ Isso demonstra interoperabilidade de transporte com as mensagens testadas, **nã
 3. `client/src/renderer.ts` e entidades: objetos em camadas, texturas e animações reais.
 4. HUD/menus/inventário/loot/combate como no original.
 5. Teste ponta a ponta contra servidor Survev configurado para desenvolvimento.
+
+## Inventario multiplayer — descarte (2026-10-22)
+
+Na tela **F6** com uma partida valida conectada, abra o inventario com **I/TAB** e clique com o **botao direito** sobre uma linha com quantidade conhecida e maior que zero. O cliente envia o `DropItemMsg` original com o tipo registrado no Survev e `weapIdx=0` (itens de bolsa nao usam slot de arma). Ao enviar, a interface mostra apenas **pedido enviado**, nao sucesso garantido.
+
+O inventario local **nao e reduzido no clique**: quantidades e loot no chao so mudam apos os `UpdateMsg` do servidor. Solicitacoes sao bloqueadas para observadores, estado offline, personagem morto, partida encerrada, quantidade zero/desconhecida e conexao fechada. Com o painel aberto, cliques nao acionam tiro no mundo.
+
+`tests/drop_item_smoke.lua` verifica serializacao binaria, portao de permissao, ausencia de mutacoes otimistas, selecao das linhas e avisos; `lua-check.yml` executa o teste em Lua 5.4 e LuaJIT. **Ainda nao e uma validacao contra servidor multiplayer real**. O descarte de armas, armaduras e perks pelo painel nao esta incluido nesta etapa.
