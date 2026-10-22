@@ -116,3 +116,12 @@ O `bloodSplat` emitido por uma colisao visual em um jogador passa a permanecer r
 ### Camada superior de folhagem e mascaras
 
 O renderizador do mundo em `F6` agora aplica parte da regra de `Obstacle.render` original: arvores e arbustos altos na camada 0, ao serem observados por jogador na camada 0, sao desenhados no passe superior com `zOrd` ajustado, **depois dos telhados**, respeitando as mascaras reais das estruturas `StructureDefs.mask`. A mascara utiliza `love.graphics.stencil` e e removida antes do HUD. Obstaculos destruidos voltam a `zOrd=5`, exibem o resíduo com `alpha=0.75` ou ficam invisiveis quando nao existe arte de residuo. A composicao de outros objetos das quatro camadas e a transicao completa de solo/subsolo continuam pendentes.
+
+
+### Matchmaking e login na partida original (2026-10-22)
+
+O porte do `client/src/main.ts:findGame` e `joinGame` usa `src/survev/matchmaking.lua` e um parser JSON Lua sem execucao dinamica. A partir de um endereco real da API, faz `POST /api/find_game_v2` com `GameConfig.protocolVersion=1028`, `region`, `zones=[]`, `playerCount=1`, `autoFill=true` e `gameModeIdx`. Espera as tres categorias de resposta originais (`success`, `error`, `banned`); valida `joinToken` e a lista de `urls`. Em sucesso, `network_client.lua:connectMatch` tenta os URLs recebidos um a um com **o mesmo token emitido pelo servidor**, chamando o `JoinMsg` e os codecs ja existentes. Nao e autorizada a fabricacao de tokens ou de enderecos de partida.
+
+Em `main.lua`, a interface de rede e a tela inicial. `ENTER` consulta a API, `SHIFT+ENTER` usa manualmente URL/token reais, `F1/F2/F3` selecionam indice do modo, e `F5` abre somente a demonstracao local. O cliente nao obtém a URL original do servidor automaticamente da Web: deve ser informada a origem da API. HTTPS/WSS exigem LuaSec e cadeia CA verificada; o cliente informa erro se indisponiveis. CAPTCHA e sessao de conta do site original ainda nao foram portados, e a API pode bloquear o ingresso com `invalid_captcha`, `rate_limited` ou outras respostas reais.
+
+Cobertura: `tests/matchmaking_smoke.lua` (contrato, JSON, seguranca, erros), `tests/match_connect_smoke.lua` (fallback) e `tests/matchmaking_http_smoke.lua` com servidor HTTP local real. Os testes confirmam o fluxo de descoberta, **nao a jogabilidade multiplayer ponta a ponta**.
