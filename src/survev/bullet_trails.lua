@@ -91,7 +91,7 @@ function Trails:update(state,dt)
         self.world=state
     end
     if self.colliderUpdate~=state.updateCount then
-        self.colliders=Collision.snapshot(state.objects)
+        self.colliders=Collision.snapshot(state.objects,nil,self.colliders)
         self.colliderUpdate=state.updateCount
     end
     local step=math.max(0,dt or 0)
