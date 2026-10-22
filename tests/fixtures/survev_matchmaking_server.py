@@ -4,6 +4,25 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path != "/api/site_info":
+            self.send_error(404)
+            return
+        payload = json.dumps({
+            "modes": [
+                {"mapName": "main", "teamMode": 1, "enabled": True},
+                {"mapName": "main", "teamMode": 2, "enabled": False},
+                {"mapName": "main", "teamMode": 4, "enabled": True},
+            ],
+            "captchaEnabled": False,
+            "clientTheme": "main",
+            "pops": {"na": {"playerCount": 22, "l10n": "North America"}},
+        }).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
     def do_POST(self):
         if self.path != "/api/find_game_v2":
             self.send_error(404)
