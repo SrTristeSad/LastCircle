@@ -23,6 +23,7 @@ local smokeFrames=0
 local screenshotRequested=false
 local equipmentScreenshotRequested=false
 local mapScreenshotRequested=false
+local inventoryScreenshotRequested=false
 local index=1
 local imageErrors={}
 local sampleFiles={
@@ -238,10 +239,19 @@ function love.update(dt)
             -- in the same real LÖVE2D/OpenGL test, without fake combat.
             if smokeFrames==9 then assert(demo:equip(4)) end
             if smokeFrames==16 then minimap:toggleExpanded() end
-            if smokeFrames>=25
+            if smokeFrames==20 then
+                minimap:toggleExpanded()
+                -- CI-only demonstration pickup: uses an actual source Loot
+                -- entity and the preview bag capacity, never server combat.
+                demo.state.objects[demo.state.activeId].pos={x=353,y=325}
+                assert(demo:pickup())
+                inventoryPanel:toggle()
+            end
+            if smokeFrames>=28
                 and love.filesystem.getInfo("LastCircle-demo.png")
                 and love.filesystem.getInfo("LastCircle-equipped.png")
-                and love.filesystem.getInfo("LastCircle-fullmap.png") then
+                and love.filesystem.getInfo("LastCircle-fullmap.png")
+                and love.filesystem.getInfo("LastCircle-inventory.png") then
                 print("LASTCIRCLE_OFFLINE_DEMO_SUCCESS")
                 love.event.quit(0)
             elseif smokeFrames>=120 then
@@ -413,5 +423,10 @@ function love.draw()
         and smokeFrames>=18 and not mapScreenshotRequested then
         mapScreenshotRequested=true
         love.graphics.captureScreenshot("LastCircle-fullmap.png")
+    end
+    if screen=="demo" and os.getenv("LASTCIRCLE_DEMO_SMOKE")=="1"
+        and smokeFrames>=23 and not inventoryScreenshotRequested then
+        inventoryScreenshotRequested=true
+        love.graphics.captureScreenshot("LastCircle-inventory.png")
     end
 end
