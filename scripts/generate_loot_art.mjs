@@ -56,7 +56,7 @@ for(const type of GameObjectDefs.getAllTypes()){
         tint:img.tint??0xffffff,tintDark:img.tintDark??null,
         borderTint:img.borderTint??null,
         scale:img.scale??1,innerScale:img.innerScale||.8,
-        rot:img.rot??0,
+        rot:img.rot??0,mirror:!!img.mirror,
         ammoType:def.type==="gun"?def.ammo:null,
     };
 }
