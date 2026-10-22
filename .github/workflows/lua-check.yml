@@ -76,6 +76,10 @@ jobs:
         run: |
           lua5.4 tests/bullet_trails_smoke.lua
           luajit tests/bullet_trails_smoke.lua
+      - name: Server-based bullet collision visuals, door and player layers
+        run: |
+          lua5.4 tests/bullet_collision_smoke.lua
+          luajit tests/bullet_collision_smoke.lua
       - name: Source-authoritative reload and item action HUD progress
         run: |
           lua5.4 tests/action_progress_smoke.lua
