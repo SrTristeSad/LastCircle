@@ -111,19 +111,27 @@ local function contains(px,py,x,y,w,h)
 end
 -- Only the original weapon slots and currently equipped helmet/chest
 -- can be selected for a live server DropItemMsg. Bag rows use their own UI.
-function HUD.hitTest(state,w,h,px,py)
+function HUD.slotAt(state,w,h,px,py)
     local model=HUD.project(state)
     if not model or model.localPreview then return nil end
     for i,slot in ipairs(model.slots) do
         local x,y,sw,sh=slotGeometry(w,h,i)
         if contains(px,py,x,y,sw,sh) then
-            local typeName=slot.type
-            if typeName=="" or typeName=="fists" or
-                (slot.kind~="gun" and slot.kind~="melee") then
-                return nil
-            end
-            return {kind="weapon",slot=slot.index,item=typeName,name=slot.name}
+            if slot.type=="" or not Gear.weapons[slot.type] then return nil end
+            return {kind="weapon",slot=slot.index,item=slot.type,name=slot.name}
         end
+    end
+    return nil
+end
+function HUD.hitTest(state,w,h,px,py)
+    local model=HUD.project(state)
+    if not model or model.localPreview then return nil end
+    local target=HUD.slotAt(state,w,h,px,py)
+    if target then
+        local def=Gear.weapons[target.item]
+        if target.slot>Game.WeaponSlot.Melee or target.item=="fists" or
+            (def.type~="gun" and def.type~="melee") then return nil end
+        return target
     end
     for i,gear in ipairs(gearFields) do
         local x,y,gw,gh=gearGeometry(w,h,i)
