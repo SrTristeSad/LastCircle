@@ -70,6 +70,9 @@ jobs:
           find "$XDG_DATA_HOME" -name 'LastCircle-fullmap.png' -size +10k \
             -exec cp {} LastCircle-fullmap-preview.png \; -quit
           test -s LastCircle-fullmap-preview.png
+          find "$XDG_DATA_HOME" -name 'LastCircle-inventory.png' -size +10k \
+            -exec cp {} LastCircle-inventory-preview.png \; -quit
+          test -s LastCircle-inventory-preview.png
           echo 'PASS: real LÖVE generated original equipment and default Survev scenes'
       - name: Gerar ZIP para Windows com um clique
         run: |
@@ -83,6 +86,7 @@ jobs:
               Path("LastCircle-preview.png"),
               Path("LastCircle-equipped-preview.png"),
               Path("LastCircle-fullmap-preview.png"),
+              Path("LastCircle-inventory-preview.png"),
               Path("LICENSE"),
               Path("ATTRIBUTION-SURVEV.txt"),
           ]
@@ -110,6 +114,7 @@ jobs:
             LastCircle-preview.png
             LastCircle-equipped-preview.png
             LastCircle-fullmap-preview.png
+            LastCircle-inventory-preview.png
           if-no-files-found: warn
           retention-days: 14
       - name: Disponibilizar pacote de testes
