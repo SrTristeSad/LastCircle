@@ -1,8 +1,9 @@
 -- Survev client/src/objects/player.ts basic BODY/HANDS/FEET pass.
 -- Original source: updateVisuals(), updateRotation(), render(); idle poses
 -- generated from client/src/animData.ts, tints/skins from outfitDefs.ts.
--- Does not pretend to implement weapons, recoil, full action animations,
--- armour, particles, water submersion or final PIXI render-layer sorting.
+-- Ports source armour/backpacks, melee and gun WORLD sprites with their
+-- actual transforms. Firing, recoil physics, water masks and final PIXI
+-- layer sorting remain separate and are NOT simulated.
 local Metadata=require("src.survev.player_art")
 local Equipment=require("src.survev.equipment_art")
 local Config=require("src.survev.game_config")
@@ -115,8 +116,29 @@ function Player:commands(obj,camera,mapName)
             ownerId=obj.__id,
         }
     end
-    -- Original bodyContainer order: feet L/R, backpack, body, equipment,
-    -- hands L/R, visor/helmet. Only layers already ported are emitted.
+    -- Screen-space commands retain ORIGINAL PIXI bodyContainer ordering.
+    -- Only layers whose metadata and source art have been verified render.
+    local function raw(name,asset,tint,point,angle,sx,sy,ax,ay)
+        if not asset then return end -- never generate stand-in pixels
+        output[#output+1]={
+            name=name,asset=asset,tint=tint,ownerId=obj.__id,
+            x=point.x,y=point.y,rotation=angle,
+            scaleX=sx,scaleY=sy,anchorX=ax or .5,anchorY=ay or .5,
+        }
+    end
+    local function localPoint(offset)
+        return V.add(center,V.rotate(V.mul(offset,bodyScale),rad))
+    end
+    -- Backpack behind the body (Survev m_getBagLevel / updateVisuals).
+    local bag=Equipment.gear[obj.backpack or ""]
+    if bag and bag.type=="backpack" and bag.level>0
+        and not obj.downed and not outfit.ghillie then
+        local offsets={10.25,11.5,12.75}
+        local offset=offsets[math.min(bag.level,#offsets)]
+        local scale=(.4+bag.level*.03)*.5*bodyScale
+        raw("backpack",outfit.backpackAsset,outfit.backpackTint,
+            localPoint({x=-offset,y=0}),rad,scale,scale)
+    end
     if obj.downed then
         if poses.FootL then
             append("footL",outfit.footAsset,foot,Metadata.sprites.footScale,
@@ -128,12 +150,97 @@ function Player:commands(obj,camera,mapName)
         end
     end
     append("body",outfit.baseAsset,primary,Metadata.sprites.bodyScale)
-    if poses.HandL then
-        append("handL",outfit.handLAsset,hand,Metadata.sprites.handScale,poses.HandL)
+    -- Chest armour is layered over the body using its own original tint.
+    local chest=Equipment.gear[obj.chest or ""]
+    if chest and chest.type=="chest" and chest.skin and not outfit.ghillie then
+        local s=bodyScale*.25
+        raw("chest",chest.skin.asset,chest.skin.baseTint,center,rad,s,s)
     end
-    if poses.HandR then
-        local punch=(obj.offlinePreview and Player.fistPose(obj.previewFistTicker)) or nil
-        append("handR",outfit.handRAsset,hand,Metadata.sprites.handScale,punch or poses.HandR)
+
+    local weap=Equipment.weapons[obj.activeWeapon or "fists"]
+    local world=weap and weap.world
+    local leftPose=poses.HandL
+    local rightPose=poses.HandR
+    if obj.offlinePreview and obj.activeWeapon=="fists" and rightPose then
+        rightPose=Player.fistPose(obj.previewFistTicker) or rightPose
+    end
+    -- Source player.ts:updateRotation: left-hand gun-specific offset.
+    if world and weap.type=="gun" and leftPose and world.leftHandOffset then
+        leftPose={
+            pos=V.add(leftPose.pos,world.leftHandOffset),
+            pivot=leftPose.pivot,rot=leftPose.rot,
+        }
+    end
+    local function drawGun(side,pose)
+        if not (world and world.asset and pose) then return end
+        local handPos,handAngle=worldPose(pose,center,rad,bodyScale)
+        local dx,dy=weap.isDual and -5.95 or -4.25,
+            weap.isDual and 0 or -1.75
+        if world.gunOffset then
+            dx=dx+world.gunOffset.x
+            dy=dy+world.gunOffset.y
+        end
+        local origin=V.add(handPos,
+            V.rotate(V.mul({x=dx,y=dy},bodyScale),handAngle))
+        local angle=handAngle+math.pi*.5
+        local pix=camera:m_pixels(1)
+        local function mag()
+            if not (world.mag and world.mag.asset) then return end
+            local pos=V.add(origin,
+                V.rotate(V.mul(world.mag.pos or {x=0,y=0},pix),angle))
+            raw("gunMag"..side,world.mag.asset,0xffffff,
+                pos,angle,pix*.25,pix*.25)
+        end
+        if world.mag and not world.mag.top then mag() end
+        -- Original Gun.setType(): gunBarrel anchor=(.5,1)
+        raw("gun"..side,world.asset,world.tint,origin,angle,
+            pix*world.scale.x*.5,pix*world.scale.y*.5,.5,1)
+        if world.mag and world.mag.top then mag() end
+    end
+    local function drawMelee(pose)
+        if not (world and world.asset and world.pos and pose) then return end
+        -- In original player.ts the melee sprite lives inside handRContainer,
+        -- with pivot=-world.pos and own rotation=world.rot. MeleeR idle bone
+        -- is identity; this preserves its exact PIXI nested transformation.
+        local centerHand,handAngle=worldPose(pose,center,rad,bodyScale)
+        local angle=handAngle+(world.rot or 0)
+        local centerSprite=V.add(centerHand,
+            V.rotate(V.mul(world.pos,bodyScale),angle))
+        local pix=camera:m_pixels(1)
+        raw("melee",world.asset,world.tint,centerSprite,angle,
+            pix*world.scale.x,pix*world.scale.y)
+    end
+
+    -- Hand containers: gun sprite below hand by default, unless handsBelow;
+    -- melee image above hand only if worldImg.renderOnHand is true.
+    local function hand(side,pose)
+        if not pose then return end
+        local drawGunSide=world and weap.type=="gun"
+            and (side=="R" or weap.isDual)
+        local drawMeleeSide=world and weap.type=="melee" and side=="R"
+        if drawGunSide and not world.handsBelow then drawGun(side,pose) end
+        if drawMeleeSide and not world.renderOnHand then drawMelee(pose) end
+        append("hand"..side,side=="L" and outfit.handLAsset or outfit.handRAsset,
+            hand,Metadata.sprites.handScale,pose)
+        if drawMeleeSide and world.renderOnHand then drawMelee(pose) end
+        if drawGunSide and world.handsBelow then drawGun(side,pose) end
+    end
+    if weap and weap.type=="melee" and world and world.leftHandOntop then
+        hand("R",rightPose)
+        hand("L",leftPose)
+    else
+        hand("L",leftPose)
+        hand("R",rightPose)
+    end
+
+    -- Helmet above body and hands, using source -3.33/+3.33 local offset.
+    local helmet=Equipment.gear[obj.helmet or ""]
+    if helmet and helmet.type=="helmet" and helmet.skin and not outfit.ghillie then
+        local img=helmet.skin
+        local s=bodyScale*(img.spriteScale or .15)
+        local x=obj.downed and 3.33 or -3.33
+        raw("helmet",img.asset,img.baseTint,localPoint({x=x,y=0}),
+            rad,s,s)
     end
     return output
 end
@@ -151,7 +258,8 @@ function Player:draw(obj,camera,mapName)
             local width,height=tex:getDimensions()
             love.graphics.setColor(color(item.tint))
             love.graphics.draw(tex,item.x,item.y,item.rotation,
-                item.scale,item.scale,width*.5,height*.5)
+                item.scaleX or item.scale,item.scaleY or item.scale,
+                width*(item.anchorX or .5),height*(item.anchorY or .5))
             n=n+1
         else
             self.unavailable=self.unavailable+1
