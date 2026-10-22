@@ -104,4 +104,40 @@ state.offlinePreview=nil
 state:applyMessage(Net.MsgType.Joined,{teamMode=1,playerId=17,started=true})
 recoil:update(state,0)
 assert(next(recoil.hands)==nil)
+-- Two socket packets can arrive before the LÖVE renderer runs.
+-- Their authoritative shotFx entries must BOTH survive the state merge.
+local batch=State.new()
+batch:applyMessage(Net.MsgType.Joined,{teamMode=1,playerId=17,started=true})
+batch:applyUpdate({fullObjects={obj},bullets={shot("ak47",true,false)}})
+batch:applyUpdate({bullets={shot("ak47",true,false)}})
+assert(#batch.bullets==1,"per-frame visual bullets remain transient")
+assert(batch.shotFxSeq==2 and #batch.shotFxEvents==2,
+    "two packet events must survive in the numbered shot queue")
+local batchedRecoil=Recoil.new()
+batchedRecoil:update(batch,0)
+near(batchedRecoil.hands[17].left,kick*2)
+near(batchedRecoil.hands[17].right,kick*2)
+batchedRecoil:update(batch,0)
+near(batchedRecoil.hands[17].left,kick*2)
+batch:applyUpdate({bullets={}})
+batchedRecoil:update(batch,0)
+near(batchedRecoil.hands[17].left,kick*2)
+-- Bound retained shot events even if a consumer stalls for many packets.
+for i=1,260 do
+    batch:applyUpdate({bullets={shot("ak47",true,false)}})
+end
+assert(#batch.shotFxEvents==256)
+assert(batch.shotFxSeq==262)
+assert(batch.shotFxEvents[1].seq==7)
+assert(batch.shotFxEvents[256].seq==262)
+batchedRecoil:update(batch,0)
+near(batchedRecoil.hands[17].left,kick*262)
+batchedRecoil:update(batch,0)
+near(batchedRecoil.hands[17].left,kick*262)
+-- Reset must discard retained effects, rather than replaying previous match.
+batch:applyMessage(Net.MsgType.Joined,{teamMode=1,playerId=17,started=true})
+assert(batch.shotFxSeq==0 and #batch.shotFxEvents==0)
+batchedRecoil:update(batch,0)
+assert(next(batchedRecoil.hands)==nil)
+
 print("Survev server-origin shotFx recoil, dual hands and exact decay passed")
