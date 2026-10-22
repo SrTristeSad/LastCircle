@@ -128,3 +128,10 @@ Cobertura: `tests/matchmaking_smoke.lua` (contrato, JSON, seguranca, erros), `te
 
 
 O modo de rede esconde as etiquetas de depuracao durante uma partida; **F8** alterna os indicadores para diagnosticar a conexao. As artes e o HUD continuam em processo de porte do cliente original. A CI executa o teste de entrada pelo menu real `tests/main_quickplay_smoke.lua`, alem dos testes HTTP/WebSocket.
+
+
+### SpectateMsg real e controles pos-morte
+
+Quando o servidor marcar o jogador local como morto no `UpdateMsg`, o LastCircle pode enviar o `SpectateMsg` original (`MsgType.Spectate=11`) com `Begin=1` por botao na tela ou tecla **B**. Depois que o servidor enviar um novo `UpdateMsg.activePlayerId`, o usuario pode selecionar **Next=2** ou **Prev=3** com as setas ou os botoes. Nenhum alvo e escolhido do lado do cliente. O estado `gameOver=false` de `GameOverMsg` nao encerra a conexao; apenas `gameOver=true` encerra a partida. `InputMsg` neutraliza movimento/disparo retidos ao morrer ou assistir outro jogador, evitando comandar o personagem sob observacao. A logica segue `client/src/game.ts`, `shared/net/spectateMsg.ts` e `server/src/game/client.ts`.
+
+`tests/ws_spectate_network.lua` conecta via WebSocket a `tests/ws_fixture_server.mjs`, que importa os serializadores da branch de referencia do Survev em TypeScript: reproduz a morte do jogador, recebe `Begin/Next/Prev` e fornece novos `UpdateMsg` de troca de alvo. Sao verificados tambem os bytes da mensagem, a ausencia de efeito otimista local e a neutralizacao de comandos `InputMsg` (Lua 5.4 e LuaJIT). **Nao e evidencia de partida online completa.**
