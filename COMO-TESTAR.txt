@@ -64,3 +64,16 @@ IMPORTANTE:
 Repositorio: https://github.com/SrTristeSad/LastCircle
 Origem: https://github.com/survev/survev
 Licenca: GPL-3.0-or-later. Atribuicao no arquivo ATTRIBUTION-SURVEV.txt.
+
+
+NOVO: INVENTARIO MULTIPLAYER (SOMENTE SE CONECTADO AO SURVEV)
+- F6: informe uma URL WebSocket real e joinToken validos.
+- I/TAB: abra o inventario recebido via UpdateMsg.
+- Clique com o botao direito sobre a linha de um item em quantidade
+  conhecida e positiva para solicitar seu descarte ao servidor.
+- "Pedido enviado" NAO significa descarte confirmado: o inventario
+  somente muda apos a resposta autoritativa UpdateMsg.
+- Nada e retirado do inventario por simples clique. Com a janela aberta,
+  cliques nao efetuam disparos.
+- Teclas 7/8/9/0: usar bandagem/kit/soda/analgesico via InputMsg.useItem.
+- Servidores ainda nao testados com partida multiplayer completa.
