@@ -135,7 +135,12 @@ function love.keypressed(key)
     end
     if screen=="demo" then
         if key=="f" then demo:interact()
-        elseif key=="r" then demo=OfflineDemo.new() end
+        elseif key=="r" then demo=OfflineDemo.new()
+        elseif key=="g" then demo:toggleGear()
+        elseif key=="c" then demo:cycleOutfit()
+        elseif key=="1" or key=="2" or key=="3" or key=="4" or key=="5" then
+            demo:equip(tonumber(key))
+        end
         return
     end
     if screen=="assets" then
@@ -283,14 +288,15 @@ local function drawDemo(w,h)
     live:draw(demo:getGameState(),w,h)
     local g=love.graphics
     g.setColor(.025,.07,.06,.92)
-    g.rectangle("fill",math.max(0,(w-900)/2),h-138,math.min(900,w),94,9)
+    g.rectangle("fill",math.max(0,(w-980)/2),h-167,math.min(980,w),129,9)
     g.setColor(.96,.97,.87)
-    g.printf("TESTE LOCAL DO CLIENTE LUA — SEM SERVIDOR",0,h-130,w,"center")
+    g.printf("TESTE LOCAL DO CLIENTE LUA — SEM SERVIDOR",0,h-159,w,"center")
     g.setColor(.75,.88,.78)
-    g.printf("WASD mover   •   mouse mirar   •   clique: soco visual   •   F porta",0,h-102,w,"center")
-    g.printf("R/F5 reiniciar   •   F6 servidor Survev   •   F7 artes   •   ESC sair",0,h-79,w,"center")
+    g.printf("WASD mover  •  mouse mirar  •  clique: soco visual  •  F porta",0,h-133,w,"center")
+    g.printf("1 Punhos  |  2 Frigideira  |  3 M9  |  4 AK-47  |  5 M9 duplas",0,h-109,w,"center")
+    g.printf("G equipamentos  •  C roupa  •  R/F5 reiniciar  •  F6 rede  •  F7 artes",0,h-86,w,"center")
     g.setColor(.99,.84,.52)
-    g.printf(demo.message,0,h-60,w,"center")
+    g.printf(demo.message,0,h-61,w,"center")
 end
 
 local function drawNetwork(w,h)
