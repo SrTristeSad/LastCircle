@@ -69,6 +69,10 @@ jobs:
           luajit tests/live_input_smoke.lua
           lua5.4 tests/pickup_feedback_smoke.lua
           luajit tests/pickup_feedback_smoke.lua
+      - name: Survev authentic spectate messages and neutral fire after death
+        run: |
+          lua5.4 tests/spectate_gameplay_smoke.lua
+          luajit tests/spectate_gameplay_smoke.lua
       - name: Server-authoritative equipment and weapon change notices
         run: |
           lua5.4 tests/equipment_tracker_smoke.lua
