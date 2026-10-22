@@ -102,3 +102,16 @@ CONTROLES DO HUD MULTIPLAYER (F6, apos entrar na partida)
   solicita descarte via DropItemMsg.
 - Mochila, punhos e slots vazios nao sao descartados.
 - O inventario e a arma equipada so mudam apos UpdateMsg do servidor.
+
+
+ESPECTADOR EM PARTIDA REAL (SOMENTE APOS UPDATE DO SERVIDOR)
+- Quando o servidor indicar que seu personagem morreu, pressione B ou
+  use o botao ASSISTIR na tela para enviar SpectateMsg.Begin original.
+- Ao receber o novo alvo de UpdateMsg do servidor, use as setas
+  ESQUERDA/DIREITA ou os botoes na tela para enviar Prev/Next.
+- Enquanto assiste, WASD e disparo nao controlam o jogador observado.
+- O cliente nao escolhe o alvo antecipadamente: escolha e cooldown
+  permanecem no servidor Survev.
+- GameOverMsg.gameOver=false indica estatisticas sem fim total de partida.
+- A compatibilidade de uma partida multiplayer completa ainda precisa
+  ser validada em servidor real.
