@@ -42,6 +42,24 @@ function C.firstHit(snapshot,bullet,startPoint,endPoint)
     if not snapshot or not bullet or not startPoint or not endPoint then
         return nil
     end
+    -- Conservative swept AABB broad phase: this does not replace the
+    -- original line/collider test, it only skips distant world entities.
+    -- A small margin covers the original coldet near-axis epsilon hack.
+    local epsilon=.001
+    local minX=math.min(startPoint.x,endPoint.x)-epsilon
+    local maxX=math.max(startPoint.x,endPoint.x)+epsilon
+    local minY=math.min(startPoint.y,endPoint.y)-epsilon
+    local maxY=math.max(startPoint.y,endPoint.y)+epsilon
+    local function inSweep(collider)
+        if collider.type==0 then
+            local p,r=collider.pos,collider.rad
+            return p.x+r>=minX and p.x-r<=maxX and
+                p.y+r>=minY and p.y-r<=maxY
+        end
+        local mn,mx=collider.min,collider.max
+        return mx.x>=minX and mn.x<=maxX and
+            mx.y>=minY and mn.y<=maxY
+    end
     local best=nil
     local function consider(hit,kind,id)
         if not hit or not hit.point then return end
@@ -55,7 +73,8 @@ function C.firstHit(snapshot,bullet,startPoint,endPoint)
             o.height>=BULLET_HEIGHT and
             LOS.sameLayer(o.layer,bullet.layer) and
             (not bullet.reflectCount or bullet.reflectCount==0 or
-                o.__id~=bullet.reflectObjId) then
+                o.__id~=bullet.reflectObjId) and
+            inSweep(o.collider) then
             consider(LOS.intersectSegment(o.collider,startPoint,endPoint),
                 "obstacle",o.__id)
         end
@@ -64,9 +83,11 @@ function C.firstHit(snapshot,bullet,startPoint,endPoint)
         if eligiblePlayer(o,bullet) then
             local rad=Config.player.radius*(o.scale or 1)
             if rad>0 then
-                consider(LOS.intersectSegment({
-                    type=0,pos=o.pos,rad=rad,
-                },startPoint,endPoint),"player",o.__id)
+                local circle={type=0,pos=o.pos,rad=rad}
+                if inSweep(circle) then
+                    consider(LOS.intersectSegment(circle,startPoint,endPoint),
+                        "player",o.__id)
+                end
             end
         end
     end
