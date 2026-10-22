@@ -85,3 +85,10 @@ O HUD apresenta o tempo de **recarga**, **uso de itens** e **reviver** se a atua
 ### Recuo visual ao disparar (2026-10-22)
 
 O HUD/mundo **F6** utiliza eventos de disparo `shotFx` recebidos do servidor, não o clique local. O sprite da arma acompanha a mão deslocada pelo recuo, inclusive em pistolas duplas. O recuo diminui pela equação original de `player.ts`. A fila de eventos numerados preserva disparos caso o WebSocket entregue múltiplos `UpdateMsg` antes de desenhar um novo quadro (limite: 256 eventos). A troca de partida, dados inválidos e morte cancelam o efeito. Isso não representa implementação de balística, dano, projéteis completos ou efeitos sonoros.
+
+
+### Tracers dos disparos do servidor
+
+O mundo em **F6** desenha rastros de projeteis vindos de `UpdateMsg.bullets`, em cima dos personagens. A aparencia vem da arte original `player-bullet-trail-02` e das definicoes originais de 63 balas, com velocidade, alcance, cor e largura. Disparos nao sao criados pelo clique local. Mensagens WebSocket recebidas no mesmo quadro nao sao perdidas: os rastros sao armazenados em uma fila de no maximo 512 eventos.
+
+**Ainda pendente:** colisoes visuais com obstaculos e jogadores, ricochete e efeitos de impacto, flares, acoes sonoras, cores especificas de biomas e validacao end-to-end. Sem essas colisões a parte visual pode atravessar paredes, o que nao indica que o servidor aceitou um acerto.
