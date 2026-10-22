@@ -78,6 +78,9 @@ O teste `tests/matchmaking_smoke.lua` cobre a API JSON original e as respostas r
 
 **Espectador original e morte (2026-10-22):** apos o servidor informar a morte, **B** ou o botao na tela solicitam `SpectateMsg.Begin`; durante a observacao, setas **esquerda/direita** ou os botoes solicitam `Prev/Next`. A camera so acompanha um novo alvo quando o servidor informa `UpdateMsg.activePlayerId`. Ao morrer, o cliente envia um `InputMsg` neutro para soltar movimentos/tiros retidos e nao controla o personagem acompanhado. O estado `GameOverMsg.gameOver=false` agora preserva a partida; `true` indica encerramento. Testes Lua/LuaJIT e uma fixture WebSocket com serializadores originais TypeScript validam a cadeia espectador; **ainda nao atestam multiplayer integral em um servidor de producao**.
 
+
+**Controles de partida e camera (2026-10-22):** implementado o zoom dinamico do `activePlayerData.zoom` recebido via `UpdateMsg`, com transicao rapida de luneta segundo `client/src/game.ts` e largura virtual 16:9. Os testes `tests/main_combat_smoke.lua` e `tests/ws_combat_network.lua` verificam o caminho do clique ao `InputMsg` e ao decodificador TypeScript original: tiro inicial/continuo, F interacao, R recarga, cura, selecao de arma, botoes do HUD, protecao contra cliques no inventario e descarte autorizado pelo servidor. As mensagens de `healthDirty` e `inventoryDirty` controlam o estado; nao ha dano nem saque inventados pelo cliente. Ainda falta provar uma partida completa contra o servidor real.
+
 **Ainda não portado:** API oficial para descobrir partidas/tokens, composição final das quatro camadas e máscaras, interação de portas com o servidor, animações completas de jogadores, **HUD final (saque/equipamento completos, feed, menus e layout final do minimapa/inventário)**, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
 ### Testar agora sem servidor (Windows / LÖVE)
