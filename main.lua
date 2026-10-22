@@ -171,6 +171,10 @@ function love.keypressed(key)
     if keyActions[key] then addAction(keyActions[key]) end
 end
 function love.mousepressed(x,y,button)
+    if screen=="demo" then
+        if button==1 then demo:punch() end
+        return
+    end
     if screen~="network" then return end
     if connected() then
         if button==1 then fireStart=true end
@@ -283,8 +287,8 @@ local function drawDemo(w,h)
     g.setColor(.96,.97,.87)
     g.printf("TESTE LOCAL DO CLIENTE LUA — SEM SERVIDOR",0,h-130,w,"center")
     g.setColor(.75,.88,.78)
-    g.printf("WASD mover   •   mouse mirar   •   F porta   •   R reiniciar",0,h-102,w,"center")
-    g.printf("F5 novo teste   •   F6 servidor Survev   •   F7 artes   •   ESC sair",0,h-79,w,"center")
+    g.printf("WASD mover   •   mouse mirar   •   clique: soco visual   •   F porta",0,h-102,w,"center")
+    g.printf("R/F5 reiniciar   •   F6 servidor Survev   •   F7 artes   •   ESC sair",0,h-79,w,"center")
     g.setColor(.99,.84,.52)
     g.printf(demo.message,0,h-60,w,"center")
 end
