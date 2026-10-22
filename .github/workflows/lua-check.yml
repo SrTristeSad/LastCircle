@@ -129,6 +129,10 @@ jobs:
         run: |
           lua5.4 tests/main_quickplay_smoke.lua
           luajit tests/main_quickplay_smoke.lua
+      - name: LÖVE real-player death, spectator navigation and neutral InputMsg
+        run: |
+          lua5.4 tests/main_spectate_smoke.lua
+          luajit tests/main_spectate_smoke.lua
       - name: Headless LÖVE UI bootstrap checks
         run: |
           lua5.4 tests/main_smoke.lua
