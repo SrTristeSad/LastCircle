@@ -7,6 +7,7 @@ local MapRenderer=require("src.survev.map_renderer")
 local ObstacleArt=require("src.survev.obstacle_art_renderer")
 local BuildingArt=require("src.survev.building_renderer")
 local PlayerArt=require("src.survev.player_renderer")
+local LootArt=require("src.survev.loot_renderer")
 local V={}
 V.__index=V
 local function image(path)
@@ -20,6 +21,7 @@ function V.new()
     return setmetatable({
         camera=Camera.new(),
         players=PlayerArt.new(),
+        lootArt=LootArt.new(),
         terrainMap=nil,terrainRenderer=nil,obstacleArt=ObstacleArt.new(),
         buildingArt=BuildingArt.new(),
         warning="PISOS, TETOS, PORTAS E RAIOS DE VISAO PORTADOS | CAMADAS FINAIS PENDENTES",
@@ -73,6 +75,8 @@ function V:draw(state,w,h)
     -- Original building floor textures precede players and ceiling layers.
     self.buildingArt:drawPhase(state.objects,cam,"floor",w,h,map.mapName)
     self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"belowPlayer")
+    -- Survev original Loot renderer zOrd=13 (below Player zOrd=18).
+    self.lootArt:draw(state.objects,cam,w,h)
 
     -- Debug markers intentionally do not pretend to reproduce object graphics.
     for _,obj in pairs(state.objects) do
@@ -88,7 +92,8 @@ function V:draw(state,w,h)
                         g.circle("line",pt.x,pt.y,cam:m_z())
                     end
                 elseif obj.__type~=Objects.Type.Obstacle and
-                    obj.__type~=Objects.Type.Building then
+                    obj.__type~=Objects.Type.Building and
+                    obj.__type~=Objects.Type.Loot then
                     g.setColor(.84,.86,.62)
                     g.circle("line",pt.x,pt.y,7)
                     g.print(tostring(obj.__type)..":"..tostring(obj.__id),pt.x+8,pt.y-10)
