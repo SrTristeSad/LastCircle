@@ -43,6 +43,8 @@ O código original está integralmente espelhado em [referencia-survev](https://
 | `shared/utils/river.ts` | `river.lua` | Rios e lagos, margens, conexões, recortes e polígonos equivalentes aos originais |
 | `shared/defs/mapDefs.ts` | `map_colors.lua` | **Cores, atlases, ajuste de brilho e tipo de margem oficial** extraídos de TypeScript, sem valores aproximados |
 | `client/src/map.ts:renderTerrain` | `map_renderer.lua` | Malhas cacheadas de água, praia, gramado, rios, patches e grade, testadas no LÖVE2D real |
+| `client/src/map.ts:getMinimapRender` e `MapObjectDefs` | `minimap_defs.lua`, `minimap.lua` | **252 definições originais visíveis de minimapa**, cores, círculos, AABBs, ordem zIdx, posições do MapMsg; canvas cacheado e marcador de jogador atualizado em tempo real; PIXI/CSS final pendentes |
+| `client/src/ui/ui2.ts` e `objects/obstacle.ts:getInteraction` | `interaction_hint.lua` | Seleção de porta por **penetração em colisor, raio original, camada e canUse**, não pela distância inventada ao centro; simulação local com F, uso real depende de InputMsg e servidor |
 | `shared/defs/register.ts` (obstáculos e imagens) | `map_obstacle_art.lua` | **741 definições** extraídas, com **511 sprites principais localizados** nos assets originais |
 | `client/src/objects/obstacle.ts` (renderização e porta) | `obstacle_art_renderer.lua`, `door_visual.lua` | Artes reais, tint, escala, âncora, **interpolação de portas**, rotação de ângulo mais curto e molduras; ordenação/máscaras finais pendentes |
 | `shared/defs/mapObjects/buildings/**` | `map_building_art.lua` | **228 definições originais**, 342 imagens de piso e 242 de teto; 537 camadas associadas aos arquivos originais |
