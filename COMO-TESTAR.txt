@@ -8,6 +8,8 @@ LASTCIRCLE - TESTE LOCAL DO CLIENTE LUA (SURVEV)
 
 O teste entra diretamente em um MAPA LOCAL, SEM SERVIDOR.
 O HUD mostra vida, boost, quatro slots, carregadores e reservas.
+Agora existe um MINIMAPA que acompanha o jogador em tempo real,
+com o terreno e os formatos originais das construcoes e obstaculos.
 Esses valores no teste local sao EXEMPLOS, sem combate de verdade.
 Isso permite avaliar o desenho REAL do terreno, dos rios, das casas,
 das arvores, das portas e do PERSONAGEM (corpo, maos, roupas e poses
@@ -24,7 +26,10 @@ TECLAS:
   5       - duas pistolas M9.
   G       - ativar / desativar mochila, colete e capacete.
   C       - alternar entre roupas originais.
-  F       - abrir ou fechar uma porta proxima, usando a regra original.
+  F       - interagir quando a mensagem "Abrir/Fechar porta" aparecer.
+            O alcance considera colisor, orientacao e raio ORIGINAL do Survev.
+  M       - ampliar/fechar o mapa.
+  N       - mostrar/ocultar o minimapa.
   R / F5  - reiniciar o teste local.
   F6      - painel para conectar a um servidor SURVEV compativel.
   F7      - ver recursos graficos originais.
@@ -33,6 +38,8 @@ TECLAS:
 IMPORTANTE:
 - O mapa e o conjunto de objetos constituem CENARIO DE TESTE LOCAL.
 - As cores, sprites, definicoes, terreno e velocidades vem do Survev.
+- As formas dos objetos no minimapa vem de Map.getMinimapRender() e
+  MapMsg.objects no Survev original; o visual do painel foi adaptado ao LOVE.
 - Movimento e interacoes locais sao uma simulacao para inspecao visual,
   NAO uma partida multiplayer nem um servidor de jogo real.
 - F6 continua necessitando de URL WebSocket e joinToken reais de Survev.
