@@ -4,6 +4,9 @@
 local Ws=require("src.survev.ws_connection")
 local Session=require("src.survev.protocol_session")
 local Input=require("src.survev.input_msg")
+local Net=require("src.survev.net")
+local Drop=require("src.survev.drop_item_msg")
+local LootDefs=require("src.survev.loot_art")
 local Client={}
 Client.__index=Client
 function Client.new(options)
@@ -88,6 +91,37 @@ function Client:sendInput(msg,dt)
     assert(msg and getmetatable(msg)==Input,"Survev InputMsg required")
     self.lastInput=msg
     return self.session:sendInput(msg,dt)
+end
+-- Original Survev DropItemMsg: bag-item type + zero weapon index.
+-- Request only. Inventory and ground loot change ONLY through server UpdateMsg.
+function Client:dropInventoryItem(item)
+    if not self.session or not self.session.opened or
+        not self.connection or self.connection.state~="open" then
+        return nil,"Sem conexao com a partida"
+    end
+    local state=self.session.state
+    if not state or not state.joined or state.gameOver or
+        state.spectating or state.activeId~=state.localId then
+        return nil,"Jogador nao pode soltar itens agora"
+    end
+    local valid=false
+    for _,key in ipairs(LootDefs.bagKeys) do
+        if key==item then valid=true;break end
+    end
+    if not valid then return nil,"Item nao pertence ao inventario" end
+    local inventory=state.localData and state.localData.inventory
+    if not inventory or type(inventory[item])~="number" or
+        inventory[item]<=0 then
+        return nil,"Item indisponivel ou quantidade desconhecida"
+    end
+    local message=Drop.new()
+    message.item=item
+    message.weapIdx=0
+    local ok,bytes=pcall(function()
+        return self.session:sendMessage(Net.MsgType.DropItem,message,128)
+    end)
+    if not ok then return nil,tostring(bytes) end
+    return bytes
 end
 function Client:close()
     if self.connection then self.connection:close() end
