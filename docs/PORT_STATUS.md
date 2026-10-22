@@ -132,3 +132,13 @@ As duas primeiras animações ofensivas implementadas são **punhos** e **frigid
 `src/survev/action_progress.lua` projeta `actionType` e `actionItem` do jogador junto dos tempos de `UpdateMsg.activePlayerData.action`. O HUD desenha uma barra de progresso somente quando recebe dados válidos para recarga, uso de consumível ou revive. Trata-se de uma adaptação visual LÖVE do indicador do jogo; não é o temporizador circular CSS original nem uma predição da ação.
 
 `tests/player_animation_smoke.lua` valida poses, durações, sequências repetidas, wrap-around, desligamento e integração com sprites. `tests/action_progress_smoke.lua` valida eventos autoritativos, durações desconhecidas e término. Ambas as suítes entram no workflow `lua-check.yml` com Lua 5.4 e LuaJIT. A confirmação em partida online completa ainda está pendente.
+
+### Recuo de tiros confirmado pelo servidor (2026-10-22)
+
+`src/survev/shot_recoil.lua` usa exclusivamente o `UpdateMsg.bullets` original com `shotFx==true`, `playerId` e `shotSourceType` válido. O impulso é obtido da propriedade original `GameObjectDefs.weapons[type].worldImg.recoil` já registrada em `equipment_art.lua`. O código replica `client/src/objects/shot.ts`: armas normais deslocam ambas as mãos, armas duplas deslocam apenas a mão definida por `shotOffhand`. O decaimento visual replica `client/src/objects/player.ts`: `max(0, recoil - recoil * dt * 5 - dt)`. `player_renderer.lua` incorpora a posição negativa em X `-recoil * 1.125` no osso da mão; arma e mão compartilham a transformação.
+
+**Não** são produzidos tiro, projétil, dano, partículas, ruído ou consumo de munição pelo cliente. Eventos inválidos, armas inexistentes e jogadores mortos não produzem recuo. O teste offline permanece sem esse efeito autoritativo.
+
+`client_state.lua` mantém `shotFxEvents` com `shotFxSeq` crescente e limite de 256 eventos, pois vários `UpdateMsg` podem chegar durante um único `love.update`; o módulo consome apenas eventos ainda não vistos e reseta quando o estado da partida é reiniciado. Se houver mais de 256 disparos sem renderização, os eventos mais antigos são descartados para limitar memória.
+
+`tests/shot_recoil_smoke.lua` verifica recuo individual, pistolas duplas, deslocamento dos sprites, decaimento, eventos inválidos, duas mensagens de rede no mesmo quadro, deduplicação, limite da fila e reinicialização. O workflow `lua-check.yml` passou em Lua 5.4 e LuaJIT na execução **39730222508** (commit `1b1c570e63fe3cc241431155602db61eae2259d0`). O empacotamento LÖVE anterior passou na execução **39730131164**. Ainda faltam efeitos de disparo, projéteis visuais fiéis, áudio e teste end-to-end em servidor real.
