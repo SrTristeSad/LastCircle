@@ -54,6 +54,37 @@ local function panPoints(o,pos,dir)
     end
     return transformPoint(p0,pos,dir),transformPoint(p1,pos,dir)
 end
+local function normalize(x,y)
+    local len=math.sqrt(x*x+y*y)
+    if len<.0000001 then return {x=0,y=1} end
+    return {x=x/len,y=y/len}
+end
+local function hitNormal(collider,point)
+    if collider.type==0 then
+        return normalize(point.x-collider.pos.x,
+            point.y-collider.pos.y)
+    end
+    local min,max=collider.min,collider.max
+    local faces={
+        {math.abs(point.x-min.x),-1,0},
+        {math.abs(point.x-max.x),1,0},
+        {math.abs(point.y-min.y),0,-1},
+        {math.abs(point.y-max.y),0,1},
+    }
+    local nearest=faces[1]
+    for i=2,#faces do
+        if faces[i][1]<nearest[1] then nearest=faces[i] end
+    end
+    return {x=nearest[2],y=nearest[3]}
+end
+local function panSegmentHit(a,b,p0,p1)
+    local hit=segmentIntersection(a,b,p0,p1)
+    if hit then
+        -- bullet.ts uses normalize(v2.perp(p1-p0)).
+        hit.normal=normalize(-(p1.y-p0.y),p1.x-p0.x)
+    end
+    return hit
+end
 local function panIntersects(o,a,b)
     if not (o.wearingPan or
         (o.activeWeapon=="pan" and o.animType~=Config.Anim.Melee)) then
@@ -63,8 +94,8 @@ local function panIntersects(o,a,b)
     local op0,op1=panPoints(o,o.oldPos or o.pos,o.oldDir or o.dir)
     if not np0 or not op0 then return nil end
     -- Source bullet.ts evaluates old/new pan segments independently.
-    return segmentIntersection(a,b,op0,op1) or
-        segmentIntersection(a,b,np0,np1)
+    return panSegmentHit(a,b,op0,op1) or
+        panSegmentHit(a,b,np0,np1)
 end
 C.panIntersects=panIntersects
 
@@ -130,11 +161,15 @@ function C.firstHit(snapshot,bullet,startPoint,endPoint)
             mx.y>=minY and mn.y<=maxY
     end
     local best=nil
-    local function consider(hit,kind,id)
+    local function consider(hit,kind,id,collider)
         if not hit or not hit.point then return end
         local distance=dist2(hit.point,startPoint)
         if not best or distance<best.distanceSq then
-            best={point=hit.point,kind=kind,id=id,distanceSq=distance}
+            best={
+                point=hit.point,kind=kind,id=id,distanceSq=distance,
+                normal=hit.normal or
+                    (collider and hitNormal(collider,hit.point)) or nil,
+            }
         end
     end
     for _,o in ipairs(snapshot.obstacles or {}) do
@@ -145,7 +180,7 @@ function C.firstHit(snapshot,bullet,startPoint,endPoint)
                 o.__id~=bullet.reflectObjId) and
             inSweep(o.collider) then
             consider(LOS.intersectSegment(o.collider,startPoint,endPoint),
-                "obstacle",o.__id)
+                "obstacle",o.__id,o.collider)
         end
     end
     for _,o in ipairs(snapshot.players or {}) do
@@ -161,7 +196,7 @@ function C.firstHit(snapshot,bullet,startPoint,endPoint)
                 pan=nil
             end
             if pan then consider(pan,"pan",o.__id)
-            else consider(body,"player",o.__id) end
+            else consider(body,"player",o.__id,circle) end
         end
     end
     if best then best.distance=math.sqrt(best.distanceSq) end
