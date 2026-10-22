@@ -1,11 +1,12 @@
 -- Live Survev terrain renderer / state inspector. Coastline, river/lake
 -- polygons, map palettes, patches and grid are ported from ORIGINAL code.
--- Obstacles now use actual source sprites; other entities remain diagnostics.
+-- Terrain, player body/hands, buildings and obstacles use original sprite sizes.
 local Camera=require("src.survev.camera")
 local Objects=require("src.survev.object_serialize_fns")
 local MapRenderer=require("src.survev.map_renderer")
 local ObstacleArt=require("src.survev.obstacle_art_renderer")
 local BuildingArt=require("src.survev.building_renderer")
+local PlayerArt=require("src.survev.player_renderer")
 local V={}
 V.__index=V
 local function image(path)
@@ -18,7 +19,7 @@ end
 function V.new()
     return setmetatable({
         camera=Camera.new(),
-        player=image("assets/survev/img/player/player-base-01.png"),
+        players=PlayerArt.new(),
         terrainMap=nil,terrainRenderer=nil,obstacleArt=ObstacleArt.new(),
         buildingArt=BuildingArt.new(),
         warning="PISOS, TETOS, PORTAS E RAIOS DE VISAO PORTADOS | CAMADAS FINAIS PENDENTES",
@@ -34,11 +35,6 @@ function V:update(state,dt)
     local active=state.objects[state.activeId]
     self.buildingArt:updateVisibility(dt,state.objects,active,state.updateCount)
     self.obstacleArt:update(state.objects,dt)
-end
-local function drawCentered(asset,x,y,dia,angle)
-    local w,h=asset:getDimensions()
-    local scale=dia/math.max(w,h)
-    love.graphics.draw(asset,x,y,angle or 0,scale,scale,w*.5,h*.5)
 end
 function V:draw(state,w,h)
     local g=love.graphics
@@ -83,12 +79,14 @@ function V:draw(state,w,h)
         if obj.pos then
             local pt=cam:m_pointToScreen(obj.pos)
             if pt.x>-80 and pt.x<w+80 and pt.y>-80 and pt.y<h+80 then
-                if obj.__type==Objects.Type.Player and self.player then
-                    g.setColor(1,1,1)
-                    drawCentered(self.player,pt.x,pt.y,2*cam:m_z()*(obj.scale or 1))
-                elseif obj.__type==Objects.Type.Player then
-                    g.setColor(.96,.93,.75)
-                    g.circle("line",pt.x,pt.y,cam:m_z())
+                if obj.__type==Objects.Type.Player then
+                    -- The player now uses source-sized body and TWO actual
+                    -- fist-pose hand sprites, not a stretched debug texture.
+                    local rendered=self.players:draw(obj,cam,map.mapName)
+                    if rendered==0 then
+                        g.setColor(.96,.93,.75)
+                        g.circle("line",pt.x,pt.y,cam:m_z())
+                    end
                 elseif obj.__type~=Objects.Type.Obstacle and
                     obj.__type~=Objects.Type.Building then
                     g.setColor(.84,.86,.62)
