@@ -1,0 +1,50 @@
+name: Original Survev Minimap Definitions
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/generate_minimap_defs.mjs
+      - .github/workflows/minimap-defs.yml
+permissions:
+  contents: write
+jobs:
+  minimap-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Generate original minimap object shapes and colors
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/generate_minimap_defs.mjs \
+            _reference/reference/survev src/survev/minimap_defs.lua
+      - name: Validate syntax and source types
+        run: |
+          sudo apt-get update && sudo apt-get install -y lua5.4 luajit
+          luac5.4 -p src/survev/minimap_defs.lua
+          lua5.4 -e 'local d=require("src.survev.minimap_defs");assert(d.shack_01 and d.tree_01 and d.stone_01);print("Survev minimap source definitions OK")'
+          luajit -e 'local d=require("src.survev.minimap_defs");assert(d.shack_01 and d.tree_01)'
+      - name: Commit generated source metadata
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/survev/minimap_defs.lua
+          if ! git diff --cached --quiet; then
+            git commit -m "port: original Survev minimap object colors and collision shapes"
+            for attempt in 1 2 3 4; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then exit 0; fi
+              sleep 2
+            done
+            exit 1
+          fi
