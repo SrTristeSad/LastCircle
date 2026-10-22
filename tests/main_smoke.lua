@@ -41,6 +41,11 @@ love.mousepressed(640,360,1)
 love.update(.016)
 love.draw()
 love.keypressed("f")
+for _,key in ipairs({"2","3","4","5","1","g","g","c"}) do
+    love.keypressed(key)
+    love.update(.016)
+    love.draw()
+end
 love.keypressed("r")
 love.keypressed("f5")
 love.update(.016)
