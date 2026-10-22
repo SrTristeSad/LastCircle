@@ -4,6 +4,7 @@
 -- Graphics layout is adapted for LÖVE; not an exact port of original CSS.
 local Game=require("src.survev.game_config")
 local Gear=require("src.survev.equipment_art")
+local ActionProgress=require("src.survev.action_progress")
 local HUD={}
 HUD.__index=HUD
 local function clamp(v,a,b) return math.max(a,math.min(v,b)) end
@@ -275,6 +276,7 @@ function HUD:draw(state,w,h)
         g.setColor(.99,.86,.56)
         g.printf(self.notice,baseX+5,baseY-55,333,"center")
     end
+    ActionProgress.draw(state,w,h)
     g.setColor(1,1,1,1)
     return true
 end
