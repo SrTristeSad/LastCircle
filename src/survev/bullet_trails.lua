@@ -2,6 +2,7 @@
 -- Visual-only port. Positions originate ONLY from server UpdateMsg.bullets.
 -- Server-authoritative hit physics/obstacle collision is NOT ported here.
 local Art=require("src.survev.bullet_art")
+local Collision=require("src.survev.bullet_collision")
 local Trails={}
 Trails.__index=Trails
 
@@ -48,6 +49,9 @@ local function addSourceBullet(self,b)
         dir={x=b.dir.x,y=b.dir.y},
         speed=speed,distance=maxDistance,traveled=0,
         layer=b.layer or 0,width=width,
+        playerId=b.playerId,reflectCount=reflect,
+        reflectObjId=b.reflectObjId,
+        damageSelf=not not def.shrapnel or reflect>0,
         tracerLength=def.tracerLength,
         color=tint,alpha=reflect>0 and .5 or 1,
         suppressed=not not def.suppressed,
@@ -61,12 +65,15 @@ local function addSourceBullet(self,b)
 end
 function Trails.new()
     return setmetatable({world=nil,lastSeq=0,trails={},
+        colliders=nil,colliderUpdate=nil,
         image=nil,imageMissing=false},Trails)
 end
 function Trails:reset()
     self.world=nil
     self.lastSeq=0
     self.trails={}
+    self.colliders=nil
+    self.colliderUpdate=nil
 end
 function Trails:addBullet(b)
     return addSourceBullet(self,b)
@@ -82,6 +89,10 @@ function Trails:update(state,dt)
         self:reset()
         self.world=state
     end
+    if self.colliderUpdate~=state.updateCount then
+        self.colliders=Collision.snapshot(state.objects)
+        self.colliderUpdate=state.updateCount
+    end
     local step=math.max(0,dt or 0)
     -- Advance previously spawned projectiles, then add new network events.
     -- Newly received bullets are drawn at origin until the next update.
@@ -94,9 +105,25 @@ function Trails:update(state,dt)
             local travel=math.min(
                 math.max(0,bullet.distance-bullet.traveled),
                 step*bullet.speed)
-            bullet.traveled=bullet.traveled+travel
-            bullet.pos.x=bullet.pos.x+bullet.dir.x*travel
-            bullet.pos.y=bullet.pos.y+bullet.dir.y*travel
+            local start={x=bullet.pos.x,y=bullet.pos.y}
+            local finish={
+                x=start.x+bullet.dir.x*travel,
+                y=start.y+bullet.dir.y*travel,
+            }
+            local hit=nil
+            if travel>0 then
+                hit=Collision.firstHit(self.colliders,bullet,start,finish)
+            end
+            if hit then
+                bullet.traveled=bullet.traveled+math.min(travel,hit.distance)
+                bullet.pos.x,bullet.pos.y=hit.point.x,hit.point.y
+                bullet.collided=true
+                bullet.impactKind=hit.kind
+                bullet.impactId=hit.id
+            else
+                bullet.traveled=bullet.traveled+travel
+                bullet.pos.x,bullet.pos.y=finish.x,finish.y
+            end
             if bullet.suppressed and bullet.alphaRate then
                 bullet.alpha=math.max(
                     bullet.alphaMin,bullet.alpha*bullet.alphaRate)
