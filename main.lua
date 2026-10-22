@@ -11,10 +11,11 @@ local Input=require("src.survev.input_msg")
 local Network=require("src.survev.network_client")
 local LiveDebug=require("src.survev.live_debug")
 local OfflineDemo=require("src.survev.offline_demo")
+local Hud=require("src.survev.hud")
 
 local camera=Camera.new()
 local screen="demo"
-local tile,logo,selected,live,demo
+local tile,logo,selected,live,demo,hud
 local smokeFrames=0
 local screenshotRequested=false
 local equipmentScreenshotRequested=false
@@ -90,6 +91,7 @@ function love.load()
     logo=loadImage("assets/survev/img/survev_logo_full.png")
     selectImage()
     live=LiveDebug.new()
+    hud=Hud.new()
     demo=OfflineDemo.new()
 end
 function love.resize(w,h)
@@ -292,6 +294,7 @@ local function drawAssets(w,h)
 end
 local function drawDemo(w,h)
     live:draw(demo:getGameState(),w,h)
+    hud:draw(demo:getGameState(),w,h)
     local g=love.graphics
     g.setColor(.025,.07,.06,.92)
     g.rectangle("fill",math.max(0,(w-980)/2),h-167,math.min(980,w),129,9)
@@ -309,6 +312,7 @@ local function drawNetwork(w,h)
     local g=love.graphics
     if client and client:getGameState() and client:getGameState().map then
         live:draw(client:getGameState(),w,h)
+        hud:draw(client:getGameState(),w,h)
     else
         g.clear(.13,.17,.16)
     end
