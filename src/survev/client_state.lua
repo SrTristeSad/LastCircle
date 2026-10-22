@@ -31,7 +31,8 @@ function State.new()
         teamMode=1,joined=false,started=false,localId=0,activeId=0,
         spectating=false,map=nil,objects={},playerInfos={},localData={},
         playerStatus={},groupStatus={},gas=Gas.new(),
-        bullets={},shotFxEvents={},shotFxSeq=0,
+        bullets={},bulletEvents={},bulletSeq=0,
+        shotFxEvents={},shotFxSeq=0,
         explosions={},emotes={},planes={},airstrikeZones={},
         mapIndicators={},killLeaderId=0,killLeaderKills=0,
         lastAck=0,updateCount=0,errors={},
@@ -96,6 +97,17 @@ function State:applyUpdate(msg)
 
     -- Effects are one-update events, not permanent world objects.
     self.bullets=copy(msg.bullets or {})
+    -- Keep ALL authentic bullet creation events between LÖVE frames, not
+    -- just shotFx. Shrapnel and reflection updates also create trails.
+    for _,bullet in ipairs(self.bullets) do
+        self.bulletSeq=self.bulletSeq+1
+        local event=copy(bullet)
+        event.seq=self.bulletSeq
+        self.bulletEvents[#self.bulletEvents+1]=event
+        if #self.bulletEvents>512 then
+            table.remove(self.bulletEvents,1)
+        end
+    end
     -- The socket can deliver several UpdateMsgs in a single render frame.
     -- Keep bounded, numbered shotFx events so the recoil renderer receives
     -- each authoritative shot once, not only the final packet's bullets.
