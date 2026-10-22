@@ -48,6 +48,9 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 **Recuo das armas (2026-10-22):** `shot_recoil.lua` reproduz o impulso de disparos informados por `UpdateMsg.bullets.shotFx`, com intensidade obtida das definições originais de cada arma, efeitos independentes nas mãos das pistolas duplas e decaimento igual ao código `player.ts`. Os eventos têm sequência própria e uma fila limitada para preservar vários pacotes por quadro, sem duplicar um disparo. O recurso foi testado em Lua 5.4 e LuaJIT; isso **não inclui áudio, trajetória completa das balas nem validação online ponta a ponta**.
 
+
+**Projeteis visuais (2026-10-22):** o cliente multiplayer agora desenha a imagem original do rastro dos projeteis disparados no `UpdateMsg.bullets`. Sao 63 definicoes de bullet/shrapnel e 13 paletas de cor transcritas do codigo fixado. `bullet_trails.lua` implementa velocidade, alcance, tamanho, cor e desaparecimento visual, e uma fila de ate 512 eventos evita perda entre pacotes. **Ainda nao sao portadas as colisoes completas do original, impactos/sons ou o disparo autoritativo do servidor; nao se trata de combate multiplayer completo.** Veja [progresso do porte](docs/PORT_STATUS.md).
+
 **Ainda não portado:** API oficial para descobrir partidas/tokens, composição final das quatro camadas e máscaras, interação de portas com o servidor, animações completas de jogadores, **HUD final (saque/equipamento completos, feed, menus e layout final do minimapa/inventário)**, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
 ### Testar agora sem servidor (Windows / LÖVE)
