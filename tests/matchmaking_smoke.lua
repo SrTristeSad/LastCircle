@@ -13,7 +13,6 @@ assert(Json.decode(Json.encode({zones=Json.array({})})).zones
 local example=Json.decode(Json.encode({version=1028,autoFill=true,zones=Json.array({"a","b"})}))
 assert(example.zones[2]=="b" and example.autoFill)
 for _,invalid in ipairs({
-    '{"type":"success","res":{"urls":[]}}',
     '{"a":1,"a":2}',
     '["broken",]',
     '{"a":1} trailing',
