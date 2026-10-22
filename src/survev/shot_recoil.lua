@@ -8,11 +8,12 @@ local Recoil={}
 Recoil.__index=Recoil
 
 function Recoil.new()
-    return setmetatable({world=nil,lastUpdate=nil,hands={}},Recoil)
+    return setmetatable({world=nil,lastUpdate=nil,lastShotSeq=0,hands={}},Recoil)
 end
 function Recoil:reset()
     self.world=nil
     self.lastUpdate=nil
+    self.lastShotSeq=0
     self.hands={}
 end
 local function decay(amount,dt)
@@ -45,8 +46,8 @@ function Recoil:update(state,dt)
     -- recoil again when several LÖVE frames run between network updates.
     if self.lastUpdate==count then return end
     self.lastUpdate=count
-    for _,shot in ipairs(state.bullets or {}) do
-        if shot.shotFx==true and
+    for _,shot in ipairs(state.shotFxEvents or {}) do
+        if shot.seq>self.lastShotSeq and
             type(shot.playerId)=="number" and
             type(shot.shotSourceType)=="string" then
             local obj=state.objects[shot.playerId]
@@ -72,6 +73,7 @@ function Recoil:update(state,dt)
             end
         end
     end
+    self.lastShotSeq=state.shotFxSeq or self.lastShotSeq
 end
 function Recoil:forPlayer(obj)
     if not obj or obj.dead or obj.downed then return nil end
