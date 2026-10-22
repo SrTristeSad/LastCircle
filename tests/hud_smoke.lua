@@ -71,8 +71,9 @@ end
 graphics.draw=function() draws=draws+1 end
 love={graphics=graphics,filesystem={getInfo=function() return true end}}
 local renderer=HUD.new()
-assert(renderer:draw(demo:getGameState(),1280,720))
-assert(renderer:draw(demo:getGameState(),1280,720))
+local cleanState=Demo.new():getGameState()
+assert(renderer:draw(cleanState,1280,720))
+assert(renderer:draw(cleanState,1280,720))
 assert(images>=1 and images<=3,"source HUD images loaded="..images)
 assert(draws>=2)
 assert(not renderer:draw({joined=false},1280,720))
