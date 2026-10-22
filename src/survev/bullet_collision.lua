@@ -7,6 +7,7 @@
 local LOS=require("src.survev.los_geometry")
 local Types=require("src.survev.object_serialize_fns").Type
 local Config=require("src.survev.game_config")
+local Structure=require("src.survev.structure_layer")
 local C={}
 local BULLET_HEIGHT=.25
 local HALF_PI=math.pi/2
@@ -82,7 +83,8 @@ end
 -- Return an array of source-transformed obstacle colliders and real
 -- connected player snapshots. Caller builds this once per UpdateMsg.
 function C.snapshot(objects,registry,previous)
-    local snapshot={obstacles=LOS.obstacles(objects,registry),players={}}
+    local snapshot={obstacles=LOS.obstacles(objects,registry),
+        structures=Structure.snapshot(objects),players={}}
     local prior={}
     for _,p in ipairs(previous and previous.players or {}) do
         prior[p.__id]=p
@@ -164,5 +166,9 @@ function C.firstHit(snapshot,bullet,startPoint,endPoint)
     end
     if best then best.distance=math.sqrt(best.distanceSq) end
     return best
+end
+function C.updateLayer(snapshot,bullet,oldPoint,newPoint)
+    return Structure.updateLayer(snapshot and snapshot.structures,
+        bullet,oldPoint,newPoint)
 end
 return C
