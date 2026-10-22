@@ -15,6 +15,8 @@ local Buildings=require("src.survev.map_building_art")
 local Collisions=require("src.survev.los_geometry")
 local V=require("src.survev.v2")
 local Palettes=require("src.survev.map_colors")
+local Equipment=require("src.survev.equipment_art")
+local Outfits=require("src.survev.player_art").outfits
 local Demo={}
 Demo.__index=Demo
 
@@ -72,7 +74,8 @@ function Demo.new()
     local all={
         {
             __type=Obj.Player,__id=1,pos=V.copy(spawn),dir={x=1,y=0},
-            outfit="outfitBase",backpack="",helmet="",chest="",
+            outfit="outfitBase",backpack="backpack02",
+            helmet="helmet02",chest="chest02",
             activeWeapon="fists",scale=1,layer=0,dead=false,downed=false,
             offlinePreview=true,
         }
@@ -136,11 +139,67 @@ local function collides(self,newPos)
     return false
 end
 
+-- Equipment buttons display ORIGINAL inventory visuals; no real pickup,
+-- ammo, attack, damage or server-authoritative inventory takes place.
+local equipSlots={"fists","pan","m9","ak47","m9_dual"}
+local outfitList={"outfitBase","outfitDemo","outfitMedic","outfitScout"}
+function Demo:equip(slot)
+    assert(type(slot)=="number")
+    local key=equipSlots[slot]
+    if not key or not Equipment.weapons[key]
+        or (Equipment.weapons[key].world and
+            not Equipment.weapons[key].world.asset) then return false end
+    local obj=self.state.objects[self.state.activeId]
+    obj.previewFistTicker=nil
+    self.state:applyMessage(Net.MsgType.Update,{
+        ack=0,partObjects={{__id=obj.__id,__type=Obj.Player,
+            activeWeapon=key}}
+    })
+    self.message="Equipado visualmente: "..Equipment.weapons[key].name..
+        " (nenhuma municao/dano no teste local)."
+    return true
+end
+function Demo:toggleGear()
+    local obj=self.state.objects[self.state.activeId]
+    local active=obj.chest~=""
+    local backpack=active and "" or "backpack02"
+    local helmet=active and "" or "helmet02"
+    local chest=active and "" or "chest02"
+    assert(Equipment.gear.chest02.skin.asset and
+        Equipment.gear.helmet02.skin.asset)
+    self.state:applyMessage(Net.MsgType.Update,{
+        ack=0,partObjects={{__id=obj.__id,__type=Obj.Player,
+            backpack=backpack,helmet=helmet,chest=chest}}
+    })
+    self.message=active and "Armadura e mochila ocultadas no teste." or
+        "Vestindo armadura, capacete e mochila originais."
+    return true
+end
+function Demo:cycleOutfit()
+    local obj=self.state.objects[self.state.activeId]
+    local idx=1
+    for i,key in ipairs(outfitList) do
+        if key==obj.outfit then idx=i;break end
+    end
+    local nextType=outfitList[idx%#outfitList+1]
+    assert(Outfits[nextType].baseAsset,"source outfit image missing")
+    self.state:applyMessage(Net.MsgType.Update,{
+        ack=0,partObjects={{__id=obj.__id,__type=Obj.Player,
+            outfit=nextType}}
+    })
+    self.message="Roupa oficial: "..nextType
+    return nextType
+end
+
 -- One local visual animation, using the exact source Animations.fists
 -- frames. Clicking does NOT inflict damage or simulate combat authority.
 function Demo:punch()
     local p=self.state.objects[self.state.activeId]
     if not p or p.previewFistTicker~=nil then return false end
+    if p.activeWeapon~="fists" then
+        self.message="Soco visual apenas com punhos (tecla 1). Combate pendente."
+        return false
+    end
     p.previewFistTicker=0
     self.message="Soco visual original do Survev (sem dano; somente teste)."
     return true
