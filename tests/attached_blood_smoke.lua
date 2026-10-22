@@ -28,6 +28,8 @@ local blood=fx.particles[1]
 assert(blood.kind=="bloodSplat" and blood.parentId==2)
 near(blood.localPx.x,16)
 near(blood.localPx.y,-8)
+near(blood.localWorld.x,1)
+near(blood.localWorld.y,-.5)
 near(blood.pos.x,51)
 near(blood.pos.y,30.5)
 local camera=Camera.new()
@@ -43,6 +45,8 @@ near(blood.localPx.x,16)
 near(blood.pos.x,initialPos.x)
 assert(#fx.particles==1 and blood.age==.12)
 assert(#fx.soundEvents==1 and hit.impactFxSent)
+near(fx.soundEvents[1].pos.x,50)
+near(fx.soundEvents[1].pos.y,30)
 -- Moving the server-authoritative actor also moves the child's sprite.
 actor.pos={x=52,y=31}
 local second=assert(fx:project(blood,camera,state.objects))
@@ -54,6 +58,13 @@ near(zoomed.x-camera:m_pointToScreen(actor.pos).x,
     camera:m_pixels(16))
 near(zoomed.y-camera:m_pointToScreen(actor.pos).y,
     -camera:m_pixels(8))
+-- Source container uses the current PPU; not a fixed 16px assumption.
+camera.m_ppu=20
+local changedPpu=assert(fx:project(blood,camera,state.objects))
+near(changedPpu.x-camera:m_pointToScreen(actor.pos).x,
+    camera:m_pixels(20))
+near(changedPpu.y-camera:m_pointToScreen(actor.pos).y,
+    -camera:m_pixels(10))
 
 local calls={draw={},new=0}
 love={filesystem={getInfo=function(path)
@@ -76,8 +87,8 @@ assert(fx:draw(camera,1280,720)==0,
     "attached blood must NOT be drawn in world BulletBarn pass")
 assert(#calls.draw==0)
 assert(fx:drawAttached(actor,camera,1280,720,state.objects)==1)
-near(calls.draw[1].x,zoomed.x)
-near(calls.draw[1].y,zoomed.y)
+near(calls.draw[1].x,changedPpu.x)
+near(calls.draw[1].y,changedPpu.y)
 assert(fx:drawAttached(actor,camera,1280,720,state.objects)==1)
 assert(calls.new==1,"cache the pinned original blood PNG")
 assert(fx:drawAttached({__id=1},camera,1280,720,state.objects)==0)
