@@ -128,6 +128,14 @@ function Demo.new()
             layer=0,isOld=true,isPreloadedGun=false,ownerId=0,
         }
     end
+    -- Local ONLY: every item category starts at a known zero, just like
+    -- GameConfig.player.defaultItems.inventory in original server code.
+    -- In REAL sessions no values are inferred when UpdateMsg is absent.
+    local demoInventory={}
+    for _,key in ipairs(LootDefs.bagKeys) do demoInventory[key]=0 end
+    demoInventory["9mm"]=120
+    demoInventory["762mm"]=90
+    demoInventory["1xscope"]=1
     state:applyMessage(Net.MsgType.Map,map)
     state:applyMessage(Net.MsgType.Update,{
         ack=0,activePlayerIdDirty=true,activePlayerId=1,
@@ -138,7 +146,7 @@ function Demo.new()
             inventoryDirty=true,scope="1xscope",
             -- Fixed LOCAL PREVIEW reserves use source GameConfig.bagSizes
             -- (base capacity 9mm=120, 762mm=90), NOT fake game pickups.
-            inventory={["9mm"]=120,["762mm"]=90,["1xscope"]=1},
+            inventory=demoInventory,
             weapsDirty=true,curWeapIdx=2,
             weapons={
                 {type="ak47",ammo=assert(Equipment.weapons.ak47.maxClip)},
