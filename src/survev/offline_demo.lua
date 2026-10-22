@@ -73,7 +73,8 @@ function Demo.new()
         {
             __type=Obj.Player,__id=1,pos=V.copy(spawn),dir={x=1,y=0},
             outfit="outfitBase",backpack="",helmet="",chest="",
-            activeWeapon="",scale=1,layer=0,dead=false,downed=false,
+            activeWeapon="fists",scale=1,layer=0,dead=false,downed=false,
+            offlinePreview=true,
         }
     }
     local doorOrigins={}
@@ -135,10 +136,27 @@ local function collides(self,newPos)
     return false
 end
 
+-- One local visual animation, using the exact source Animations.fists
+-- frames. Clicking does NOT inflict damage or simulate combat authority.
+function Demo:punch()
+    local p=self.state.objects[self.state.activeId]
+    if not p or p.previewFistTicker~=nil then return false end
+    p.previewFistTicker=0
+    self.message="Soco visual original do Survev (sem dano; somente teste)."
+    return true
+end
+
 function Demo:update(dt,moveX,moveY,aim)
     dt=clamp(dt or 0,0,.08)
     local player=self.state.objects[1]
     if not player then return end
+    if player.previewFistTicker~=nil then
+        local frames=require("src.survev.player_art").animations.fists
+        player.previewFistTicker=player.previewFistTicker+dt
+        if player.previewFistTicker>=frames[#frames].time then
+            player.previewFistTicker=nil
+        end
+    end
     local dir=V.copy(player.dir)
     if aim and type(aim.x)=="number" and type(aim.y)=="number" then
         local toward=V.sub(aim,player.pos)
