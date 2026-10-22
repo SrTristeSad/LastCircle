@@ -24,7 +24,7 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.dumps({
                 "type": "success",
                 "res": {"urls": ["ws://127.0.0.1:19998/relay?test=1"],
-                        "joinToken": "AUTHENTIC-FIXTURE-TOKEN"},
+                        "joinToken": "fixture-token"},
             }).encode()
             self.send_response(200)
         except (AssertionError, ValueError, KeyError) as error:
