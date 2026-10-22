@@ -1,0 +1,57 @@
+name: Original Survev Loot And Inventory Metadata
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/generate_loot_art.mjs
+      - src/survev/loot_renderer.lua
+      - src/survev/inventory_panel.lua
+      - tests/loot_smoke.lua
+      - .github/workflows/loot-art.yml
+permissions:
+  contents: write
+jobs:
+  source-loot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Generate original loot sprites and bag capacities
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/generate_loot_art.mjs \
+            _reference/reference/survev src/survev/loot_art.lua
+      - name: Verify Lua metadata and render tests
+        run: |
+          sudo apt-get update && sudo apt-get install -y lua5.4 luajit
+          luac5.4 -p src/survev/loot_art.lua
+          lua5.4 -e 'local a=require("src.survev.loot_art");assert(a.loot.m9.asset and a.loot.bandage.asset and a.bagSizes["9mm"][1]==120);print("Original loot verified")'
+          luajit -e 'local a=require("src.survev.loot_art");assert(a.loot.ak47.asset and a.bagSizes["762mm"][1]==90)'
+          if test -f tests/loot_smoke.lua; then
+            lua5.4 tests/loot_smoke.lua
+            luajit tests/loot_smoke.lua
+          fi
+      - name: Commit source-generated Lua metadata
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/survev/loot_art.lua
+          if ! git diff --cached --quiet; then
+            git commit -m "port: original Survev item images, pickup radii and bag capacity definitions"
+            for attempt in 1 2 3 4; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then exit 0; fi
+              sleep 2
+            done
+            exit 1
+          fi
