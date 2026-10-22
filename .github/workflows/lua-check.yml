@@ -20,6 +20,10 @@ jobs:
             luac5.4 -p "$file"
             luajit -b "$file" /tmp/lastcircle-module.bc
           done
+      - name: Authentic Survev find_game_v2 matchmaking, JSON and token
+        run: |
+          lua5.4 tests/matchmaking_smoke.lua
+          luajit tests/matchmaking_smoke.lua
       - name: Shared camera, controls and constants parity
         run: |
           lua5.4 tests/survev_parity.lua
