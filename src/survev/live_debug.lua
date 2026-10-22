@@ -8,6 +8,7 @@ local ObstacleArt=require("src.survev.obstacle_art_renderer")
 local BuildingArt=require("src.survev.building_renderer")
 local PlayerArt=require("src.survev.player_renderer")
 local PlayerAnimation=require("src.survev.player_animation")
+local ShotRecoil=require("src.survev.shot_recoil")
 local LootArt=require("src.survev.loot_renderer")
 local V={}
 V.__index=V
@@ -23,6 +24,7 @@ function V.new()
         camera=Camera.new(),
         players=PlayerArt.new(),
         playerAnimations=PlayerAnimation.new(),
+        shotRecoil=ShotRecoil.new(),
         lootArt=LootArt.new(),
         terrainMap=nil,terrainRenderer=nil,obstacleArt=ObstacleArt.new(),
         buildingArt=BuildingArt.new(),
@@ -31,6 +33,7 @@ function V.new()
 end
 function V:update(state,dt)
     self.playerAnimations:update(state,dt)
+    self.shotRecoil:update(state,dt)
     if not state or not state.objects then return end
     if self.lastUpdateMap~=state.map then
         self.lastUpdateMap=state.map
@@ -90,7 +93,8 @@ function V:draw(state,w,h)
                     -- The player now uses source-sized body and TWO actual
                     -- fist-pose hand sprites, not a stretched debug texture.
                     local pose=self.playerAnimations:poseFor(obj)
-                    local rendered=self.players:draw(obj,cam,map.mapName,pose)
+                    local recoil=self.shotRecoil:forPlayer(obj)
+                    local rendered=self.players:draw(obj,cam,map.mapName,pose,recoil)
                     if rendered==0 then
                         g.setColor(.96,.93,.75)
                         g.circle("line",pt.x,pt.y,cam:m_z())
