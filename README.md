@@ -27,9 +27,19 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 **Ainda não portado:** API oficial para descobrir partidas/tokens, composição final das quatro camadas e máscaras, interação de portas com o servidor, animações completas de jogadores, HUD, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
+### Testar agora sem servidor (Windows / LÖVE)
+
+**Agora o LastCircle inicia diretamente no modo de teste local F5**, sem login, sem joinToken, sem Node.js e sem Moo-Quest. O cenário reproduz terreno, rio, construções, árvores, pedras, barris e portas a partir dos recursos originais do Survev. A movimentação de inspeção é **simulada localmente**, usando a velocidade do Survev e os colisores das artes originais; **isso ainda não é uma partida real, nem prova de compatibilidade com servidores públicos**.
+
+O ZIP `LastCircle-Teste-Windows.zip` está em [Actions / Empacotar cliente Lua](https://github.com/SrTristeSad/LastCircle/actions/workflows/build-love.yml). Extraia-o e execute **`TESTAR-LASTCIRCLE-WINDOWS.bat`** com o LÖVE2D 11.5 instalado. O pacote inclui as artes rasterizadas, o jogo `.love`, instruções e uma captura do teste real feito pela CI.
+
+Controles locais: **WASD** para mover, **mouse** para mirar, **F** para testar portas próximas, **R** ou **F5** para reiniciar o cenário, **F6** para ir à conexão original WebSocket, **F7** para conferir as artes, **ESC** para sair.
+
+O workflow executa o mesmo arquivo `.love` em um runtime **LÖVE/OpenGL real** (Xvfb) antes de publicar o ZIP, e exige que o jogo renderize uma captura da tela. Os testes Lua 5.4/LuaJIT verificam dados do mapa, velocidade, colisão, interação de portas e navegação da interface.
+
 ### Inspeção das artes no LÖVE
 
-O `main.lua` mostra arquivos gráficos reais do Survev, convertidos sem redesenho. **A/D ou setas** alternam as artes. **F6** abre a interface de conexão e diagnóstico com WebSocket, onde é possível informar o endereço e `joinToken` de uma partida válida. A tela F6 recebe estados reais, desenha **terreno, obstáculos, pisos e tetos das construções a partir das definições originais** e envia controles, mas **ainda não renderiza o jogo completo**. ESC desconecta/volta e F6 alterna telas. Consulte [docs/NETWORK.md](docs/NETWORK.md).
+O **F7** abre o visualizador de arquivos gráficos reais do Survev, convertidos sem redesenho. **A/D ou setas** alternam as artes. **F6** abre a interface de conexão e diagnóstico com WebSocket, onde é possível informar o endereço e `joinToken` de uma partida válida. A tela F6 recebe estados reais, desenha **terreno, obstáculos, pisos e tetos das construções a partir das definições originais** e envia controles, mas **ainda não renderiza o jogo completo**. ESC desconecta/volta e F6 retorna ao modo local quando não conectado. Consulte [docs/NETWORK.md](docs/NETWORK.md).
 
 O LÖVE não suporta SVG diretamente. Para testar com recursos:
 1. Na guia [Actions](https://github.com/SrTristeSad/LastCircle/actions/workflows/build-love.yml), abra um pacote bem-sucedido chamado **LastCircle-Lua**.
