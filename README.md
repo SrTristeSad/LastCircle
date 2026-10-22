@@ -57,6 +57,9 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 **Defesa da frigideira e escadas (2026-10-22):** `bullet_collision.lua` testa as superficies originais `pan.reflectSurface` (equipada e guardada). `structure_layer.lua` calcula a transicao de camada dos projeteis em escadas e mascaras originais extraidas por `scripts/generate_structure_collision.mjs`. Sem supor dano, novos ricochetes ou partidas completas. Testado em Lua 5.4 e LuaJIT na [CI](https://github.com/SrTristeSad/LastCircle/actions/runs/39748426408).
 
+
+**Particulas e sons originais de combate (2026-10-22):** `impact_fx.lua` renderiza as particulas de impacto de obstaculos, personagens e frigideiras usando 34 definicoes de `particles.ts` e os PNG originais do Survev. `hit_sound_art.lua` contem 22 grupos do audio original de impactos; MP3s sao reutilizados na memoria com alcance e limite de reproducoes, sem arquivos sonoros inventados. A direcao visual das particulas vem da normal de colisao. O sistema e cosmetico, com testes Lua/LuaJIT; emissao complexa de particulas, mixagem/filtros originais e multiplayer end-to-end ainda estao pendentes.
+
 **Ainda não portado:** API oficial para descobrir partidas/tokens, composição final das quatro camadas e máscaras, interação de portas com o servidor, animações completas de jogadores, **HUD final (saque/equipamento completos, feed, menus e layout final do minimapa/inventário)**, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
 ### Testar agora sem servidor (Windows / LÖVE)
