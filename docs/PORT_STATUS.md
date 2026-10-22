@@ -55,7 +55,13 @@ O código original está integralmente espelhado em [referencia-survev](https://
 
 `scripts/prepare_assets.py` rasteriza **1.616 SVG** originais como PNG e copia **492 arquivos** de recursos adicionais sem redesenhar. O workflow `build-love.yml` cria o pacote `LastCircle-Lua.love` com os recursos e módulos Lua.
 
-O `main.lua` apresenta as artes originais e, via **F6**, uma tela WebSocket que renderiza **terreno real pela seed, rios, obstáculos e imagens originais de pisos/tetos das construções**, junto dos jogadores recebidos do servidor. O teto se torna transparente quando o jogador entra em regiões internas já portadas. **A linha de visão já usa os obstáculos e regras originais**, mas faltam as máscaras de renderização PIXI, camadas subterrâneas completas, interações de portas, efeitos e o HUD. Não é uma partida plenamente jogável.
+O `main.lua` **agora abre automaticamente um cenário de TESTE LOCAL**, sem servidor, sem token e sem uso do backend Moo-Quest. O módulo `offline_demo.lua` monta um `MapMsg` e um estado `UpdateMsg` com dados derivados das definições originais para demonstrar terreno, rio, casas, árvores, pedras, barris, um jogador visível, colisões de inspeção e portas. **O movimento e a interação local são simulados exclusivamente para pré-visualização**; não representam a física nem a autorização de um servidor Survev.
+
+O controle no teste local usa WASD (movimento), mouse (direção), F (porta), R ou F5 (reiniciar), F6 (conexão WebSocket verdadeira), F7 (inspeção de artes). **ESC** sai ou volta. O modo F6 continua exigindo endereço e joinToken emitidos por um servidor Survev compatível.
+
+O workflow de build compila o `.love` com imagens originais, **executa o modo local em LÖVE2D/OpenGL real**, verifica a captura da tela e publica `LastCircle-Teste-Windows.zip` com o jogo, um BAT de inicialização, instruções e screenshot. Os testes Lua 5.4/LuaJIT validam a inicialização, o movimento, os dados derivados do Survev e as interações locais.
+
+Ainda faltam matchmaking oficial, camadas subterrâneas/máscaras PIXI, animação completa do personagem, HUD, armas, inventário, combate e servidor de jogo. **O cenário offline não deve ser confundido com uma partida completa.**
 
 ## Pendências prioritárias
 
