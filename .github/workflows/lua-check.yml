@@ -76,6 +76,10 @@ jobs:
         run: |
           lua5.4 tests/bullet_trails_smoke.lua
           luajit tests/bullet_trails_smoke.lua
+      - name: Survev equipped and holstered pan reflection collision
+        run: |
+          lua5.4 tests/pan_collision_smoke.lua
+          luajit tests/pan_collision_smoke.lua
       - name: Server-based bullet collision visuals, door and player layers
         run: |
           lua5.4 tests/bullet_collision_smoke.lua
