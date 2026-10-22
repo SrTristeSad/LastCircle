@@ -18,6 +18,8 @@ local Palettes=require("src.survev.map_colors")
 local Equipment=require("src.survev.equipment_art")
 local Outfits=require("src.survev.player_art").outfits
 local Hint=require("src.survev.interaction_hint")
+local Loot=require("src.survev.loot_renderer")
+local LootDefs=require("src.survev.loot_art")
 local Demo={}
 Demo.__index=Demo
 
@@ -107,6 +109,23 @@ function Demo.new()
         -- MapMsg.objects is used for the minimap in the original client.
         map.objects[#map.objects+1]={
             pos=V.copy(entity.pos),ori=entity.ori,scale=1,type=entity.type
+        }
+    end
+    -- Sample ground loot uses actual ObjectType.Loot, original sprites,
+    -- source pickup ranges and counts, not permanent MapMsg decorations.
+    for _,item in ipairs({
+        {id=30,type="9mm",count=50,x=353,y=325},
+        {id=31,type="bandage",count=3,x=349,y=324},
+        {id=32,type="m9",count=1,x=348,y=316},
+        {id=33,type="762mm",count=45,x=357,y=317},
+        {id=34,type="soda",count=2,x=353,y=316},
+    }) do
+        assert(LootDefs.loot[item.type] and
+            LootDefs.loot[item.type].asset,"missing original Survev loot")
+        all[#all+1]={
+            __id=item.id,__type=Obj.Loot,type=item.type,
+            pos={x=item.x,y=item.y},count=item.count,
+            layer=0,isOld=true,isPreloadedGun=false,ownerId=0,
         }
     end
     state:applyMessage(Net.MsgType.Map,map)
@@ -220,6 +239,64 @@ function Demo:cycleOutfit()
     return nextType
 end
 
+-- Preview-only pickup: the real Survev server remains authoritative.
+-- We model only stackable bag items here; weapons/armour never magically
+-- enter player inventory. Partial stacks respect the original bag capacity.
+function Demo:pickup()
+    local target=Loot.nearest(self.state)
+    if not target then
+        self.message="Nenhum item do Survev no raio de coleta."
+        return false
+    end
+    local obj=target.object
+    local item=target.def
+    local capacities=LootDefs.bagSizes[obj.type]
+    if not capacities then
+        self.message=item.name.." - apenas visualizacao; coleta de equipamentos pendente."
+        return false
+    end
+    local actor=self.state.objects[self.state.activeId]
+    local bag=Equipment.gear[actor.backpack or ""]
+    local level=bag and bag.level or 0
+    local limit=capacities[level+1]
+    assert(limit,"capacity must be defined by original Survev GameConfig")
+    local existing=self.state.localData.inventory[obj.type] or 0
+    local quantity=math.min(obj.count,math.max(0,limit-existing))
+    if quantity<=0 then
+        self.message="Mochila cheia para "..item.name.." ("..existing.."/"..limit..")."
+        return false
+    end
+    local inventory={}
+    for name,n in pairs(self.state.localData.inventory) do inventory[name]=n end
+    inventory[obj.type]=existing+quantity
+    local message={
+        ack=0,
+        activePlayerData={inventoryDirty=true,
+            scope=self.state.localData.scope,inventory=inventory},
+    }
+    local remaining=obj.count-quantity
+    if remaining==0 then
+        message.delObjIds={obj.__id}
+    else
+        message.partObjects={{__id=obj.__id,__type=Obj.Loot,
+            pos=V.copy(obj.pos)}}
+    end
+    self.state:applyMessage(Net.MsgType.Update,message)
+    if remaining>0 then
+        -- Full-only count belongs in a full ObjectType.Loot update.
+        local snapshot={}
+        for k,v in pairs(obj) do snapshot[k]=v end
+        snapshot.count=remaining
+        self.state:applyMessage(Net.MsgType.Update,{
+            ack=0,fullObjects={snapshot}
+        })
+    end
+    self.message="TESTE LOCAL: +"..quantity.." "..item.name..
+        " (servidor nao conectado)."
+    self.pickups=(self.pickups or 0)+1
+    return true,quantity
+end
+
 -- One local visual animation, using the exact source Animations.fists
 -- frames. Clicking does NOT inflict damage or simulate combat authority.
 function Demo:punch()
@@ -275,6 +352,8 @@ end
 -- Door transition based on original
 -- server/src/game/objects/obstacle.ts:toggleDoor().
 function Demo:interact()
+    -- Original UI gives nearby loot priority over door interaction.
+    if Loot.nearest(self.state) then return self:pickup() end
     local player=self.state.objects[1]
     local choice=Hint.scan(self.state)
     local best=choice and choice.usable and self.doorOrigins[choice.id]
