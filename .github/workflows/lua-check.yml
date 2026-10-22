@@ -133,6 +133,10 @@ jobs:
         run: |
           lua5.4 tests/main_quickplay_smoke.lua
           luajit tests/main_quickplay_smoke.lua
+      - name: LÖVE main.lua original gun fire, interactions, healing and HUD input
+        run: |
+          lua5.4 tests/main_combat_smoke.lua
+          luajit tests/main_combat_smoke.lua
       - name: LÖVE real-player death, spectator navigation and neutral InputMsg
         run: |
           lua5.4 tests/main_spectate_smoke.lua
