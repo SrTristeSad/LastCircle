@@ -86,7 +86,10 @@ assert(state.objects[13].door.open)
 assert(state.objects[13].door.seq==2)
 assert(state.objects[13].ori~=0,"swing door must rotate like original server")
 assert(d.interactions==1)
-assert(d:interact(),"closing same door should work")
+-- Original collider moves with the opened door. Stand near its NEW
+-- orientation before pressing F again; no remote interaction cheat.
+p.pos=V.add(door.pos,{x=.4,y=.4})
+assert(d:interact(),"closing same door should work from its open collider")
 assert(not state.objects[13].door.open)
 assert(state.objects[13].ori==0)
 assert(state.objects[13].door.seq==3)
