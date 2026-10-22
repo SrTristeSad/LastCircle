@@ -34,7 +34,7 @@ function State.new()
         bullets={},explosions={},emotes={},planes={},airstrikeZones={},
         mapIndicators={},killLeaderId=0,killLeaderKills=0,
         lastAck=0,updateCount=0,errors={},
-        gameOver=nil,score=nil,aliveCounts={},lastPickup=nil,
+        gameOver=nil,score=nil,aliveCounts={},lastPickup=nil,pickupSeq=0,
         lastKill=nil,
     },State)
 end
@@ -129,6 +129,7 @@ function State:applyMessage(id,msg)
         self.lastKill=copy(msg)
     elseif id==t.Pickup then
         self.lastPickup=copy(msg)
+        self.pickupSeq=self.pickupSeq+1
     elseif id==t.RoleAnnouncement then
         self.lastRole=copy(msg)
     elseif id==t.Emote or id==t.Spectate or id==t.DropItem then
