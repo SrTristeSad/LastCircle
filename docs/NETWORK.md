@@ -74,3 +74,10 @@ Os itens, indices e tipos sao lidos do `UpdateMsg`; a acao nao altera o estado l
 ### Selecao de armas pelo HUD
 
 No modo de rede, o **clique esquerdo** em um slot de arma conhecido (inclusive os punhos) envia a acao `Input.EquipPrimary/Secondary/Melee/Throwable` do Survev, em vez de disparar. Um slot desconhecido ou vazio nao produz comando de equipamento. O **clique direito** continua enviando pedidos de descarte de armas e armaduras elegiveis. Nenhum clique altera o equipamento no cliente ate o `UpdateMsg` do servidor. O HUD de teste offline continua apenas demonstrativo.
+
+
+### Animações recebidas do servidor
+
+O renderizador de rede agora processa `animSeq`/`animType` do próprio jogador e usa quadros originais para golpes de **punhos** e **frigideira**. Essas animações não simulam acerto nem dano. Outras animações de combate ainda usam a pose de espera.
+
+O HUD apresenta o tempo de **recarga**, **uso de itens** e **reviver** se a atualização completa do jogador informar `actionType`/`actionItem` e o servidor enviar `activePlayerData.action.time/duration`. Não há contador local sem dados do servidor. O indicador é uma adaptação visual; o indicador circular original ainda precisa ser portado.
