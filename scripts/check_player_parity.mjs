@@ -16,7 +16,7 @@ if(!(await readFile(resolve(root,"../ORIGEM.txt"),"utf8"))
     throw Error("unverified original Survev revision");
 const importFile=async name=>import(pathToFileURL(resolve(root,name)).href);
 const {GameObjectDefs}=await importFile("shared/defs/register.ts");
-const {IdlePoses,Bones}=await importFile("client/src/animData.ts");
+const {IdlePoses,Bones,Animations}=await importFile("client/src/animData.ts");
 const {Camera}=await importFile("client/src/camera.ts");
 const {v2}=await importFile("shared/utils/v2.ts");
 const config=await importFile("shared/gameConfig.ts");
@@ -62,6 +62,33 @@ for(const [outfit,dir,position,scale,downed] of [
  append("handL",hand.left,raw.handTint,.175,pose[Bones.HandL]);
  append("handR",hand.right,raw.handTint,.175,pose[Bones.HandR]);
  cases.push({world,expected});
+}
+// Compare the actual Survev animations.fists keyframe positions (left click
+// is a VISUAL test only; no damage is simulated by LastCircle).
+for(const time of [0,.03,.1,.175,.24]){
+    const base=cases[0];
+    const frames=Animations.fists.keyframes;
+    let a=frames[0],b=frames[1];
+    for(let i=1;i<frames.length;i++){
+        if(time<=frames[i].time){a=frames[i-1];b=frames[i];break;}
+    }
+    const weight=(time-a.time)/(b.time-a.time);
+    const lerp=(v,w)=>v+(w-v)*weight;
+    const handA=a.bones[Bones.HandR],handB=b.bones[Bones.HandR];
+    const pivot={
+        x:lerp(handA.pivot.x,handB.pivot.x),
+        y:lerp(handA.pivot.y,handB.pivot.y)
+    };
+    const original=base.expected.map(e=>({...e}));
+    const outer=camera.m_pixels(1);
+    const center=camera.m_pointToScreen(base.world.pos);
+    original[2].x=center.x+pivot.x*outer;
+    original[2].y=center.y+pivot.y*outer;
+    original[2].rotation=0;
+    cases.push({
+        world:{...base.world,offlinePreview:true,previewFistTicker:time},
+        expected:original
+    });
 }
 function lua(x){
  if(x==null)return "nil";
