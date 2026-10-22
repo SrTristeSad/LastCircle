@@ -97,7 +97,7 @@ function lua(v){
  if(Array.isArray(v))return "{"+v.map(lua).join(",")+"}";
  return "{"+Object.entries(v).map(([k,val])=>"["+lua(k)+"]="+lua(val)).join(",")+"}";
 }
-const result={weapons,gear,source={revision:pin}};
+const result={weapons,gear,source:{revision:pin}};
 await mkdir(dirname(resolve(outArg)),{recursive:true});
 await writeFile(resolve(outArg),
     "-- Generated from ORIGINAL Survev GameObjectDefs (GPL-3.0-or-later)\n"+
