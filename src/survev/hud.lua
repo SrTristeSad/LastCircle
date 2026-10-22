@@ -180,17 +180,22 @@ function HUD:draw(state,w,h)
             g.rectangle("fill",x,gaugeY+60,slotW*fill,12,2,2)
         end
     end
+    -- Keep armor badges compact: complete localized names can wrap and
+    -- accidentally overlap the weapon slot caption on 720p displays.
     local gearNames={}
-    for _,name in ipairs({
-        model.actor.backpack or "",model.actor.helmet or "",
-        model.actor.chest or ""
+    for _,info in ipairs({
+        {model.actor.backpack or "","Moch."},
+        {model.actor.helmet or "","Cap."},
+        {model.actor.chest or "","Colete"},
     }) do
-        local def=Gear.gear[name]
-        if def then gearNames[#gearNames+1]=def.name end
+        local def=Gear.gear[info[1]]
+        if def then
+            gearNames[#gearNames+1]=info[2].." "..tostring(def.level)
+        end
     end
     if #gearNames>0 then
         g.setColor(.82,.90,.82)
-        g.printf(table.concat(gearNames," | "),
+        g.printf(table.concat(gearNames,"  |  "),
             baseX,baseY-20,343,"center")
     end
     g.setColor(1,1,1,1)
