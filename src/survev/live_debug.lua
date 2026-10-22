@@ -10,6 +10,7 @@ local PlayerArt=require("src.survev.player_renderer")
 local PlayerAnimation=require("src.survev.player_animation")
 local ShotRecoil=require("src.survev.shot_recoil")
 local BulletTrails=require("src.survev.bullet_trails")
+local ImpactFx=require("src.survev.impact_fx")
 local LootArt=require("src.survev.loot_renderer")
 local V={}
 V.__index=V
@@ -27,6 +28,7 @@ function V.new()
         playerAnimations=PlayerAnimation.new(),
         shotRecoil=ShotRecoil.new(),
         bulletTrails=BulletTrails.new(),
+        impactFx=ImpactFx.new(),
         lootArt=LootArt.new(),
         terrainMap=nil,terrainRenderer=nil,obstacleArt=ObstacleArt.new(),
         buildingArt=BuildingArt.new(),
@@ -37,6 +39,8 @@ function V:update(state,dt)
     self.playerAnimations:update(state,dt)
     self.shotRecoil:update(state,dt)
     self.bulletTrails:update(state,dt)
+    self.impactFx:update(state,self.bulletTrails,dt)
+    self.impactFx:tickSound(dt)
     if not state or not state.objects then return end
     if self.lastUpdateMap~=state.map then
         self.lastUpdateMap=state.map
@@ -117,6 +121,8 @@ function V:draw(state,w,h)
     -- Original BulletBarn renders at zOrd 20, above players (18),
     -- before ceiling / roof layers. Visual collisions never alter damage.
     self.bulletTrails:draw(cam,w,h)
+    self.impactFx:draw(cam,w,h)
+    self.impactFx:playSounds(cam)
     self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"betweenPlayerAndRoof")
     self.buildingArt:drawPhase(state.objects,cam,"ceiling",w,h,map.mapName)
     self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"aboveRoof")
