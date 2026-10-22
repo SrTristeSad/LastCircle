@@ -45,6 +45,9 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 **Animações multiplayer (2026-10-22):** `player_animation.lua` lê sequências `animSeq` autorizadas pelo Survev e aplica os keyframes originais dos golpes de **punhos** e **frigideira** ao `player_renderer.lua`. `action_progress.lua` mostra recarga, uso de itens e reviver quando o servidor fornece tipo e tempo da ação. Nenhum movimento implica dano local, nem substitui animações de armas ainda não portadas. Consulte [status do porte](docs/PORT_STATUS.md).
 
+
+**Recuo das armas (2026-10-22):** `shot_recoil.lua` reproduz o impulso de disparos informados por `UpdateMsg.bullets.shotFx`, com intensidade obtida das definições originais de cada arma, efeitos independentes nas mãos das pistolas duplas e decaimento igual ao código `player.ts`. Os eventos têm sequência própria e uma fila limitada para preservar vários pacotes por quadro, sem duplicar um disparo. O recurso foi testado em Lua 5.4 e LuaJIT; isso **não inclui áudio, trajetória completa das balas nem validação online ponta a ponta**.
+
 **Ainda não portado:** API oficial para descobrir partidas/tokens, composição final das quatro camadas e máscaras, interação de portas com o servidor, animações completas de jogadores, **HUD final (saque/equipamento completos, feed, menus e layout final do minimapa/inventário)**, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
 ### Testar agora sem servidor (Windows / LÖVE)
