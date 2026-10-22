@@ -73,20 +73,22 @@ function Match.buildBody(region,mode,zones,turnstile)
     end
     return Json.encode(body)
 end
-local function httpSend(url,body,opts)
+local function httpSend(url,body,opts,method)
+    method=method or "POST"
+    body=body or ""
     local ltn12=require("ltn12")
     local chunks={}
     local options={
-        url=url,method="POST",
-        headers={
-            ["Content-Type"]="application/json; charset=utf-8",
-            ["Content-Length"]=tostring(#body),
-            ["Accept"]="application/json",
-        },
-        source=ltn12.source.string(body),
+        url=url,method=method,
+        headers={["Accept"]="application/json"},
+        source=method=="POST" and ltn12.source.string(body) or nil,
         sink=ltn12.sink.table(chunks),
         redirect=false,
     }
+    if method=="POST" then
+        options.headers["Content-Type"]="application/json; charset=utf-8"
+        options.headers["Content-Length"]=tostring(#body)
+    end
     local secure=url:sub(1,8)=="https://"
     local module
     if secure then
@@ -109,6 +111,40 @@ local function httpSend(url,body,opts)
     end
     local _,status,headers,statusLine=module.request(options)
     return table.concat(chunks),tonumber(status),statusLine or headers
+end
+local function prepareBase(base,options)
+    local url,baseError=prepareBase(base,options)
+    if not url then return nil,baseError end
+    return url
+end
+function Match.siteInfo(base,options,sender)
+    options=options or {}
+    local url,errorMessage=prepareBase(base,options)
+    if not url then return nil,errorMessage end
+    local sent,response,status=pcall(sender or httpSend,
+        url.."/api/site_info",nil,options,"GET")
+    if not sent then return nil,"Site-info HTTP: "..tostring(response) end
+    if status~=200 then
+        return nil,"Site-info HTTP status "..tostring(status or "?")
+    end
+    local parsed,info=pcall(Json.decode,response)
+    if not parsed then return nil,"Invalid site info JSON: "..tostring(info) end
+    if type(info)~="table" or type(info.modes)~="table" or
+        #info.modes==0 or #info.modes>8 then
+        return nil,"Site info missing Survev game modes"
+    end
+    for i,mode in ipairs(info.modes) do
+        if type(mode)~="table" or type(mode.enabled)~="boolean"
+            or type(mode.mapName)~="string" or
+            type(mode.teamMode)~="number" then
+            return nil,"Invalid Survev mode "..tostring(i)
+        end
+    end
+    return {
+        modes=info.modes,pops=type(info.pops)=="table" and info.pops or {},
+        captchaEnabled=info.captchaEnabled==true,
+        clientTheme=info.clientTheme,
+    }
 end
 function Match.request(base,options,sender)
     options=options or {}
