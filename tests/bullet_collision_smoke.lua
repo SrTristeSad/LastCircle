@@ -140,4 +140,33 @@ assert(not differentLayer.collided)
 state:applyMessage(Net.MsgType.Joined,{teamMode=1,playerId=1,started=true})
 renderer:update(state,0)
 assert(#renderer.trails==0 and renderer.colliders)
+-- Real binary UpdateMsg path (serializer -> byte frame -> decoder -> state
+-- -> visual renderer). This does not replace a live multiplayer session.
+local Update=require("src.survev.update_msg")
+local Registry=require("src.survev.type_registry")
+local Decoder=require("src.survev.packet_decoder")
+local wire=State.new()
+wire:applyMessage(Net.MsgType.Joined,{teamMode=1,playerId=1,started=true})
+wire:applyUpdate({fullObjects={shooter,wall,worldTarget},bullets={}})
+local update=Update.new()
+update.ack=9
+update.bullets={shot()}
+local stream=Net.newMsgStream(1024,Registry)
+stream:serializeMsg(Net.MsgType.Update,update)
+local frames=Decoder.decode(stream:getBuffer(),Registry)
+assert(#frames==1 and frames[1].id==Net.MsgType.Update)
+assert(#frames[1].msg.bullets==1)
+wire:receive(stream:getBuffer(),Registry)
+assert(wire.updateCount==2 and #wire.bulletEvents==1)
+local real=Trails.new()
+real:update(wire,0)
+assert(#real.trails==1)
+real:update(wire,.1)
+local clipped=real.trails[1]
+assert(clipped.collided and clipped.impactKind=="obstacle" and
+    clipped.impactId==3,"decoded Survev bullet should stop at actual door")
+assert(math.abs(clipped.pos.x-5.7)<.1)
+assert(wire.objects[3].dead==false and wire.objects[2].dead==false,
+    "visual collision may not change authoritative packet-backed actors")
+
 print("Survev obstacle/player visual bullet collision and lifecycle passed")
