@@ -28,6 +28,8 @@ local barrel={
     __type=Type.Obstacle,__id=26,type="barrel_01",
     pos={x=3,y=0},scale=1,ori=0,layer=0,
 }
+local missingResidue={__type=Type.Obstacle,__id=27,type="barrel_01",
+    pos={x=3.5,y=0},scale=1,ori=0,layer=0,dead=true}
 local order=Art.visualOrder(Meta.tree_01,tree,ground)
 assert(order.high and order.layer==2 and order.z==900)
 assert(order.zIdx==1000*65535+23)
@@ -45,7 +47,8 @@ tree.layer=0
 -- The pinned source has one original mask for bunker_structure_01.
 local building={__id=30,__type=Type.Structure,
     type="bunker_structure_01",pos={x=0,y=0},ori=0}
-local objects={[23]=tree,[24]=dead,[25]=bush,[26]=barrel,[30]=building}
+local objects={[23]=tree,[24]=dead,[25]=bush,[26]=barrel,
+    [27]=missingResidue,[30]=building}
 local camera=Camera.new()
 camera.m_pos={x=0,y=0}
 camera.m_screenWidth,camera.m_screenHeight=1280,720
@@ -55,6 +58,7 @@ local stencilCalls={}
 local pixelRects={}
 local draws={}
 local stencilActive=false
+local lastColor={}
 love={
     filesystem={getInfo=function() return true end},
     graphics={
@@ -64,10 +68,10 @@ love={
             function img:setFilter()end
             return img
         end,
-        setColor=function()end,
+        setColor=function(r,g,b,a) lastColor={r=r,g=g,b=b,a=a} end,
         draw=function(image,x,y)
             draws[#draws+1]={img=image.name,x=x,y=y,
-                active=stencilActive}
+                active=stencilActive,color=lastColor.a}
         end,
         rectangle=function(kind,x,y,w,h)
             assert(kind=="fill")
@@ -95,6 +99,8 @@ renderer:draw(objects,camera,1280,720,"main","belowPlayer",ground)
 assert(#draws==2,"dead tree residue and barrel render below player")
 assert(draws[1].img:find("tree%-res") and
     draws[2].img:find("barrel"),"dead z=5 precedes live z=10")
+near(draws[1].color,.75)
+assert(#draws==2,"dead barrel has no source residue and must be invisible")
 renderer:draw(objects,camera,1280,720,"main","aboveRoof",ground)
 assert(#draws==2,"ground high trees are deferred to upper layer")
 renderer:draw(objects,camera,1280,720,"main","stairsOverlay",ground)
