@@ -104,3 +104,11 @@ A tela de resultados agora le `GameOverMsg.playerStats` para mostrar por jogador
 * O estado de rede numera respostas `PickupMsg` recebidas do servidor (`pickupSeq`); `pickup_feedback.lua` apresenta por tres segundos os seis avisos de falha definidos no `client/src/ui/ui2.ts`. `PickupMsgType.Success` nao inventa um item no inventario nem exibe sucesso grafico falso: a atualizacao de inventario deve vir de `UpdateMsg`.
 * `tests/live_input_smoke.lua` verifica serializacao binaria de InputMsg com `useItem`; `tests/pickup_feedback_smoke.lua` verifica avisos, expiração, reset e ausencia de coleta otimista. `lua-check.yml` testa os dois scripts em Lua 5.4 e LuaJIT.
 * Pendencias: captura de uma partida multiplayer real, efeitos sonoros de coleta, outras interacoes (reviver/usar objetos) e equipamentos finais. Os resultados locais e a CI nao comprovam compatibilidade completa com servidores publicos.
+
+### Mudancas de equipamentos confirmadas pelo servidor (2026-10-22)
+
+O modulo `src/survev/equipment_tracker.lua` observa apenas `UpdateMsg` aplicado no `client_state.lua`. Ele compara os quatro slots de armas e os campos de capacete, colete e mochila do jogador ativo, exibindo breves avisos quando o servidor muda um tipo conhecido para outro. O tracker nao altera inventario, nao supoe aquisicoes a partir de `InputMsg` ou `PickupMsg`, e ignora mudancas apenas no numero de cartuchos. A primeira fotografia do estado, a troca do jogador observado e a entrada em nova partida sao tratadas como linha de base, sem eventos inventados.
+
+`main.lua` integra o indicador somente na tela de rede; a demonstracao offline nao produz os avisos. `tests/equipment_tracker_smoke.lua` cobre troca de arma, equipamento, recarga, `PickupMsg`, observacao e reinicializacao em Lua 5.4 e LuaJIT. O workflow `lua-check.yml` foi confirmado **verde na execucao 39722129014**, para o commit `24946086e910e06dead93b2c7129a6cb1dfc4190` (2026-10-22).
+
+Continua pendente validar a aparencia/temporizacao em uma partida real, os sons de equipamento e a fidelidade grafica completa de Survev.
