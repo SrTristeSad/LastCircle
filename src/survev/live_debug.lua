@@ -33,6 +33,7 @@ function V.new()
         terrainMap=nil,terrainRenderer=nil,obstacleArt=ObstacleArt.new(),
         buildingArt=BuildingArt.new(),
         warning="PISOS, TETOS, PORTAS E RAIOS DE VISAO PORTADOS | CAMADAS FINAIS PENDENTES",
+        lastScope=nil,lastZoom=nil,zoomFast=false,
     },V)
 end
 function V:update(state,dt)
@@ -46,6 +47,28 @@ function V:update(state,dt)
         self.lastUpdateMap=state.map
         self.buildingArt.visibility:reset()
         self.obstacleArt.doors:reset()
+        self.lastScope=nil
+        self.lastZoom=nil
+        self.zoomFast=false
+    end
+    -- Use ONLY the scope/zoom supplied in activePlayerData by the
+    -- authoritative server. Never change the zoom in the offline preview.
+    if state.joined and not state.offlinePreview then
+        local data=state.localData or {}
+        local scope,zoom=data.scope,data.zoom
+        if type(zoom)=="number" and zoom>0 then
+            -- In upstream player.ts, zoomDirty clears zoomFast first;
+            -- changing scope sets it again, until the next zoom update.
+            if self.lastZoom~=nil and zoom~=self.lastZoom then
+                self.zoomFast=false
+            end
+            if self.lastScope~=nil and scope~=self.lastScope then
+                self.zoomFast=true
+            end
+            self.lastZoom=zoom
+            self.lastScope=scope
+            self.camera:m_updateZoom(zoom,dt,self.zoomFast)
+        end
     end
     local active=state.objects[state.activeId]
     self.buildingArt:updateVisibility(dt,state.objects,active,state.updateCount)
