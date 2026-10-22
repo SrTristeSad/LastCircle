@@ -121,3 +121,14 @@ A implementacao atual foi comparada com o Survev original (`client/src/game.ts`,
 - `hud.lua` apresenta regioes de clique compartilhadas com o desenho dos quatro slots, e indicadores individuais de mochila/capacete/colete. **Esquerdo:** `InputMsg` com `EquipPrimary/Secondary/Melee/Throwable`, incluindo os punhos. **Direito:** pedido de descarte nos slots elegiveis ou nas etiquetas de capacete/colete. A interface nao modifica armas nem armaduras ate o servidor confirmar por `UpdateMsg`.
 - Pedidos sao bloqueados para itens desconhecidos, slots vazios, modo de teste, jogo encerrado, personagem morto/caido, espectador e transporte desconectado. O aviso `Descarte solicitado` indica apenas envio.
 - `tests/equipment_drop_smoke.lua` verifica dados binarios e zonas clicaveis em Lua 5.4 e LuaJIT; `lua-check.yml` inclui o teste. **Execucao de CI `39723614131` aprovada** no commit `ab23399b98e42380cfbef289aa772a33a93ae20a`. A compilacao/empacotamento real do LÖVE tambem havia passado apos a integracao inicial do HUD (`39723575640`). Nao ha ainda confirmacao de uma partida multiplayer end-to-end.
+
+
+### Animações autenticadas pelo servidor (2026-10-22)
+
+`src/survev/player_animation.lua` acompanha jogadores por `__id` e segue a atualização de `animType` + `animSeq` da mensagem completa de jogador `UpdateMsg`, em conformidade com `client/src/objects/player.ts:m_updateData`. Reexecuta a animação somente quando muda o número de sequência de 3 bits; os números podem dar a volta de 7 para 0. Ao morrer, mudar de sessão ou perder o objeto, a animação deixa de ser aplicada.
+
+As duas primeiras animações ofensivas implementadas são **punhos** e **frigideira**, com quadros verificados no `client/src/animData.ts`. `player_renderer.lua` recebe as poses por parâmetro, preservando sua renderização anterior para outros tipos de armas. Nenhum disparo, dano, colisão, som ou efeito de tiro é inventado. A seleção aleatória de variantes/espelhamento e a composição completa de animações permanecem pendentes.
+
+`src/survev/action_progress.lua` projeta `actionType` e `actionItem` do jogador junto dos tempos de `UpdateMsg.activePlayerData.action`. O HUD desenha uma barra de progresso somente quando recebe dados válidos para recarga, uso de consumível ou revive. Trata-se de uma adaptação visual LÖVE do indicador do jogo; não é o temporizador circular CSS original nem uma predição da ação.
+
+`tests/player_animation_smoke.lua` valida poses, durações, sequências repetidas, wrap-around, desligamento e integração com sprites. `tests/action_progress_smoke.lua` valida eventos autoritativos, durações desconhecidas e término. Ambas as suítes entram no workflow `lua-check.yml` com Lua 5.4 e LuaJIT. A confirmação em partida online completa ainda está pendente.
