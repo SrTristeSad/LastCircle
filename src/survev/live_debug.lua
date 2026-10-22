@@ -9,6 +9,7 @@ local BuildingArt=require("src.survev.building_renderer")
 local PlayerArt=require("src.survev.player_renderer")
 local PlayerAnimation=require("src.survev.player_animation")
 local ShotRecoil=require("src.survev.shot_recoil")
+local BulletTrails=require("src.survev.bullet_trails")
 local LootArt=require("src.survev.loot_renderer")
 local V={}
 V.__index=V
@@ -25,6 +26,7 @@ function V.new()
         players=PlayerArt.new(),
         playerAnimations=PlayerAnimation.new(),
         shotRecoil=ShotRecoil.new(),
+        bulletTrails=BulletTrails.new(),
         lootArt=LootArt.new(),
         terrainMap=nil,terrainRenderer=nil,obstacleArt=ObstacleArt.new(),
         buildingArt=BuildingArt.new(),
@@ -34,6 +36,7 @@ end
 function V:update(state,dt)
     self.playerAnimations:update(state,dt)
     self.shotRecoil:update(state,dt)
+    self.bulletTrails:update(state,dt)
     if not state or not state.objects then return end
     if self.lastUpdateMap~=state.map then
         self.lastUpdateMap=state.map
@@ -111,6 +114,9 @@ function V:draw(state,w,h)
     end
 
     -- Survev draw order around Player (zOrd 18) and roof (about zOrd 750).
+    -- Original BulletBarn renders at zOrd 20, above players (18),
+    -- before ceiling / roof layers. No client-side hit calculation.
+    self.bulletTrails:draw(cam,w,h)
     self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"betweenPlayerAndRoof")
     self.buildingArt:drawPhase(state.objects,cam,"ceiling",w,h,map.mapName)
     self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"aboveRoof")
