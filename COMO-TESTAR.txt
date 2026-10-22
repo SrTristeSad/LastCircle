@@ -8,6 +8,9 @@ LASTCIRCLE - TESTE LOCAL DO CLIENTE LUA (SURVEV)
 
 O teste entra diretamente em um MAPA LOCAL, SEM SERVIDOR.
 O HUD mostra vida, boost, quatro slots, carregadores e reservas.
+I/TAB abre o novo INVENTARIO (25 categorias e capacidade de mochila).
+Perto do inicio existem itens de solo do Survev: municao, bandagens,
+refrigerantes e pistola M9. F pode coletar pilhas de itens no teste local.
 Agora existe um MINIMAPA que acompanha o jogador em tempo real,
 com o terreno e os formatos originais das construcoes e obstaculos.
 Esses valores no teste local sao EXEMPLOS, sem combate de verdade.
@@ -26,8 +29,9 @@ TECLAS:
   5       - duas pistolas M9.
   G       - ativar / desativar mochila, colete e capacete.
   C       - alternar entre roupas originais.
-  F       - interagir quando a mensagem "Abrir/Fechar porta" aparecer.
-            O alcance considera colisor, orientacao e raio ORIGINAL do Survev.
+  F       - abrir/fechar porta ou COLETAR quando item estiver perto.
+            O alcance respeita raio, orientacao, propriedade e camada.
+  I / TAB - abrir/fechar o INVENTARIO EXPANSIVEL com limites de mochila.
   M       - ampliar/fechar o mapa.
   N       - mostrar/ocultar o minimapa.
   R / F5  - reiniciar o teste local.
@@ -49,9 +53,13 @@ IMPORTANTE:
 - O personagem usa roupas, armas, coletes, capacetes e mochilas originais.
 - TROCAR EQUIPAMENTO no teste e apenas visual. O HUD usa os slots e as
   capacidades originais, mas nao reproduz o inventario de servidor real.
+- A coleta do cenario local e SOMENTE uma SIMULACAO para testar exibicao,
+  contagem de pilhas e limites de capacidade. Ela NAO conecta a servidor.
+- Armas e equipamentos no solo ficam somente visiveis no modo offline;
+  coleta e equipagem reais ainda dependem do servidor.
 - Ainda faltam disparos, recoil, efeitos, animacoes adicionais e a
   composicao final por camadas/masks.
-- Ainda faltam HUD completo, combate, inventario e servidor multiplayer.
+- Ainda faltam saque/equipamento completos, combate, HUD final e multiplayer.
 
 Repositorio: https://github.com/SrTristeSad/LastCircle
 Origem: https://github.com/survev/survev
