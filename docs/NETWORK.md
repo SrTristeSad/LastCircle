@@ -62,3 +62,11 @@ Na tela **F6** com uma partida valida conectada, abra o inventario com **I/TAB**
 O inventario local **nao e reduzido no clique**: quantidades e loot no chao so mudam apos os `UpdateMsg` do servidor. Solicitacoes sao bloqueadas para observadores, estado offline, personagem morto, partida encerrada, quantidade zero/desconhecida e conexao fechada. Com o painel aberto, cliques nao acionam tiro no mundo.
 
 `tests/drop_item_smoke.lua` verifica serializacao binaria, portao de permissao, ausencia de mutacoes otimistas, selecao das linhas e avisos; `lua-check.yml` executa o teste em Lua 5.4 e LuaJIT. **Ainda nao e uma validacao contra servidor multiplayer real**. O descarte de armas, armaduras e perks pelo painel nao esta incluido nesta etapa.
+
+### Descarte de armas e armaduras no HUD (2026-10-22)
+
+No modo de rede `F6` conectado, **clique com o botao direito sobre os slots de armas** no HUD (primaria, secundaria ou corpo a corpo) para enviar a solicitacao `DropItemMsg` usando o indice **zero-based** do slot. Nao e possivel descartar punhos ou um slot sem arma. **Capacetes e coletes** equipados podem ser solicitados pelo botao direito sobre suas etiquetas acima do HUD; mochilas sao apenas informativas e nao sao descartadas nessa interface.
+
+Os itens, indices e tipos sao lidos do `UpdateMsg`; a acao nao altera o estado local. O servidor decide se o pedido e permitido, inclusive regras especificas sobre itens que nao podem ser soltos. A mensagem na interface indica **pedido enviado**, nunca um sucesso nao confirmado.
+
+`tests/equipment_drop_smoke.lua` verifica a serializacao binaria do DropItemMsg, os indices corretos, cliques nos slots, blindagem contra slots vazios ou invalidos, observadores, jogadores caidos e ausencia de mutacao otimista. `lua-check.yml` executa o teste em Lua 5.4 e LuaJIT. **Ainda falta validar o fluxo contra uma partida multiplayer real**.
