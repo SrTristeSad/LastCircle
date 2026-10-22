@@ -79,6 +79,8 @@ for(const type of MapObjectDefs.getAllTypes()) {
         collision:d.collision,
         collidable:d.collidable,
         height:d.height,
+        hitParticle:d.hitParticle??null,
+        bulletSound:d.sound?.bullet??null,
         isWindow:!!d.isWindow,
         isWall:!!d.isWall,
         door:d.door ? {
