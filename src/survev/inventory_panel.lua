@@ -37,11 +37,46 @@ function Inventory.project(state)
     }
 end
 function Inventory.new()
-    return setmetatable({visible=false,cache={},missing={}},Inventory)
+    return setmetatable({visible=false,cache={},missing={},
+        notice=nil,noticeTime=0},Inventory)
 end
 function Inventory:toggle()
     self.visible=not self.visible
     return self.visible
+end
+-- The inventory's grid is shared by rendering and mouse hit testing.
+local function geometry(width,height)
+    local x,y,w,h,rowsPerColumn,rowHeight,slotW=geometry(width,height)
+    local perCol=math.ceil(#Source.bagKeys/2)
+    local rowHeight=math.min(34,(h-136)/perCol)
+    local slotW=(w-34)/2
+    return x,y,w,h,perCol,rowHeight,slotW
+end
+function Inventory:hitTest(state,width,height,px,py)
+    if not self.visible then return nil end
+    local model=Inventory.project(state)
+    if not model then return nil end
+    local x,y,_,_,perCol,rowHeight,slotW=geometry(width,height)
+    if rowHeight<=3 then return nil end
+    for i,item in ipairs(model.rows) do
+        local col=math.floor((i-1)/perCol)
+        local row=(i-1)%perCol
+        local left=x+10+col*(slotW+14)
+        local top=y+100+row*rowHeight
+        if px>=left and px<=left+slotW and
+            py>=top and py<=top+rowHeight-3 then
+            return item
+        end
+    end
+    return nil
+end
+function Inventory:flash(message)
+    self.notice=message
+    self.noticeTime=3
+end
+function Inventory:update(dt)
+    self.noticeTime=math.max(0,self.noticeTime-math.max(0,dt or 0))
+    if self.noticeTime==0 then self.notice=nil end
 end
 function Inventory:image(path)
     if not path then return nil end
@@ -91,9 +126,6 @@ function Inventory:draw(state,width,height)
         ("nivel "..tostring(projected.level)) or "desconhecida"),
         x+10,y+64,w-20,"center")
     local rows=projected.rows
-    local rowsPerColumn=math.ceil(#rows/2)
-    local rowHeight=math.min(34,(h-136)/rowsPerColumn)
-    local slotW=(w-34)/2
     for i,item in ipairs(rows) do
         local col=math.floor((i-1)/rowsPerColumn)
         local row=(i-1)%rowsPerColumn
@@ -119,10 +151,11 @@ function Inventory:draw(state,width,height)
         g.printf(count.." / "..max,left+slotW-112,top+5,106,"right")
     end
     g.setColor(.71,.81,.77)
-    g.printf(projected.preview and
-        "Amostra: itens podem ser coletados apenas no cenario local."
-        or "A coleta e confirmada pelo servidor; esta tela nao altera os dados.",
-        x+10,y+h-29,w-20,"center")
+    local footer=projected.preview and
+        "Amostra offline: coleta apenas no cenario local."
+        or "Botao direito: solicitar descarte (servidor confirma)."
+    if self.notice and self.noticeTime>0 then footer=self.notice end
+    g.printf(footer,x+10,y+h-29,w-20,"center")
     g.setColor(1,1,1,1)
     return true
 end
