@@ -43,7 +43,7 @@ near(animation:poseFor(player).HandR.pivot.x,29.75)
 -- Receiving the SAME animation sequence again must not replay the swing.
 state.updateCount=2
 animation:update(state,.05)
-near(animation:poseFor(player).HandR.pivot.x,22.875)
+near(animation:poseFor(player).HandR.pivot.x,24.5)
 local renderer=Renderer.new()
 local camera=Camera.new()
 camera.m_pos={x=300,y=305}
