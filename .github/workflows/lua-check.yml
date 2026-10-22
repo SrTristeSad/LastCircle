@@ -64,6 +64,10 @@ jobs:
         run: |
           lua5.4 tests/equipment_drop_smoke.lua
           luajit tests/equipment_drop_smoke.lua
+      - name: Server-authoritative Survev melee animation frames
+        run: |
+          lua5.4 tests/player_animation_smoke.lua
+          luajit tests/player_animation_smoke.lua
       - name: Headless LÖVE UI bootstrap checks
         run: |
           lua5.4 tests/main_smoke.lua
