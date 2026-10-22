@@ -115,7 +115,7 @@ function V:draw(state,w,h)
 
     -- Survev draw order around Player (zOrd 18) and roof (about zOrd 750).
     -- Original BulletBarn renders at zOrd 20, above players (18),
-    -- before ceiling / roof layers. No client-side hit calculation.
+    -- before ceiling / roof layers. Visual collisions never alter damage.
     self.bulletTrails:draw(cam,w,h)
     self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"betweenPlayerAndRoof")
     self.buildingArt:drawPhase(state.objects,cam,"ceiling",w,h,map.mapName)
