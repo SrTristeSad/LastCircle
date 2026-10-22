@@ -87,7 +87,7 @@ function Player:load(path)
     self.images[path]=img
     return img
 end
-function Player:commands(obj,camera,mapName)
+function Player:commands(obj,camera,mapName,animation)
     if not obj or not obj.pos or obj.dead then return {} end
     local outfit=Metadata.outfits[obj.outfit or "outfitBase"]
     if not outfit then
@@ -161,6 +161,12 @@ function Player:commands(obj,camera,mapName)
     local world=(not obj.downed) and weap and weap.world or nil
     local leftPose=poses.HandL
     local rightPose=poses.HandR
+    -- Original player.ts blends server animSeq-triggered bones with idle pose.
+    -- Only source-verified keyframes are overridden; unknown types stay idle.
+    if animation and not obj.offlinePreview then
+        leftPose=animation.HandL or leftPose
+        rightPose=animation.HandR or rightPose
+    end
     if obj.offlinePreview and (not obj.activeWeapon or obj.activeWeapon=="fists") and rightPose then
         rightPose=Player.fistPose(obj.previewFistTicker) or rightPose
     end
@@ -245,8 +251,8 @@ function Player:commands(obj,camera,mapName)
     return output
 end
 
-function Player:draw(obj,camera,mapName)
-    local commands,err=self:commands(obj,camera,mapName)
+function Player:draw(obj,camera,mapName,animation)
+    local commands,err=self:commands(obj,camera,mapName,animation)
     if not commands then
         self.unavailable=self.unavailable+1
         return 0,err
