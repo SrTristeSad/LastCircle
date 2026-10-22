@@ -1,0 +1,53 @@
+name: Survev Player Outfit And Pose Metadata
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/generate_player_art.mjs"
+      - ".github/workflows/player-art.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  original-player-art:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/checkout@v4
+        with:
+          ref: referencia-survev
+          path: _reference
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Extract original Survev outfits and idle poses
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/generate_player_art.mjs \
+            _reference/reference/survev src/survev/player_art.lua
+      - name: Validate Lua source metadata
+        run: |
+          sudo apt-get update && sudo apt-get install -y lua5.4 luajit
+          luac5.4 -p src/survev/player_art.lua
+          lua5.4 -e 'local p=require("src.survev.player_art");assert(p.outfits.outfitBase.baseAsset=="player/player-base-01.png" and p.idlePoses.fists.HandL.pivot.x==14); print("Source player outfits/poses verified")'
+          luajit -e 'local p=require("src.survev.player_art");assert(p.outfits.outfitBase.baseTint==0xf8c574)'
+      - name: Commit source-generated player metadata to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/survev/player_art.lua
+          if ! git diff --cached --quiet; then
+            git commit -m "port: original Survev player outfit textures, tints and hand poses"
+            for attempt in 1 2 3 4; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then exit 0; fi
+              sleep 2
+            done
+            exit 1
+          fi
