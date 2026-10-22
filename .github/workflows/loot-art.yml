@@ -8,6 +8,8 @@ on:
       - src/survev/loot_renderer.lua
       - src/survev/inventory_panel.lua
       - tests/loot_smoke.lua
+      - tests/loot_parity.lua
+      - scripts/check_loot_parity.mjs
       - .github/workflows/loot-art.yml
 permissions:
   contents: write
@@ -40,6 +42,14 @@ jobs:
             lua5.4 tests/loot_smoke.lua
             luajit tests/loot_smoke.lua
           fi
+      - name: Compare original Survev LootBarn/item/bag data in Lua 5.4
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_loot_parity.mjs _reference/reference/survev lua5.4
+      - name: Compare original Survev LootBarn/item/bag data in LuaJIT
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_loot_parity.mjs _reference/reference/survev luajit
       - name: Commit source-generated Lua metadata
         run: |
           git config user.name "github-actions[bot]"
