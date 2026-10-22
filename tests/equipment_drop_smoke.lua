@@ -32,6 +32,20 @@ local function check(kind,item,slot)
     assert(messages[1].msg.item==item)
     assert(messages[1].msg.weapIdx==(kind=="weapon" and slot or 0))
 end
+-- Left click accepts all populated slots, including original fists.
+local bind=require("src.survev.input_bindings").Input
+local Buffer=require("src.survev.live_input")
+local input=Buffer.new()
+local chosen=assert(HUD.slotAt(state,1280,720,945,425))
+assert(chosen.slot==0)
+local actions={bind.EquipPrimary,bind.EquipSecondary,bind.EquipMelee,
+               bind.EquipThrowable}
+assert(input:queueAction(actions[chosen.slot+1]))
+local msg=require("src.survev.input_msg").new()
+input:drain(msg)
+assert(#msg.inputs==1 and msg.inputs[1]==bind.EquipPrimary)
+assert(HUD.slotAt(state,1280,720,1106,425).item=="fists")
+assert(HUD.slotAt(state,1280,720,1187,425)==nil)
 local primary=assert(HUD.hitTest(state,1280,720,945,425))
 assert(primary.kind=="weapon" and primary.slot==0 and primary.item=="ak47")
 local secondary=assert(HUD.hitTest(state,1280,720,1028,425))
