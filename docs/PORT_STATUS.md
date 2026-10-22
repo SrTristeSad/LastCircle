@@ -85,3 +85,7 @@ Ainda faltam matchmaking oficial, camadas subterrâneas/máscaras PIXI, animaç�
 ## Licenciamento
 
 O Survev é distribuído sob licença GNU GPL-3.0-or-later. `LICENSE` e `ATTRIBUTION-SURVEV.txt` foram preservados. A existência de uma licença open source no código não assegura que todas as marcas e recursos gráficos possam ser redistribuídos comercialmente sem verificação adicional.
+
+## Tela de resultados (2026-10-22)
+
+`src/survev/results_overlay.lua` projeta exclusivamente `GameOverMsg` recebido do servidor: encerramento, vitoria e classificacao da equipe. Integrado em `main.lua` na tela de rede. Nao calcula danos, kills ou classificacoes locais, nem substitui o menu final original do Survev. Teste de regressao: `lua scripts/test_results_overlay.lua` (requer Lua e modulos locais; executa sem LÖVE). **Pendente:** renderizacao fiel do resultado original, dados detalhados por jogador e teste de integracao com partida real.
