@@ -86,6 +86,8 @@ local function optionsForConnect()
     return options
 end
 local function setConnection()
+    if client and client.connection then client:close() end
+    client=nil
     if fields[2].value=="" or fields[3].value=="" then
         status="Modo direto exige URL e token REAIS.";return
     end
@@ -98,6 +100,8 @@ local function setConnection()
     else status="WebSocket conectado. Aguardando JoinedMsg..." end
 end
 local function quickPlay()
+    if client and client.connection then client:close() end
+    client=nil
     if fields[1].value=="" then
         status="Informe a URL real da API Survev.";return
     end
@@ -515,12 +519,14 @@ local function drawNetwork(w,h)
         0,528,w,"center")
     g.printf("HTTPS/WSS: LuaSec e certificado de CA; HTTP/WS so em localhost.",
         0,550,w,"center")
-    if client then
-        g.setColor(client.error and {.98,.42,.38} or {.72,.91,.71})
-        g.printf("Estado: "..client.state..
-            (client.error and (" | "..client.error) or ""),20,592,w-40,"center")
-    elseif status~="" then
-        g.setColor(.96,.59,.4);g.printf(status,20,592,w-40,"center")
+    if status~="" then
+        g.setColor(.96,.59,.4)
+        g.printf(status,20,592,w-40,"center")
+    end
+    if client and client.error then
+        g.setColor(.98,.42,.38)
+        g.printf("Estado: "..client.state.." | "..client.error,
+            20,614,w-40,"center")
     end
     g.setColor(.98,.54,.37)
     g.printf("Porte Lua em andamento. Entrar na partida depende do servidor original.",
