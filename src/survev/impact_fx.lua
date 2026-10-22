@@ -44,10 +44,14 @@ function Fx.new()
     return setmetatable({
         world=nil,sequence=0,particles={},soundEvents={},
         spriteCache={},missingSprites={},lastSound={},voices={},
+        soundPrototypes={},
         muted=false,
     },Fx)
 end
 function Fx:reset()
+    for _,source in ipairs(self.voices) do
+        if source.stop then source:stop() end
+    end
     self.world=nil
     self.sequence=0
     self.particles={}
@@ -218,8 +222,20 @@ function Fx:playSounds(camera)
              self.lastSound[event.group]>=.04) then
             local path="assets/survev/"..event.path
             if love.filesystem.getInfo(path) then
-                local ok,src=pcall(love.audio.newSource,path,"static")
-                if ok and src then
+                local proto=self.soundPrototypes[event.path]
+                if not proto then
+                    local ok,loaded=pcall(love.audio.newSource,path,"static")
+                    if ok and loaded then
+                        proto=loaded
+                        self.soundPrototypes[event.path]=loaded
+                    end
+                end
+                if proto then
+                    local src=proto
+                    if proto.clone then
+                        local ok,cloned=pcall(proto.clone,proto)
+                        if ok and cloned then src=cloned end
+                    end
                     src:setVolume(.32*math.max(0,1-distance/45))
                     src:play()
                     self.voices[#self.voices+1]=src
