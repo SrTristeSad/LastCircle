@@ -53,11 +53,14 @@ for(const key of GameObjectDefs.getAllTypes()){
         baseTint:img.baseTint,handTint:img.handTint,footTint:img.footTint,
         baseSprite:img.baseSprite,handLSprite:hands.left,handRSprite:hands.right,
         footSprite:img.footSprite,
+        backpackSprite:img.backpackSprite,
+        backpackTint:img.backpackTint,
         baseAsset:sprite(img.baseSprite),
         handLAsset:sprite(hands.left),handRAsset:sprite(hands.right),
         footAsset:sprite(img.footSprite),
+        backpackAsset:sprite(img.backpackSprite),
     };
-    if(!info.baseAsset||!info.handLAsset||!info.handRAsset||!info.footAsset)
+    if(!info.baseAsset||!info.handLAsset||!info.handRAsset||!info.footAsset||!info.backpackAsset)
         throw Error("Missing upstream artwork for "+key+" "+JSON.stringify(info));
     outfits[key]=info;
 }
