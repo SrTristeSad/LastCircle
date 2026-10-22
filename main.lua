@@ -206,11 +206,28 @@ function love.wheelmoved(dx,dy)
 end
 function love.mousepressed(x,y,button)
     if screen=="demo" then
+        -- A click inside an open inventory must not trigger combat.
+        if inventoryPanel.visible then return end
         if button==1 then demo:punch() end
         return
     end
     if screen~="network" then return end
     if connected() then
+        if inventoryPanel.visible then
+            if button==2 then
+                local width,height=love.graphics.getDimensions()
+                local state=client:getGameState()
+                local row=inventoryPanel:hitTest(state,width,height,x,y)
+                if row then
+                    local packet,reason=client:dropInventoryItem(row.type)
+                    inventoryPanel:flash(packet and
+                        ("Pedido para soltar "..row.name.." enviado.")
+                        or ("Nao enviado: "..tostring(reason)))
+                end
+            end
+            -- Clicking UI never fires a gun or issues an unbound world action.
+            return
+        end
         if button==1 then fireStart=true end
         return
     end
@@ -226,6 +243,7 @@ function love.mousepressed(x,y,button)
 end
 local atan2=math.atan2 or math.atan
 function love.update(dt)
+    inventoryPanel:update(dt)
     if screen=="demo" then
         local state=demo:getGameState()
         local player=state.objects[state.activeId]
