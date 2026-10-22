@@ -2,17 +2,21 @@
 -- Original terrain, obstacles, interiors, wall-aware roof LOS and door
 -- visual interpolation are partially ported. Full layer masks/player/HUD
 -- gameplay is NOT complete. No invented mechanics.
--- Press F6 for the optional network debug tool. No fictitious battle royale.
+-- LOCAL visual test starts immediately. F6 opens network mode, F7 assets.
+-- Local input is a marked sandbox, never simulated server authority.
 local Camera=require("src.survev.camera")
 local Binds=require("src.survev.input_bindings")
 local Config=require("src.survev.game_config")
 local Input=require("src.survev.input_msg")
 local Network=require("src.survev.network_client")
 local LiveDebug=require("src.survev.live_debug")
+local OfflineDemo=require("src.survev.offline_demo")
 
 local camera=Camera.new()
-local screen="assets"
-local tile,logo,selected,live
+local screen="demo"
+local tile,logo,selected,live,demo
+local smokeFrames=0
+local screenshotRequested=false
 local index=1
 local imageErrors={}
 local sampleFiles={
@@ -78,13 +82,14 @@ local function addAction(id)
     actionQueue[#actionQueue+1]=id
 end
 function love.load()
-    love.window.setTitle("LastCircle - Survev Lua | Arte e Rede (desenvolvimento)")
+    love.window.setTitle("LastCircle - Teste Local do Survev Lua")
     font=love.graphics.newFont(16)
     love.graphics.setFont(font)
     tile=loadImage("assets/survev/img/intro/map_tile.png")
     logo=loadImage("assets/survev/img/survev_logo_full.png")
     selectImage()
     live=LiveDebug.new()
+    demo=OfflineDemo.new()
 end
 function love.resize(w,h)
     camera.m_screenWidth,camera.m_screenHeight=w,h
@@ -106,8 +111,15 @@ local function backspace(str)
     return str:sub(1,-2)
 end
 function love.keypressed(key)
-    if key=="f6" then
-        screen=screen=="assets" and "network" or "assets"
+    if key=="f5" then
+        demo=OfflineDemo.new()
+        screen="demo"
+        return
+    elseif key=="f6" then
+        screen=screen=="network" and "demo" or "network"
+        return
+    elseif key=="f7" then
+        screen=screen=="assets" and "demo" or "assets"
         return
     end
     if key=="escape" then
@@ -115,10 +127,15 @@ function love.keypressed(key)
             client:close()
             status="Desconectado."
         elseif screen=="network" then
-            screen="assets"
+            screen="demo"
         else
             love.event.quit()
         end
+        return
+    end
+    if screen=="demo" then
+        if key=="f" then demo:interact()
+        elseif key=="r" then demo=OfflineDemo.new() end
         return
     end
     if screen=="assets" then
@@ -171,6 +188,31 @@ function love.mousepressed(x,y,button)
 end
 local atan2=math.atan2 or math.atan
 function love.update(dt)
+    if screen=="demo" then
+        local state=demo:getGameState()
+        local player=state.objects[state.activeId]
+        live.camera.m_pos=player.pos
+        live.camera.m_screenWidth,live.camera.m_screenHeight=
+            love.graphics.getDimensions()
+        local mx,my=love.mouse.getPosition()
+        local mouseWorld=live.camera:m_screenToPoint({x=mx,y=my})
+        local x=(love.keyboard.isDown("d") and 1 or 0)-
+            (love.keyboard.isDown("a") and 1 or 0)
+        local y=(love.keyboard.isDown("w") and 1 or 0)-
+            (love.keyboard.isDown("s") and 1 or 0)
+        demo:update(dt,x,y,mouseWorld)
+        live:update(state,dt)
+        if os.getenv("LASTCIRCLE_DEMO_SMOKE")=="1" then
+            smokeFrames=smokeFrames+1
+            if smokeFrames>=25 and love.filesystem.getInfo("LastCircle-demo.png") then
+                print("LASTCIRCLE_OFFLINE_DEMO_SUCCESS")
+                love.event.quit(0)
+            elseif smokeFrames>=120 then
+                error("Offline screenshot was not created by real LÖVE runtime")
+            end
+        end
+        return
+    end
     if not client then return end
     client:poll()
     local world=client:getGameState()
@@ -219,7 +261,7 @@ local function drawAssets(w,h)
     g.setColor(1,1,1)
     g.printf("INSPECAO DE RECURSOS ORIGINAIS",0,195,w,"center")
     g.setColor(.84,.91,.82)
-    g.printf("F6: conexao de rede | A/D ou setas: alternar arte | ESC: sair",0,233,w,"center")
+    g.printf("F5: TESTAR MAPA LOCAL | F6: conectar | F7: voltar | A/D: artes",0,233,w,"center")
     g.printf("Ainda nao e uma partida jogavel.",0,262,w,"center")
     if selected then centered(selected,w/2,h/2+20,math.min(250,h*.3)) end
     g.setColor(1,1,1)
@@ -233,6 +275,20 @@ local function drawAssets(w,h)
         g.printf("Falha ao carregar alguns recursos originais. Consulte console.",0,h-48,w,"center")
     end
 end
+local function drawDemo(w,h)
+    live:draw(demo:getGameState(),w,h)
+    local g=love.graphics
+    g.setColor(.025,.07,.06,.92)
+    g.rectangle("fill",math.max(0,(w-900)/2),h-138,math.min(900,w),94,9)
+    g.setColor(.96,.97,.87)
+    g.printf("TESTE LOCAL DO CLIENTE LUA — SEM SERVIDOR",0,h-130,w,"center")
+    g.setColor(.75,.88,.78)
+    g.printf("WASD mover   •   mouse mirar   •   F porta   •   R reiniciar",0,h-102,w,"center")
+    g.printf("F5 novo teste   •   F6 servidor Survev   •   F7 artes   •   ESC sair",0,h-79,w,"center")
+    g.setColor(.99,.84,.52)
+    g.printf(demo.message,0,h-60,w,"center")
+end
+
 local function drawNetwork(w,h)
     local g=love.graphics
     if client and client:getGameState() and client:getGameState().map then
@@ -295,5 +351,11 @@ function love.draw()
     local w,h=g.getDimensions()
     camera.m_screenWidth,camera.m_screenHeight=w,h
     if screen=="assets" then drawAssets(w,h)
+    elseif screen=="demo" then drawDemo(w,h)
     else drawNetwork(w,h) end
+    if screen=="demo" and os.getenv("LASTCIRCLE_DEMO_SMOKE")=="1"
+        and smokeFrames>=2 and not screenshotRequested then
+        screenshotRequested=true
+        love.graphics.captureScreenshot("LastCircle-demo.png")
+    end
 end
