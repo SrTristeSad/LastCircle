@@ -12,7 +12,12 @@ local function utf8point(n)
         0x80+math.floor(n/4096)%64,0x80+math.floor(n/64)%64,0x80+n%64)
 end
 local null={}
+local arrayTag={}
 J.null=null
+function J.array(items)
+    assert(type(items)=="table","JSON array requires a table")
+    return setmetatable(items,arrayTag)
+end
 function J.decode(text)
     assert(type(text)=="string" and #text<=262144,"invalid JSON response size")
     local pos,len=1,#text
@@ -104,7 +109,7 @@ function J.decode(text)
         end
         local number=rest:match("^-?%d+%.?%d*[eE][+-]?%d+")
             or rest:match("^-?%d+%.?%d*")
-        assert(number and number:match("^-?(0|[1-9])")~=false,"expected JSON value")
+        assert(number~=nil,"expected JSON value")
         -- Enforce number lexical grammar; no Lua number syntax extensions.
         assert(number:match("^-?%d+%.?%d*$") or
             number:match("^-?%d+%.?%d*[eE][+-]?%d+$"),"invalid JSON number")
@@ -146,7 +151,8 @@ function J.encode(value)
                 array=false
             else max=math.max(max,k) end
         end
-        if array and count==max and count>0 then
+        if (array and count==max and count>0) or getmetatable(v)==arrayTag then
+            assert(count==max,"JSON array must be dense")
             local parts={}
             for i=1,max do parts[#parts+1]=encode(v[i],depth+1) end
             return "["..table.concat(parts,",").."]"
