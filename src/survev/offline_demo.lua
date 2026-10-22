@@ -278,19 +278,14 @@ function Demo:pickup()
     if remaining==0 then
         message.delObjIds={obj.__id}
     else
-        message.partObjects={{__id=obj.__id,__type=Obj.Loot,
-            pos=V.copy(obj.pos)}}
-    end
-    self.state:applyMessage(Net.MsgType.Update,message)
-    if remaining>0 then
-        -- Full-only count belongs in a full ObjectType.Loot update.
+        -- Count is serialized ONLY with the full Loot object. Avoid
+        -- forging a partial update with fields absent from the wire.
         local snapshot={}
         for k,v in pairs(obj) do snapshot[k]=v end
         snapshot.count=remaining
-        self.state:applyMessage(Net.MsgType.Update,{
-            ack=0,fullObjects={snapshot}
-        })
+        message.fullObjects={snapshot}
     end
+    self.state:applyMessage(Net.MsgType.Update,message)
     self.message="TESTE LOCAL: +"..quantity.." "..item.name..
         " (servidor nao conectado)."
     self.pickups=(self.pickups or 0)+1
