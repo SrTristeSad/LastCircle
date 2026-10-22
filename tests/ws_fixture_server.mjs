@@ -10,6 +10,7 @@ const load=async p=>await import(pathToFileURL(resolve(root,p)).href);
 const { MsgStream,MsgType,BitStream }=await load("shared/net/net.ts");
 const { JoinMsg }=await load("shared/net/joinMsg.ts");
 const { InputMsg }=await load("shared/net/inputMsg.ts");
+const { SpectateMsg,SpectateAction }=await load("shared/net/spectateMsg.ts");
 const { JoinedMsg }=await load("shared/net/joinedMsg.ts");
 const { MapMsg }=await load("shared/net/mapMsg.ts");
 const { UpdateMsg }=await load("shared/net/updateMsg.ts");
@@ -54,11 +55,11 @@ function decodeClient(buffer) {
   for(let i=0;i<n;i++)body[i]^=mask[i%4];
   return {frame:{opcode:buffer[0]&15,payload:body},rest:buffer.subarray(offset+4+n)};
 }
-function playerPayload(x,y,full=true) {
+function playerPayload(x,y,full=true,id=7,dead=false) {
   const d={
-    __type:ObjectType.Player,__id:7,pos:{x,y},dir:{x:1,y:0},
+    __type:ObjectType.Player,__id:id,pos:{x,y},dir:{x:1,y:0},
     outfit:"outfitBase",backpack:"",helmet:"",chest:"",activeWeapon:"",
-    layer:0,dead:false,downed:false,animType:0,animSeq:0,
+    layer:0,dead,downed:false,animType:0,animSeq:0,
     actionType:0,actionSeq:0,wearingPan:false,healEffect:false,
     lastStandEffect:false,frozen:false,hasteType:0,hasteSeq:0,
     actionItem:"",scale:1,role:"",perks:[]
@@ -88,6 +89,7 @@ const update=()=> {
 };
 const listen=net.createServer(socket=>{
   let buffer=Buffer.alloc(0),upgraded=false,joinSeen=false,inputSeen=false,pongSeen=false;
+  let spectatorSession=false,spectateSeen=false,spectateIndex=0;
   socket.setNoDelay(true);
   socket.on("data",async data=>{
     try {
@@ -114,24 +116,55 @@ const listen=net.createServer(socket=>{
         if(type===MsgType.Join) {
           const join=new JoinMsg();
           join.deserialize(stream.getStream());
-          if(join.protocol!==1028||join.name!=="Network Test"||join.joinToken!=="fixture-token")
+          if(join.protocol!==1028 ||
+             !["Network Test","Spectator Test"].includes(join.name) ||
+             join.joinToken!=="fixture-token")
             throw Error("invalid original TS JoinMsg fields");
+          spectatorSession=join.name==="Spectator Test";
           joinSeen=true;
           const joined=new JoinedMsg();
           joined.teamMode=1;joined.playerId=7;joined.started=true;joined.emotes=[];
           const map=new MapMsg();
           map.mapName="main";map.seed=321;map.width=720;map.height=640;
           map.shoreInset=8;map.grassInset=12;
+          const initial=update();
+          if(spectatorSession) {
+            // Original TS object serialization: a dead local player and
+            // two living players who are valid spectator targets.
+            initial.fullObjects=[
+              playerPayload(120,140,true,7,true),
+              playerPayload(200,250,true,8,false),
+              playerPayload(300,350,true,9,false),
+            ];
+          }
           const combined=Buffer.concat([
             framedMsg(MsgType.Joined,joined),
             framedMsg(MsgType.Map,map),
-            framedMsg(MsgType.Update,update())
+            framedMsg(MsgType.Update,initial)
           ]);
           // RFC fragmented binary message with interleaved PING.
           const half=Math.floor(combined.length/2);
           socket.write(serverFrame(combined.subarray(0,half),2,false));
           socket.write(serverFrame(Buffer.from("survev-ping"),9));
           socket.write(serverFrame(combined.subarray(half),0,true));
+        } else if(type===MsgType.Spectate) {
+          if(!joinSeen||!spectatorSession)throw Error("unexpected SpectateMsg");
+          const msg=new SpectateMsg();
+          msg.deserialize(stream.getStream());
+          const expected=[
+            SpectateAction.Begin,SpectateAction.Next,SpectateAction.Prev
+          ][spectateIndex];
+          if(msg.action!==expected)
+            throw Error("source spectator action order mismatch");
+          spectateIndex++;
+          spectateSeen=true;
+          // The mock server owns the target selection. It emits an actual
+          // TS UpdateMsg as the *only* cause of Lua activeId changes.
+          const snap=update();
+          snap.activePlayerIdDirty=true;
+          snap.activePlayerId=spectateIndex===2?9:8;
+          snap.fullObjects=[];
+          socket.write(serverFrame(framedMsg(MsgType.Update,snap)));
         } else if(type===MsgType.Input) {
           if(!joinSeen)throw Error("Input before Join");
           const input=new InputMsg();
@@ -151,8 +184,8 @@ const listen=net.createServer(socket=>{
     }
   });
   socket.on("close",()=>{
-    if(!joinSeen||!inputSeen||!pongSeen) {
-      console.error("Fixture incomplete", {joinSeen,inputSeen,pongSeen});
+    if(!joinSeen||!(inputSeen||(spectateSeen&&spectateIndex===3))||!pongSeen) {
+      console.error("Fixture incomplete", {joinSeen,inputSeen,spectateSeen,spectateIndex,pongSeen});
       process.exitCode=1;
     }
   });
