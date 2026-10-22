@@ -52,6 +52,8 @@ for(const key of GameObjectDefs.getAllTypes()){
         if(world){if(file)worldCount++;else missingWorld++;}
         weapons[key]={
             type:def.type,name:def.name??key,
+            ammoType:def.type==="gun" ? def.ammo : null,
+            maxClip:def.type==="gun" ? def.maxClip : null,
             idlePose:def.anim?.idlePose??null,
             isDual:!!def.isDual,pistol:!!def.pistol,
             isBullpup:!!def.isBullpup,isLauncher:!!def.isLauncher,
