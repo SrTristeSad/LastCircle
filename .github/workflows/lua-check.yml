@@ -24,6 +24,10 @@ jobs:
         run: |
           lua5.4 tests/matchmaking_smoke.lua
           luajit tests/matchmaking_smoke.lua
+      - name: Server-issued URL fallback and join token parity
+        run: |
+          lua5.4 tests/match_connect_smoke.lua
+          luajit tests/match_connect_smoke.lua
       - name: Real LuaSocket HTTP matchmaking to a local original-protocol test server
         run: |
           python3 tests/fixtures/survev_matchmaking_server.py > /tmp/survev-matchmaking.log 2>&1 &
