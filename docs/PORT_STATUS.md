@@ -142,3 +142,14 @@ As duas primeiras animações ofensivas implementadas são **punhos** e **frigid
 `client_state.lua` mantém `shotFxEvents` com `shotFxSeq` crescente e limite de 256 eventos, pois vários `UpdateMsg` podem chegar durante um único `love.update`; o módulo consome apenas eventos ainda não vistos e reseta quando o estado da partida é reiniciado. Se houver mais de 256 disparos sem renderização, os eventos mais antigos são descartados para limitar memória.
 
 `tests/shot_recoil_smoke.lua` verifica recuo individual, pistolas duplas, deslocamento dos sprites, decaimento, eventos inválidos, duas mensagens de rede no mesmo quadro, deduplicação, limite da fila e reinicialização. O workflow `lua-check.yml` passou em Lua 5.4 e LuaJIT na execução **39730222508** (commit `1b1c570e63fe3cc241431155602db61eae2259d0`). O empacotamento LÖVE anterior passou na execução **39730131164**. Ainda faltam efeitos de disparo, projéteis visuais fiéis, áudio e teste end-to-end em servidor real.
+
+
+### Rastros de projeteis Survev (2026-10-22)
+
+`src/survev/bullet_art.lua` contem **63 definicoes de bullets/shrapnel e 13 paletas de cores** geradas diretamente de `reference/survev/shared/defs/gameObjects/bulletDefs.ts` e `shared/gameConfig.ts`, fixados no commit original `c6185e31`. Os parâmetros sao usados somente na visualizacao do cliente. O asset de rastro e o SVG original `player/player-bullet-trail-02.svg`, rasterizado em `assets/survev/img/player/player-bullet-trail-02.png` pelo workflow LÖVE.
+
+`client_state.lua` preserva `UpdateMsg.bullets` em `bulletEvents` numerados por `bulletSeq`, com capacidade maxima de 512; isso inclui **todos** os projeteis, nao apenas os `shotFx` usados pelo recuo. `src/survev/bullet_trails.lua` implementa a parte visual de `client/src/objects/bullet.ts`: velocidade com `varianceT` e `speedMult`, alcance com `reflectDistDecay`, `clipDistance`, `distanceMult` e `distAdjIdx`; tamanhos `trailSmall`/`trailThick`, cor de tracer, AP e saturacao, alpha de supressor, e desvanecimento `scale -= dt*6`. A escala, ancora e rotacao usam o asset original e o pivot PIXI de 14.5, em `zOrd=20`. Flare segue pendente para `FlareBarn`; rastro invisivel nao e desenhado.
+
+**Limite assumido e documentado:** a renderizacao termina ao atingir a distancia calculada, mas **nao replica ainda as colisoes cliente-lado de Survev** (objetos, jogadores, portas, escadas, deflexoes), nem efeitos sonoros, particulas, luminosidade da superficie ou paletas especificas do bioma. Portanto pode haver rastro visual atraves de paredes ate essa etapa ser portada. O mundo/servidor nao e modificado pelo renderizador.
+
+`tests/bullet_trails_smoke.lua` confere o total de tipos/paletas, equacoes, sprites, cores, distancias, desaparecimento, nao duplicacao de eventos, lotes de WebSocket e limite de memoria. Testes foram adicionados ao `lua-check.yml` para Lua 5.4 e LuaJIT. Uma partida multiplayer real ainda nao foi verificada.
