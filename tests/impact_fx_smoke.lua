@@ -53,6 +53,9 @@ assert(#fx.particles==1 and #fx.soundEvents==1)
 local p=fx.particles[1]
 assert(p.pos.x<100,"hit particles move back along impact normal")
 assert(p.age==.02 and p.vel.x<0)
+near(p.rotDrag,p.drag/2)
+near(p.alphaLerp[1],.95);near(p.alphaLerp[2],1)
+near(p.scaleLerp[1],0);near(p.scaleLerp[2],1)
 assert(p.red>=0 and p.red<=1 and p.green>=0 and p.green<=1)
 
 -- Collision with player is blood, unless the shooter is dead.
