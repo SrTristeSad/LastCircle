@@ -47,7 +47,7 @@ assert(hit.point.x< -1)
 -- Zero-scale change should preserve the original source endpoints.
 player.scale=2
 snap=C.snapshot(objects)
-hit=assert(C.firstHit(snap,shot,{x=-5,y=-.45},{x=5,y=-.45}))
+hit=assert(C.firstHit(snap,shot,{x=-5,y=-1},{x=5,y=-1}))
 assert(hit.kind=="pan" and hit.point.x<-2)
 player.scale=1
 
