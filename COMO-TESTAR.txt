@@ -14,7 +14,14 @@ originais do Survev).
 TECLAS:
   WASD    - mover o personagem de teste.
   MOUSE   - mirar / mostrar direcao.
-  CLIQUE ESQUERDO - animacao de soco original (VISUAL, sem causar dano).
+  CLIQUE ESQUERDO - soco original quando equipado com punhos (sem dano).
+  1       - punhos.
+  2       - frigideira.
+  3       - pistola M9.
+  4       - AK-47.
+  5       - duas pistolas M9.
+  G       - ativar / desativar mochila, colete e capacete.
+  C       - alternar entre roupas originais.
   F       - abrir ou fechar uma porta proxima, usando a regra original.
   R / F5  - reiniciar o teste local.
   F6      - painel para conectar a um servidor SURVEV compativel.
@@ -30,8 +37,11 @@ IMPORTANTE:
 - O servidor Moo-Quest (1 ou 2) usa protocolo diferente e NAO funciona
   como servidor do LastCircle.
 - O teste local NAO precisa de Node.js, login, token ou internet.
-- O personagem ja usa roupa, corpo e maos originais, mas falta o restante
-  das animacoes, armas/efeitos e a composicao final por camadas/masks.
+- O personagem usa roupas, armas, coletes, capacetes e mochilas originais.
+- TROCAR EQUIPAMENTO no teste e apenas visual e NAO reproduz o inventario
+  ou a municao de uma partida multiplayer verdadeira.
+- Ainda faltam disparos, recoil, efeitos, animacoes adicionais e a
+  composicao final por camadas/masks.
 - Ainda faltam HUD completo, combate, inventario e servidor multiplayer.
 
 Repositorio: https://github.com/SrTristeSad/LastCircle
