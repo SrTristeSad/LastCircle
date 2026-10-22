@@ -93,3 +93,7 @@ O Survev é distribuído sob licença GNU GPL-3.0-or-later. `LICENSE` e `ATTRIBU
 ### Estatisticas de encerramento — etapa adicional
 
 A tela de resultados agora le `GameOverMsg.playerStats` para mostrar por jogador `playerId`, `kills`, `damageDealt`, `damageTaken` e `timeAlive`, sem calcular nenhum valor local. `scripts/test_results_overlay.lua` valida derrota, vitoria, estatisticas e reset. O workflow `.github/workflows/lua-check.yml` executa o teste com Lua 5.4 e LuaJIT. O layout ainda e uma adaptacao LÖVE, nao pixel-paridade da interface original. A execucao da CI precisa ser conferida no GitHub Actions.
+
+### Controles de rede (2026-10-22)
+
+`main.lua` encaminha rolagem da roda do mouse aos IDs originais `EquipPrevWeap` e `EquipNextWeap` apenas durante a conexao de jogo. A fila de ações enviadas respeita o limite de sete entradas do `InputMsg` e elimina duplicatas. Trocas de modo e `GameOverMsg` limpam entradas pendentes para evitar comandos atrasados. O teste de inicializacao `tests/main_smoke.lua` exercita os callbacks sem servidor. **Nao validado contra uma partida multiplayer real.**
