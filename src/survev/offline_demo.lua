@@ -1,0 +1,228 @@
+-- LastCircle LOCAL VISUAL TEST (no server).
+-- This deliberately constructs a SMALL MapMsg/UpdateMsg-shaped source-data
+-- scene from the pinned Survev MapObjectDefs. It is NOT a fabricated Survev
+-- game server, nor a replay of a real matchmaking session.
+--
+-- The terrain generator, sprite definitions, building/door renderers, player
+-- size and speed all come from the Survev Lua port. Only movement in this
+-- isolated inspection sandbox is locally simulated.
+local State=require("src.survev.client_state")
+local Net=require("src.survev.net")
+local Config=require("src.survev.game_config")
+local Obj=require("src.survev.object_serialize_fns").Type
+local Obstacles=require("src.survev.map_obstacle_art")
+local Buildings=require("src.survev.map_building_art")
+local Collisions=require("src.survev.los_geometry")
+local V=require("src.survev.v2")
+local Palettes=require("src.survev.map_colors")
+local Demo={}
+Demo.__index=Demo
+
+local function clamp(value,low,high)
+    return math.max(low,math.min(high,value))
+end
+
+local function dummyMap()
+    local palette=assert(Palettes.main,"original Survev main palette missing")
+    return {
+        mapName="main",width=720,height=640,seed=98765,
+        shoreInset=17,grassInset=8,
+        rivers={
+            {width=6,looped=false,points={
+                {x=0,y=280},{x=180,y=287},{x=300,y=307},
+                {x=420,y=291},{x=550,y=285},{x=720,y=285},
+            }},
+        },
+        places={{name="Area de teste local",pos={x=.5,y=.5}}},
+        groundPatches={
+            {bound={type=0,pos={x=364,y=324},rad=18},
+                roughness=.23,offsetDist=3,order=0,
+                color=palette.colors.grass,useAsMapShape=false},
+        },
+        objects={},
+    }
+end
+
+function Demo.new()
+    local state=State.new()
+    state:applyMessage(Net.MsgType.Joined,{
+        teamMode=Config.TeamMode.Solo,playerId=1,started=true,emotes={}
+    })
+    local map=dummyMap()
+    state:applyMessage(Net.MsgType.Map,map)
+    local spawn={x=355,y=321}
+    local units={
+        -- The sprite names, original image scales and rotations are looked
+        -- up in generated registries; none of the art is invented.
+        {id=10,type="shack_01",x=365,y=329,ori=0,building=true},
+        {id=11,type="barn_01",x=323,y=356,ori=0,building=true},
+        {id=12,type="warehouse_01",x=439,y=364,ori=1,building=true},
+        {id=13,type="house_door_01",x=362,y=321,ori=0,door=true},
+        {id=14,type="house_door_01",x=324,y=350,ori=1,door=true},
+        {id=15,type="tree_01",x=344,y=340,ori=0},
+        {id=16,type="tree_01",x=380,y=345,ori=0},
+        {id=17,type="tree_02",x=336,y=327,ori=0},
+        {id=18,type="tree_02",x=388,y=316,ori=0},
+        {id=19,type="stone_01",x=338,y=319,ori=0},
+        {id=20,type="barrel_01",x=375,y=315,ori=0},
+        {id=21,type="crate_01",x=376,y=332,ori=0},
+        {id=22,type="bush_01",x=344,y=316,ori=0},
+        {id=23,type="bush_01",x=384,y=333,ori=0},
+        {id=24,type="tree_01",x=406,y=350,ori=0},
+    }
+    local all={
+        {
+            __type=Obj.Player,__id=1,pos=V.copy(spawn),dir={x=1,y=0},
+            outfit="outfitBase",backpack="",helmet="",chest="",
+            activeWeapon="",scale=1,layer=0,dead=false,downed=false,
+        }
+    }
+    local doorOrigins={}
+    for _,spec in ipairs(units) do
+        local meta=spec.building and Buildings[spec.type]
+            or Obstacles[spec.type]
+        assert(meta,"missing pinned Survev definition: "..spec.type)
+        if spec.building then
+            assert(meta.floor and #meta.floor>0,"building has no real floor")
+        else
+            assert(meta.asset,"original obstacle sprite missing: "..spec.type)
+        end
+        local entity={
+            __id=spec.id,__type=spec.building and Obj.Building or Obj.Obstacle,
+            type=spec.type,pos={x=spec.x,y=spec.y},
+            ori=spec.ori,layer=0,scale=1,dead=false,
+            ceilingDead=false,ceilingDamaged=false,
+        }
+        if spec.door then
+            assert(meta.door,"source object does not define a door")
+            entity.isDoor=true
+            entity.door={open=false,canUse=true,locked=false,seq=1}
+            doorOrigins[spec.id]={pos=V.copy(entity.pos),ori=spec.ori}
+        end
+        all[#all+1]=entity
+        -- MapMsg.objects is used for the minimap in the original client.
+        map.objects[#map.objects+1]={
+            pos=V.copy(entity.pos),ori=entity.ori,scale=1,type=entity.type
+        }
+    end
+    state:applyMessage(Net.MsgType.Update,{
+        ack=0,activePlayerIdDirty=true,activePlayerId=1,
+        fullObjects=all,
+        activePlayerData={healthDirty=true,health=100},
+    })
+    state.offlinePreview=true
+    return setmetatable({
+        state=state,spawn=spawn,
+        doorOrigins=doorOrigins,steps=0,interactions=0,
+        message="Cenario de teste feito com artes e definicoes originais.",
+    },Demo)
+end
+
+local function collides(self,newPos)
+    local map=self.state.map
+    -- This is a local collision PREVIEW, not server-authoritative physics.
+    if newPos.x<map.shoreInset+1 or newPos.x>map.width-map.shoreInset-1
+        or newPos.y<map.shoreInset+1
+        or newPos.y>map.height-map.shoreInset-1 then return true end
+    local radius=Config.player.radius
+    for _,obstacle in ipairs(Collisions.obstacles(self.state.objects)) do
+        if obstacle.collidable and not obstacle.dead and
+            Collisions.sameLayer(obstacle.layer,0) and
+            Collisions.intersectCircle(obstacle.collider,newPos,radius) then
+            return true
+        end
+    end
+    return false
+end
+
+function Demo:update(dt,moveX,moveY,aim)
+    dt=clamp(dt or 0,0,.08)
+    local player=self.state.objects[1]
+    if not player then return end
+    local dir=V.copy(player.dir)
+    if aim and type(aim.x)=="number" and type(aim.y)=="number" then
+        local toward=V.sub(aim,player.pos)
+        local len=V.length(toward)
+        if len>.00001 then dir=V.div(toward,len) end
+    end
+    moveX=clamp(moveX or 0,-1,1)
+    moveY=clamp(moveY or 0,-1,1)
+    local length=math.sqrt(moveX*moveX+moveY*moveY)
+    if length>1 then moveX,moveY=moveX/length,moveY/length end
+    local amount=dt*Config.player.moveSpeed
+    local x=player.pos.x+moveX*amount
+    local y=player.pos.y+moveY*amount
+    local nextPos=V.copy(player.pos)
+    -- Axis-separated test collision permits sliding around source obstacles.
+    if not collides(self,{x=x,y=nextPos.y}) then nextPos.x=x end
+    if not collides(self,{x=nextPos.x,y=y}) then nextPos.y=y end
+    local moved=V.lengthSqr(V.sub(player.pos,nextPos))>.00000001
+    if moved or (dir.x~=player.dir.x or dir.y~=player.dir.y) then
+        self.state:applyMessage(Net.MsgType.Update,{
+            ack=0,partObjects={{__type=Obj.Player,__id=1,
+                pos=nextPos,dir=dir}},
+        })
+    end
+    if moved then self.steps=self.steps+1 end
+end
+
+-- Door transition based on original
+-- server/src/game/objects/obstacle.ts:toggleDoor().
+function Demo:interact()
+    local player=self.state.objects[1]
+    local best,bestDistance=nil,Config.player.maxInteractionRad
+    for id,origin in pairs(self.doorOrigins) do
+        local door=self.state.objects[id]
+        if door and door.isDoor and door.door.canUse and not door.door.locked then
+            local distance=V.distance(door.pos,player.pos)
+            if distance<bestDistance then
+                best,bestDistance=door,distance
+            end
+        end
+    end
+    if not best then
+        self.message="Nenhuma porta do Survev esta ao alcance (F)."
+        return false
+    end
+    local def=Obstacles[best.type].door
+    local origin=self.doorOrigins[best.__id]
+    local opening=not best.door.open
+    local newPos=V.copy(best.pos)
+    local newOri=best.ori
+    if def.slideToOpen then
+        local offset=V.rotate({x=0,y=def.slideOffset*(opening and -1 or 1)},
+            best.ori*math.pi*.5)
+        newPos=V.add(newPos,offset)
+    elseif not opening then
+        newOri=origin.ori
+    else
+        local side=def.openOneWay
+        if not side or side==0 then
+            local toDoor=V.sub(best.pos,player.pos)
+            local doorDir=V.rotate({x=1,y=0},best.ori*math.pi*.5)
+            side=V.dot(toDoor,doorDir)<0 and -1 or 1
+        end
+        newOri=(best.ori-side)%4
+    end
+    local copyDoor={}
+    for k,v in pairs(best.door) do copyDoor[k]=v end
+    copyDoor.open=opening
+    copyDoor.seq=copyDoor.seq+1
+    self.state:applyMessage(Net.MsgType.Update,{
+        ack=0,
+        partObjects={{__type=Obj.Obstacle,__id=best.__id,
+            pos=newPos,ori=newOri}},
+        fullObjects={},
+    })
+    -- Full metadata is authoritative in real UpdateMsg; this is only
+    -- a local sandbox change, so apply the door's source-equivalent state.
+    best=self.state.objects[best.__id]
+    best.door=copyDoor
+    self.state.updateCount=self.state.updateCount+1
+    self.interactions=self.interactions+1
+    self.message=opening and "Porta de teste aberta." or "Porta de teste fechada."
+    return true
+end
+
+function Demo:getGameState() return self.state end
+return Demo
