@@ -11,6 +11,8 @@ const { MsgStream,MsgType,BitStream }=await load("shared/net/net.ts");
 const { JoinMsg }=await load("shared/net/joinMsg.ts");
 const { InputMsg }=await load("shared/net/inputMsg.ts");
 const { SpectateMsg,SpectateAction }=await load("shared/net/spectateMsg.ts");
+const { DropItemMsg }=await load("shared/net/dropItemMsg.ts");
+const { Input }=await load("shared/gameConfig.ts");
 const { JoinedMsg }=await load("shared/net/joinedMsg.ts");
 const { MapMsg }=await load("shared/net/mapMsg.ts");
 const { UpdateMsg }=await load("shared/net/updateMsg.ts");
@@ -90,6 +92,7 @@ const update=()=> {
 const listen=net.createServer(socket=>{
   let buffer=Buffer.alloc(0),upgraded=false,joinSeen=false,inputSeen=false,pongSeen=false;
   let spectatorSession=false,spectateSeen=false,spectateIndex=0;
+  let combatSession=false,combatStep=0,dropSeen=false;
   socket.setNoDelay(true);
   socket.on("data",async data=>{
     try {
@@ -117,10 +120,11 @@ const listen=net.createServer(socket=>{
           const join=new JoinMsg();
           join.deserialize(stream.getStream());
           if(join.protocol!==1028 ||
-             !["Network Test","Spectator Test"].includes(join.name) ||
+             !["Network Test","Spectator Test","Combat Test"].includes(join.name) ||
              join.joinToken!=="fixture-token")
             throw Error("invalid original TS JoinMsg fields");
           spectatorSession=join.name==="Spectator Test";
+          combatSession=join.name==="Combat Test";
           joinSeen=true;
           const joined=new JoinedMsg();
           joined.teamMode=1;joined.playerId=7;joined.started=true;joined.emotes=[];
@@ -128,6 +132,11 @@ const listen=net.createServer(socket=>{
           map.mapName="main";map.seed=321;map.width=720;map.height=640;
           map.shoreInset=8;map.grassInset=12;
           const initial=update();
+          if(combatSession) {
+            initial.activePlayerData.inventoryDirty=true;
+            initial.activePlayerData.scope="1xscope";
+            initial.activePlayerData.inventory={"bandage":2,"9mm":15};
+          }
           if(spectatorSession) {
             // Original TS object serialization: a dead local player and
             // two living players who are valid spectator targets.
@@ -165,16 +174,77 @@ const listen=net.createServer(socket=>{
           snap.activePlayerId=spectateIndex===2?9:8;
           snap.fullObjects=[];
           socket.write(serverFrame(framedMsg(MsgType.Update,snap)));
+        } else if(type===MsgType.DropItem) {
+          if(!joinSeen||!combatSession||combatStep!==6||dropSeen)
+            throw Error("unexpected DropItemMsg");
+          const item=new DropItemMsg();
+          item.deserialize(stream.getStream());
+          if(item.item!=="9mm"||item.weapIdx!==0)
+            throw Error("invalid original drop inventory packet");
+          dropSeen=true;
+          const delta=update();
+          delta.ack=0;delta.fullObjects=[];
+          delta.activePlayerData.inventoryDirty=true;
+          delta.activePlayerData.scope="1xscope";
+          delta.activePlayerData.inventory={bandage:1,"9mm":0};
+          socket.write(serverFrame(framedMsg(MsgType.Update,delta)));
         } else if(type===MsgType.Input) {
           if(!joinSeen)throw Error("Input before Join");
           const input=new InputMsg();
           input.deserialize(stream.getStream());
           if(input.seq===0)throw Error("missing InputMsg sequence");
+          if(combatSession) {
+            const check=(condition,why)=>{
+              if(!condition)throw Error("combat step "+combatStep+": "+why);
+            };
+            const expectAction=(action)=>{
+              check(input.inputs.length===1&&input.inputs[0]===action,
+                "bad source enum action");
+            };
+            if(combatStep===0) {
+              check(input.moveRight&&input.shootStart&&input.shootHold,
+                "move + first gun fire");
+              check(input.inputs.length===0&&!input.useItem,"fire must be bits");
+              check(input.toMouseDir.x>.999 && input.toMouseLen>0,
+                "original aim vector");
+            } else if(combatStep===1) {
+              check(input.moveRight&&!input.shootStart&&input.shootHold,
+                "held automatic fire without duplicate start");
+            } else if(combatStep===2) {
+              check(!input.shootStart&&!input.shootHold&&!input.moveRight,
+                "movement and gun trigger released");
+              expectAction(Input.Interact);
+            } else if(combatStep===3) {
+              check(!input.shootHold&&!input.moveRight,"no held combat input");
+              expectAction(Input.Reload);
+            } else if(combatStep===4) {
+              check(input.useItem==="bandage"&&input.inputs.length===0,
+                "bandages use type string not Input enum");
+            } else if(combatStep===5) {
+              expectAction(Input.EquipSecondary);
+              check(input.useItem==="","heal action must be one-shot");
+            } else {
+              throw Error("unexpected extra combat InputMsg");
+            }
+            ++combatStep;
+            const delta=update();
+            delta.ack=input.seq;delta.fullObjects=[];
+            delta.partObjects=[playerPayload(120+combatStep*3,140,false)];
+            delta.activePlayerData.healthDirty=true;
+            delta.activePlayerData.health=combatStep>=5?90:80;
+            if(combatStep===5) {
+              delta.activePlayerData.inventoryDirty=true;
+              delta.activePlayerData.scope="1xscope";
+              delta.activePlayerData.inventory={bandage:1,"9mm":15};
+            }
+            socket.write(serverFrame(framedMsg(MsgType.Update,delta)));
+          } else {
+            const ack=update();ack.ack=input.seq;
+            ack.fullObjects=[];
+            ack.partObjects=[playerPayload(125,150,false)];
+            socket.write(serverFrame(framedMsg(MsgType.Update,ack)));
+          }
           inputSeen=true;
-          const ack=update();ack.ack=input.seq;
-          ack.fullObjects=[];
-          ack.partObjects=[playerPayload(125,150,false)];
-          socket.write(serverFrame(framedMsg(MsgType.Update,ack)));
         } else throw Error("unknown original client packet "+type);
       }
     } catch(e){
@@ -184,8 +254,12 @@ const listen=net.createServer(socket=>{
     }
   });
   socket.on("close",()=>{
-    if(!joinSeen||!(inputSeen||(spectateSeen&&spectateIndex===3))||!pongSeen) {
-      console.error("Fixture incomplete", {joinSeen,inputSeen,spectateSeen,spectateIndex,pongSeen});
+    if(!joinSeen||!(inputSeen||(spectateSeen&&spectateIndex===3))||!pongSeen
+        ||(combatSession&&(combatStep!==6||!dropSeen))) {
+      console.error("Fixture incomplete", {
+        joinSeen,inputSeen,spectateSeen,spectateIndex,combatSession,
+        combatStep,dropSeen,pongSeen
+      });
       process.exitCode=1;
     }
   });
