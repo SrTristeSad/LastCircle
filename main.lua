@@ -10,6 +10,7 @@ local Config=require("src.survev.game_config")
 local Input=require("src.survev.input_msg")
 local LiveInput=require("src.survev.live_input")
 local Network=require("src.survev.network_client")
+local Spectate=require("src.survev.spectate_msg")
 local Match=require("src.survev.matchmaking")
 local LiveDebug=require("src.survev.live_debug")
 local OfflineDemo=require("src.survev.offline_demo")
@@ -277,15 +278,42 @@ function love.keypressed(key)
         end
         return
     end
-    -- The authoritative Survev server accepts inputs only after JoinedMsg.
+    -- Original game.ts only queues game input while controlling a living
+    -- player. SpectateAction.Begin is sent after death via the UI, and
+    -- Left/Right cycle spectator targets; server chooses the target.
     local state=client and client:getGameState()
-    if not state or not state.joined or state.gameOver then return end
+    if not state or not state.joined or
+        (state.gameOver and state.gameOver.gameOver==true) then return end
+    local own=state.objects and state.objects[state.localId]
+    if state.spectating then
+        pendingInput:clear()
+        fireStart=false
+        if key=="right" or key=="left" then
+            local action=key=="right" and Spectate.Action.Next
+                or Spectate.Action.Prev
+            local bytes,err=client:sendSpectate(action)
+            if not bytes then status="Espectador: "..tostring(err) end
+        end
+        return
+    end
+    if own and own.dead then
+        pendingInput:clear()
+        fireStart=false
+        if key=="b" then
+            local bytes,err=client:sendSpectate(Spectate.Action.Begin)
+            if not bytes then status="Espectador: "..tostring(err) end
+        end
+        return
+    end
     pendingInput:keypressed(key)
 end
 function love.wheelmoved(dx,dy)
     local state=client and client:getGameState()
     if screen~="network" or not connected() or not state or
-        not state.joined or state.gameOver then return end
+        not state.joined or state.spectating or
+        (state.gameOver and state.gameOver.gameOver==true) then return end
+    local own=state.objects and state.objects[state.localId]
+    if own and own.dead then return end
     pendingInput:wheelmoved(dy)
 end
 function love.mousepressed(x,y,button)
@@ -297,6 +325,32 @@ function love.mousepressed(x,y,button)
     end
     if screen~="network" then return end
     if connected() then
+        local game=client:getGameState()
+        local own=game and game.objects and game.objects[game.localId]
+        if game and (game.spectating or own and own.dead) then
+            pendingInput:clear()
+            fireStart=false
+            -- Drawn spectate control will also be usable by mouse.
+            if button==1 then
+                local action=nil
+                if game.spectating then
+                    if x>=10 and x<=135 and y<=100 then
+                        action=Spectate.Action.Prev
+                    elseif x>=145 and x<=270 and y<=100 then
+                        action=Spectate.Action.Next
+                    end
+                elseif own and own.dead then
+                    if x>=10 and x<=235 and y<=100 then
+                        action=Spectate.Action.Begin
+                    end
+                end
+                if action then
+                    local _,err=client:sendSpectate(action)
+                    if err then status="Espectador: "..tostring(err) end
+                end
+            end
+            return
+        end
         if inventoryPanel.visible then
             if button==2 then
                 local width,height=love.graphics.getDimensions()
@@ -314,7 +368,8 @@ function love.mousepressed(x,y,button)
         end
         if button==1 then
             local state=client:getGameState()
-            if state and state.joined and not state.gameOver
+            if state and state.joined and
+                not (state.gameOver and state.gameOver.gameOver==true)
                 and not state.spectating then
                 local width,height=love.graphics.getDimensions()
                 local target=Hud.slotAt(state,width,height,x,y)
@@ -416,19 +471,32 @@ function love.update(dt)
     if world and world.map then live:update(world,dt) end
     if screen~="network" or not connected() or not client:getGameState()
         or not client:getGameState().joined then return end
-    if client:getGameState().gameOver then
+    local state=client:getGameState()
+    if state.gameOver and state.gameOver.gameOver==true then
         pendingInput:clear()
         fireStart=false
         return
     end
-    local state=client:getGameState()
+    local own=state.objects[state.localId]
     local player=state.objects[state.activeId]
+    -- On death/spectate, flush the previous held movement/shoot packet
+    -- with an empty InputMsg; never control the spectated player's body.
+    if state.spectating or (own and own.dead) then
+        pendingInput:clear()
+        fireStart=false
+        local neutral=Input.new()
+        local ok,err=pcall(function() client:sendInput(neutral,dt) end)
+        if not ok then status="Falha InputMsg espectador: "..tostring(err) end
+        return
+    end
     if not player or not player.pos then return end
     local msg=Input.new()
-    msg.moveLeft=love.keyboard.isDown("a")
-    msg.moveRight=love.keyboard.isDown("d")
-    msg.moveUp=love.keyboard.isDown("w")
-    msg.moveDown=love.keyboard.isDown("s")
+    -- game.ts also accepts unbound arrow keys for desktop movement.
+    msg.moveLeft=love.keyboard.isDown("a","left")
+    msg.moveRight=love.keyboard.isDown("d","right")
+    msg.moveUp=love.keyboard.isDown("w","up")
+    msg.moveDown=love.keyboard.isDown("s","down")
+    msg.portrait=love.graphics.getWidth()<love.graphics.getHeight()
     msg.shootStart=fireStart
     msg.shootHold=not inventoryPanel.visible and love.mouse.isDown(1)
     local mx,my=love.mouse.getPosition()
@@ -510,7 +578,25 @@ local function drawNetwork(w,h)
         minimap:draw(state,w,h,live.terrainRenderer)
         pickupFeedback:draw(w,h)
         equipmentTracker:draw(w,h)
-        ResultsOverlay.draw(state,w,h)
+        if not state.spectating then
+            ResultsOverlay.draw(state,w,h)
+        end
+        local own=state.objects and state.objects[state.localId]
+        if state.joined and state.spectating then
+            g.setColor(.025,.05,.04,.86)
+            g.rectangle("fill",10,10,260,85,6)
+            g.setColor(.98,.95,.78)
+            g.printf("ASSISTINDO JOGADOR "..tostring(state.activeId),15,15,250,"center")
+            g.printf("< ANTERIOR",15,52,115,"center")
+            g.printf("PROXIMO >",145,52,115,"center")
+        elseif state.joined and own and own.dead
+            and not (state.gameOver and state.gameOver.gameOver==true) then
+            g.setColor(.025,.05,.04,.86)
+            g.rectangle("fill",10,10,225,85,6)
+            g.setColor(.98,.95,.78)
+            g.printf("PERSONAGEM ELIMINADO",16,17,213,"center")
+            g.printf("B / CLIQUE: ASSISTIR",16,53,213,"center")
+        end
         local statusText="Conexao: "..client.state..
             " | MapMsg: "..tostring(state and state.map and state.map.mapName or "aguardando")..
             " | Atualizacoes: "..tostring(state and state.updateCount or 0)
