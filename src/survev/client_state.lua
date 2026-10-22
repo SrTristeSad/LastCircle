@@ -31,7 +31,8 @@ function State.new()
         teamMode=1,joined=false,started=false,localId=0,activeId=0,
         spectating=false,map=nil,objects={},playerInfos={},localData={},
         playerStatus={},groupStatus={},gas=Gas.new(),
-        bullets={},explosions={},emotes={},planes={},airstrikeZones={},
+        bullets={},shotFxEvents={},shotFxSeq=0,
+        explosions={},emotes={},planes={},airstrikeZones={},
         mapIndicators={},killLeaderId=0,killLeaderKills=0,
         lastAck=0,updateCount=0,errors={},
         gameOver=nil,score=nil,aliveCounts={},lastPickup=nil,pickupSeq=0,
@@ -95,6 +96,20 @@ function State:applyUpdate(msg)
 
     -- Effects are one-update events, not permanent world objects.
     self.bullets=copy(msg.bullets or {})
+    -- The socket can deliver several UpdateMsgs in a single render frame.
+    -- Keep bounded, numbered shotFx events so the recoil renderer receives
+    -- each authoritative shot once, not only the final packet's bullets.
+    for _,bullet in ipairs(self.bullets) do
+        if bullet.shotFx==true then
+            self.shotFxSeq=self.shotFxSeq+1
+            local shot=copy(bullet)
+            shot.seq=self.shotFxSeq
+            self.shotFxEvents[#self.shotFxEvents+1]=shot
+            if #self.shotFxEvents>256 then
+                table.remove(self.shotFxEvents,1)
+            end
+        end
+    end
     self.explosions=copy(msg.explosions or {})
     self.emotes=copy(msg.emotes or {})
     self.planes=copy(msg.planes or {})
