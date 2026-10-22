@@ -112,7 +112,21 @@ function Demo.new()
     state:applyMessage(Net.MsgType.Update,{
         ack=0,activePlayerIdDirty=true,activePlayerId=1,
         fullObjects=all,
-        activePlayerData={healthDirty=true,health=100},
+        activePlayerData={
+            healthDirty=true,health=100,
+            boostDirty=true,boost=62.5,
+            inventoryDirty=true,scope="1xscope",
+            -- Fixed LOCAL PREVIEW reserves use source GameConfig.bagSizes
+            -- (base capacity 9mm=120, 762mm=90), NOT fake game pickups.
+            inventory={["9mm"]=120,["762mm"]=90,["1xscope"]=1},
+            weapsDirty=true,curWeapIdx=2,
+            weapons={
+                {type="ak47",ammo=assert(Equipment.weapons.ak47.maxClip)},
+                {type="m9",ammo=assert(Equipment.weapons.m9.maxClip)},
+                {type="fists",ammo=0},
+                {type="",ammo=0}
+            },
+        },
     })
     state.offlinePreview=true
     return setmetatable({
@@ -151,9 +165,23 @@ function Demo:equip(slot)
             not Equipment.weapons[key].world.asset) then return false end
     local obj=self.state.objects[self.state.activeId]
     obj.previewFistTicker=nil
+    local current={}
+    for i,item in ipairs(self.state.localData.weapons) do
+        current[i]={type=item.type,ammo=item.ammo}
+    end
+    -- Original four slots: primary=0, secondary=1, melee=2, throwable=3.
+    local index=2
+    if key=="m9" or key=="m9_dual" then index=1 end
+    if key=="ak47" then index=0 end
+    current[index+1]={
+        type=key,ammo=Equipment.weapons[key].maxClip or 0,
+    }
     self.state:applyMessage(Net.MsgType.Update,{
         ack=0,partObjects={{__id=obj.__id,__type=Obj.Player,
-            activeWeapon=key}}
+            activeWeapon=key}},
+        activePlayerData={
+            weapsDirty=true,curWeapIdx=index,weapons=current
+        },
     })
     self.message="Equipado visualmente: "..Equipment.weapons[key].name..
         " (nenhuma municao/dano no teste local)."
