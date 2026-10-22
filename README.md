@@ -25,6 +25,8 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 **Nova etapa — visibilidade e portas:** acrescentei a varredura de **cinco raios de linha de visão**, respeitando os colisores originais das paredes, janelas, portas, obstáculos destruídos e regras de escadas. O teto usa os resultados para fazer o fade como no Survev. As portas agora têm interpolação visual de posição e rotação, além das molduras originais. As comparações são geradas a partir do TypeScript original e executadas em Lua 5.4 e LuaJIT.
 
+**Personagem Survev (etapa atual):** `player_renderer.lua` desenha agora corpo, mãos e pés do personagem nas escalas, cores e posições obtidas diretamente de `player.ts` e `animData.ts`. O gerador `scripts/generate_player_art.mjs` importou **90 outfits**, **16 poses** e os **3 quadros-chave do soco original**. A animação de clique no cenário offline é apenas visual e não gera dano. O teste [Player Outfit And Pose Metadata](https://github.com/SrTristeSad/LastCircle/actions/workflows/player-art.yml) compara as transformações de sprite com as calculadas pelo TypeScript original em Lua 5.4 e LuaJIT; o cliente usa passes parciais de z-order para renderizar árvores acima de telhados e personagens.
+
 **Ainda não portado:** API oficial para descobrir partidas/tokens, composição final das quatro camadas e máscaras, interação de portas com o servidor, animações completas de jogadores, HUD, efeitos, áudio e partida multiplayer plenamente jogável. O modo F6 **é uma visualização parcial de estado real, não o jogo completo**.
 
 ### Testar agora sem servidor (Windows / LÖVE)
@@ -33,7 +35,7 @@ O objetivo é **reproduzir fielmente o cliente Survev** em Lua/LÖVE2D, respeita
 
 O ZIP `LastCircle-Teste-Windows.zip` está em [Actions / Empacotar cliente Lua](https://github.com/SrTristeSad/LastCircle/actions/workflows/build-love.yml). Extraia-o e execute **`TESTAR-LASTCIRCLE-WINDOWS.bat`** com o LÖVE2D 11.5 instalado. O pacote inclui as artes rasterizadas, o jogo `.love`, instruções e uma captura do teste real feito pela CI.
 
-Controles locais: **WASD** para mover, **mouse** para mirar, **F** para testar portas próximas, **R** ou **F5** para reiniciar o cenário, **F6** para ir à conexão original WebSocket, **F7** para conferir as artes, **ESC** para sair.
+Controles locais: **WASD** para mover, **mouse** para mirar, **clique esquerdo** para animar o soco original sem dano, **F** para testar portas próximas, **R** ou **F5** para reiniciar o cenário, **F6** para ir à conexão original WebSocket, **F7** para conferir as artes, **ESC** para sair.
 
 O workflow executa o mesmo arquivo `.love` em um runtime **LÖVE/OpenGL real** (Xvfb) antes de publicar o ZIP, e exige que o jogo renderize uma captura da tela. Os testes Lua 5.4/LuaJIT verificam dados do mapa, velocidade, colisão, interação de portas e navegação da interface.
 
