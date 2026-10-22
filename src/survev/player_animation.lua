@@ -68,9 +68,7 @@ function Animations:update(state,dt)
                 type(obj.animType)=="number" then
                 local previous=self.entities[id]
                 -- 3-bit animation sequence wraps. Compare equality, not >.
-                if not previous or previous.sequence~=obj.animSeq or
-                    previous.kind~=obj.animType or
-                    previous.weapon~=obj.activeWeapon then
+                if not previous or previous.sequence~=obj.animSeq then
                     self.entities[id]={
                         sequence=obj.animSeq,kind=obj.animType,
                         weapon=obj.activeWeapon,ticker=0,
@@ -94,7 +92,8 @@ function Animations:poseFor(obj)
     if not obj or obj.dead or obj.downed then return nil end
     local entry=self.entities[obj.__id]
     if not entry or entry.kind~=Game.Anim.Melee then return nil end
-    if obj.animSeq~=entry.sequence or obj.activeWeapon~=entry.weapon then
+    if obj.animSeq~=entry.sequence or obj.animType~=entry.kind
+        or obj.activeWeapon~=entry.weapon then
         return nil
     end
     return Animations.sample(entry.weapon,entry.ticker)
