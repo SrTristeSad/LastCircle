@@ -111,3 +111,8 @@ Os efeitos sao limitados e emitidos somente uma vez por impacto visual. A CI val
 ### Sangue visual ligado ao jogador
 
 O `bloodSplat` emitido por uma colisao visual em um jogador passa a permanecer relativo ao corpo daquele personagem. O renderer desenha a textura no passe do jogador correspondente, em vez de desenha-la como partícula fixa do mapa. O deslocamento X/Y conserva a referencia original `player.container` (sem girar o sangue junto com a pose do corpo) e respeita a conversao atual de pixels por unidade e o zoom do LÖVE. Se o personagem deixa de existir no estado ou morre, suas particulas anexadas sao descartadas. O som original de impacto usa a posicao do jogador. A flag interna `impactFx.bloodEnabled=false` suprime apenas o efeito grafico de sangue; ainda nao esta disponivel na interface de configuracoes. `tests/attached_blood_smoke.lua` testa essas propriedades.
+
+
+### Camada superior de folhagem e mascaras
+
+O renderizador do mundo em `F6` agora aplica parte da regra de `Obstacle.render` original: arvores e arbustos altos na camada 0, ao serem observados por jogador na camada 0, sao desenhados no passe superior com `zOrd` ajustado, **depois dos telhados**, respeitando as mascaras reais das estruturas `StructureDefs.mask`. A mascara utiliza `love.graphics.stencil` e e removida antes do HUD. Obstaculos destruidos voltam a `zOrd=5`, exibem o resíduo com `alpha=0.75` ou ficam invisiveis quando nao existe arte de residuo. A composicao de outros objetos das quatro camadas e a transicao completa de solo/subsolo continuam pendentes.
