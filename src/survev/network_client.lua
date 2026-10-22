@@ -6,6 +6,7 @@ local Session=require("src.survev.protocol_session")
 local Input=require("src.survev.input_msg")
 local Net=require("src.survev.net")
 local Drop=require("src.survev.drop_item_msg")
+local Spectate=require("src.survev.spectate_msg")
 local LootDefs=require("src.survev.loot_art")
 local Equipment=require("src.survev.equipment_art")
 local Config=require("src.survev.game_config")
@@ -63,7 +64,10 @@ function Client:connect(url,joinOptions)
         self.packetCount=self.packetCount+1
         self.lastMessages=result
         if self.session.state.joined then self.state="joined" end
-        if self.session.state.gameOver then self.state="finished" end
+        if self.session.state.gameOver and
+            self.session.state.gameOver.gameOver==true then
+            self.state="finished"
+        end
     end
     ws.onError=function(err)
         self.error=err
@@ -108,6 +112,38 @@ function Client:connectMatch(match,options)
     self.state="error"
     self.error=table.concat(errors," | ")
     return nil,self.error~="" and self.error or "No usable game address"
+end
+-- Port of client/src/game.ts: SpectateMsg contains exactly one
+-- SpectateAction byte. Server owns target selection/cooldowns and
+-- refuses spectator commands from a living player.
+function Client:sendSpectate(action)
+    if not self.session or not self.session.opened or
+        not self.connection or self.connection.state~="open" then
+        return nil,"Partida nao conectada"
+    end
+    local state=self.session.state
+    if not state or not state.joined or state.offlinePreview or
+        (state.gameOver and state.gameOver.gameOver==true) then
+        return nil,"Partida indisponivel para espectador"
+    end
+    if action~=Spectate.Action.Begin and action~=Spectate.Action.Next
+        and action~=Spectate.Action.Prev then
+        return nil,"Acao de espectador desconhecida"
+    end
+    local own=state.objects and state.objects[state.localId]
+    if own and not own.dead then
+        return nil,"Jogador ainda esta vivo"
+    end
+    if action~=Spectate.Action.Begin and not state.spectating then
+        return nil,"Ainda nao esta assistindo"
+    end
+    local msg=Spectate.new()
+    msg.action=action
+    local ok,bytes=pcall(function()
+        return self.session:sendMessage(Net.MsgType.Spectate,msg,128)
+    end)
+    if not ok then return nil,tostring(bytes) end
+    return bytes
 end
 function Client:poll()
     if self.connection then self.connection:poll() end
