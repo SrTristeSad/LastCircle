@@ -5,6 +5,7 @@
 local Registry=require("src.survev.map_obstacle_art")
 local Objects=require("src.survev.object_serialize_fns")
 local DoorVisual=require("src.survev.door_visual")
+local Structure=require("src.survev.structure_layer")
 local Biomes=require("src.survev.map_colors")
 local Art={}
 Art.__index=Art
@@ -71,7 +72,52 @@ local function inStratum(z,part)
     error("unknown upstream obstacle stratum "..tostring(part))
 end
 Art.inStratum=inStratum
-function Art:draw(objects,camera,width,height,mapName,part)
+-- Source obstacle.ts render(): corpses become zOrd=5. When the active
+-- player is on ground floor, high objects (zOrd>=50) on layer 0 are
+-- promoted to stairs layer 2 with zOrd+100. These are rendered AFTER
+-- the ground/roof pass and are clipped by structure mask holes.
+function Art.visualOrder(meta,obj,activePlayer)
+    local z=obj.dead and 5 or (meta and meta.zIdx or 0)
+    local layer=obj.layer or 0
+    local high=false
+    if not obj.dead and z>=50 and layer==0 and
+        activePlayer and (activePlayer.layer or 0)==0 then
+        z=z+100
+        layer=2
+        high=true
+    end
+    return {z=z,layer=layer,high=high,
+        zIdx=math.floor((obj.scale or 1)*1000)*65535+(obj.__id or 0)}
+end
+local function maskHighFoliage(g,objects,camera,activePlayer)
+    if not activePlayer or (activePlayer.layer or 0)~=0 then return false end
+    if not g.stencil or not g.setStencilTest then return false end
+    local masks={}
+    for _,structure in ipairs(Structure.snapshot(objects)) do
+        for _,rect in ipairs(structure.mask) do
+            if rect.type==1 then
+                local left=camera:m_pointToScreen(rect.min)
+                local right=camera:m_pointToScreen(rect.max)
+                masks[#masks+1]={
+                    x=math.min(left.x,right.x),
+                    y=math.min(left.y,right.y),
+                    w=math.abs(left.x-right.x),
+                    h=math.abs(left.y-right.y),
+                }
+            end
+        end
+    end
+    if #masks==0 then return false end
+    g.stencil(function()
+        for _,rect in ipairs(masks) do
+            g.rectangle("fill",rect.x,rect.y,rect.w,rect.h)
+        end
+    end,"replace",1)
+    g.setStencilTest("equal",0)
+    return true
+end
+Art.maskHighFoliage=maskHighFoliage
+function Art:draw(objects,camera,width,height,mapName,part,activePlayer)
     local graphics=love.graphics
     local visible={}
     self.drawn,self.unavailable=0,0
@@ -79,16 +125,26 @@ function Art:draw(objects,camera,width,height,mapName,part)
         if obj.__type==Objects.Type.Obstacle and obj.pos and obj.type then
             local meta=Registry[obj.type]
             local ok,pt=screenVisible(camera,obj.pos,width,height,200)
-            local z=meta and meta.zIdx or 0
-            if ok and inStratum(z,part) then
-                visible[#visible+1]={obj=obj,meta=meta,pt=pt,z=z}
+            local order=Art.visualOrder(meta,obj,activePlayer)
+            local accepted=(part=="stairsOverlay" and order.high)
+                or (part~="stairsOverlay" and
+                    not order.high and inStratum(order.z,part))
+            if ok and accepted then
+                visible[#visible+1]={
+                    obj=obj,meta=meta,pt=pt,
+                    z=order.z,zIdx=order.zIdx,
+                }
             end
         end
     end
     table.sort(visible,function(a,b)
         if a.z~=b.z then return a.z<b.z end
-        return a.obj.__id<b.obj.__id
+        return a.zIdx<b.zIdx
     end)
+    local masked=false
+    if part=="stairsOverlay" and #visible>0 then
+        masked=maskHighFoliage(graphics,objects,camera,activePlayer)
+    end
     for _,entry in ipairs(visible) do
         local meta,obj,pt=entry.meta,entry.obj,entry.pt
         local isDoor=meta and meta.door~=nil
@@ -131,6 +187,7 @@ function Art:draw(objects,camera,width,height,mapName,part)
             self.unavailable=self.unavailable+1
         end
     end
+    if masked then graphics.setStencilTest() end
     graphics.setColor(1,1,1,1)
 end
 return Art
