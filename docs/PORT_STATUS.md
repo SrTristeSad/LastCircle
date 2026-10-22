@@ -112,3 +112,12 @@ O modulo `src/survev/equipment_tracker.lua` observa apenas `UpdateMsg` aplicado 
 `main.lua` integra o indicador somente na tela de rede; a demonstracao offline nao produz os avisos. `tests/equipment_tracker_smoke.lua` cobre troca de arma, equipamento, recarga, `PickupMsg`, observacao e reinicializacao em Lua 5.4 e LuaJIT. O workflow `lua-check.yml` foi confirmado **verde na execucao 39722129014**, para o commit `24946086e910e06dead93b2c7129a6cb1dfc4190` (2026-10-22).
 
 Continua pendente validar a aparencia/temporizacao em uma partida real, os sons de equipamento e a fidelidade grafica completa de Survev.
+
+### HUD e protocolo de descarte de equipamentos (2026-10-22)
+
+A implementacao atual foi comparada com o Survev original (`client/src/game.ts`, fluxo de UI `action=="drop"`, e `server/src/game/objects/player.ts:dropItem`).
+
+- `network_client.lua` envia `DropItemMsg` para **armas primarias e secundarias**, **melee** (exceto punhos) e armaduras atualmente equipadas (**helmet/chest**). Para armas, `weapIdx` e o indice zero-based recebido em `UpdateMsg`; para armaduras usa-se o tipo real recebido no objeto do jogador. Mochilas continuam somente leitura.
+- `hud.lua` apresenta regioes de clique compartilhadas com o desenho dos quatro slots, e indicadores individuais de mochila/capacete/colete. **Esquerdo:** `InputMsg` com `EquipPrimary/Secondary/Melee/Throwable`, incluindo os punhos. **Direito:** pedido de descarte nos slots elegiveis ou nas etiquetas de capacete/colete. A interface nao modifica armas nem armaduras ate o servidor confirmar por `UpdateMsg`.
+- Pedidos sao bloqueados para itens desconhecidos, slots vazios, modo de teste, jogo encerrado, personagem morto/caido, espectador e transporte desconectado. O aviso `Descarte solicitado` indica apenas envio.
+- `tests/equipment_drop_smoke.lua` verifica dados binarios e zonas clicaveis em Lua 5.4 e LuaJIT; `lua-check.yml` inclui o teste. **Execucao de CI `39723614131` aprovada** no commit `ab23399b98e42380cfbef289aa772a33a93ae20a`. A compilacao/empacotamento real do LÖVE tambem havia passado apos a integracao inicial do HUD (`39723575640`). Nao ha ainda confirmacao de uma partida multiplayer end-to-end.
