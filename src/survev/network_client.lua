@@ -101,8 +101,13 @@ function Client:dropInventoryItem(item)
     end
     local state=self.session.state
     if not state or not state.joined or state.gameOver or
-        state.spectating or state.activeId~=state.localId then
+        state.offlinePreview or state.spectating or
+        state.activeId~=state.localId then
         return nil,"Jogador nao pode soltar itens agora"
+    end
+    local actor=state.objects and state.objects[state.activeId]
+    if not actor or actor.dead then
+        return nil,"Jogador sem personagem ativo"
     end
     local valid=false
     for _,key in ipairs(LootDefs.bagKeys) do
