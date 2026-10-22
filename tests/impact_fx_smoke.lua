@@ -97,7 +97,6 @@ fx:update(state,{trails={}},1.6)
 assert(#fx.particles==0 and #fx.soundEvents==3)
 
 -- Draw original PNGs; no placeholder colored circle.
-local draws={},{}
 local calls={new=0,draw=0,play=0,stop=0}
 love={filesystem={
     getInfo=function(path)
