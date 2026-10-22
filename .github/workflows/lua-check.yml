@@ -24,6 +24,10 @@ jobs:
         run: |
           lua5.4 tests/survev_parity.lua
           luajit tests/survev_parity.lua
+      - name: Original-source offline demo movement and doors
+        run: |
+          lua5.4 tests/offline_demo.lua
+          luajit tests/offline_demo.lua
       - name: Headless LÖVE UI bootstrap checks
         run: |
           lua5.4 tests/main_smoke.lua
