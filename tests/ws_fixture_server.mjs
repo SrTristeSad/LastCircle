@@ -133,6 +133,8 @@ const listen=net.createServer(socket=>{
           map.shoreInset=8;map.grassInset=12;
           const initial=update();
           if(combatSession) {
+            initial.activePlayerData.zoomDirty=true;
+            initial.activePlayerData.zoom=50;
             initial.activePlayerData.inventoryDirty=true;
             initial.activePlayerData.scope="1xscope";
             initial.activePlayerData.inventory={"bandage":2,"9mm":15};
