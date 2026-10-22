@@ -72,7 +72,7 @@ function V:draw(state,w,h)
     g.setColor(1,1,1)
     -- Original building floor textures precede players and ceiling layers.
     self.buildingArt:drawPhase(state.objects,cam,"floor",w,h,map.mapName)
-    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName)
+    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"belowPlayer")
 
     -- Debug markers intentionally do not pretend to reproduce object graphics.
     for _,obj in pairs(state.objects) do
@@ -97,8 +97,10 @@ function V:draw(state,w,h)
         end
     end
 
-    -- Roof images render above occupants, alpha determined by actual LOS rays.
+    -- Survev draw order around Player (zOrd 18) and roof (about zOrd 750).
+    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"betweenPlayerAndRoof")
     self.buildingArt:drawPhase(state.objects,cam,"ceiling",w,h,map.mapName)
+    self.obstacleArt:draw(state.objects,cam,w,h,map.mapName,"aboveRoof")
 
     local active=state.objects[state.activeId]
     local info=(state.offlinePreview and "CENARIO LOCAL: " or "MAPA: ")..tostring(map.mapName)..
