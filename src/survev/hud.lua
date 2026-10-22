@@ -92,8 +92,63 @@ local function panel(g,x,y,w,h,selected)
     g.rectangle("line",x+.5,y+.5,w-1,h-1,6,6)
     g.setLineWidth(1)
 end
+local function slotGeometry(w,h,i)
+    local x=math.max(8,w-355)+10+(i-1)*82
+    local y=math.max(105,h-343)+34
+    return x,y,76,74
+end
+local gearFields={
+    {key="backpack",label="Moch."},
+    {key="helmet",label="Cap."},
+    {key="chest",label="Colete"},
+}
+local function gearGeometry(w,h,i)
+    return math.max(8,w-355)+5+(i-1)*112,
+        math.max(105,h-343)-23,108,19
+end
+local function contains(px,py,x,y,w,h)
+    return px>=x and px<x+w and py>=y and py<y+h
+end
+-- Only the original weapon slots and currently equipped helmet/chest
+-- can be selected for a live server DropItemMsg. Bag rows use their own UI.
+function HUD.hitTest(state,w,h,px,py)
+    local model=HUD.project(state)
+    if not model or model.localPreview then return nil end
+    for i,slot in ipairs(model.slots) do
+        local x,y,sw,sh=slotGeometry(w,h,i)
+        if contains(px,py,x,y,sw,sh) then
+            local typeName=slot.type
+            if typeName=="" or typeName=="fists" or
+                (slot.kind~="gun" and slot.kind~="melee") then
+                return nil
+            end
+            return {kind="weapon",slot=slot.index,item=typeName,name=slot.name}
+        end
+    end
+    for i,gear in ipairs(gearFields) do
+        local x,y,gw,gh=gearGeometry(w,h,i)
+        if contains(px,py,x,y,gw,gh) then
+            local item=model.actor[gear.key]
+            local def=item and Gear.gear[item]
+            if (gear.key=="helmet" or gear.key=="chest") and
+                def and def.type==gear.key then
+                return {kind="armor",field=gear.key,item=item,name=def.name}
+            end
+            return nil
+        end
+    end
+    return nil
+end
 function HUD.new()
-    return setmetatable({cache={},missing={}},HUD)
+    return setmetatable({cache={},missing={},notice=nil,noticeTime=0},HUD)
+end
+function HUD:flash(message)
+    self.notice=tostring(message)
+    self.noticeTime=3
+end
+function HUD:update(dt)
+    self.noticeTime=math.max(0,self.noticeTime-math.max(0,dt or 0))
+    if self.noticeTime==0 then self.notice=nil end
 end
 function HUD:image(path)
     if not path then return nil end
@@ -121,7 +176,7 @@ function HUD:draw(state,w,h)
     g.printf(model.localPreview and "INVENTARIO • TESTE LOCAL"
         or "INVENTARIO • SERVIDOR",baseX+4,baseY+8,335,"center")
     for i,slot in ipairs(model.slots) do
-        local x,y=baseX+10+(i-1)*82,baseY+34
+        local x,y=slotGeometry(w,h,i)
         panel(g,x,y,76,74,slot.equipped)
         g.setColor(.96,.97,.88)
         g.print(tostring(i),x+6,y+4)
@@ -180,23 +235,24 @@ function HUD:draw(state,w,h)
             g.rectangle("fill",x,gaugeY+60,slotW*fill,12,2,2)
         end
     end
-    -- Keep armor badges compact: complete localized names can wrap and
-    -- accidentally overlap the weapon slot caption on 720p displays.
-    local gearNames={}
-    for _,info in ipairs({
-        {model.actor.backpack or "","Moch."},
-        {model.actor.helmet or "","Cap."},
-        {model.actor.chest or "","Colete"},
-    }) do
-        local def=Gear.gear[info[1]]
+    -- Three separate equipment labels share exactly the same hit boxes
+    -- used for right-click drop requests. The backpack is display-only.
+    for i,info in ipairs(gearFields) do
+        local equipped=model.actor[info.key]
+        local def=Gear.gear[equipped or ""]
         if def then
-            gearNames[#gearNames+1]=info[2].." "..tostring(def.level)
+            local x,y,gw,gh=gearGeometry(w,h,i)
+            g.setColor(.045,.08,.10,.86)
+            g.rectangle("fill",x,y,gw,gh,3,3)
+            g.setColor(.82,.90,.82)
+            g.printf(info.label.." "..tostring(def.level),x,y+2,gw,"center")
         end
     end
-    if #gearNames>0 then
-        g.setColor(.82,.90,.82)
-        g.printf(table.concat(gearNames,"  |  "),
-            baseX,baseY-20,343,"center")
+    if self.notice and self.noticeTime>0 then
+        g.setColor(.045,.08,.10,.94)
+        g.rectangle("fill",baseX,baseY-63,343,35,5,5)
+        g.setColor(.99,.86,.56)
+        g.printf(self.notice,baseX+5,baseY-55,333,"center")
     end
     g.setColor(1,1,1,1)
     return true
