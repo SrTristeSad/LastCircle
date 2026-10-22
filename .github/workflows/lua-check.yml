@@ -68,6 +68,10 @@ jobs:
         run: |
           lua5.4 tests/player_animation_smoke.lua
           luajit tests/player_animation_smoke.lua
+      - name: Source-authoritative reload and item action HUD progress
+        run: |
+          lua5.4 tests/action_progress_smoke.lua
+          luajit tests/action_progress_smoke.lua
       - name: Headless LÖVE UI bootstrap checks
         run: |
           lua5.4 tests/main_smoke.lua
