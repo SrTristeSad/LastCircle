@@ -38,6 +38,10 @@ jobs:
           luajit tests/minimap_smoke.lua
           lua5.4 tests/interaction_hint.lua
           luajit tests/interaction_hint.lua
+      - name: Survev ground loot and 25-category expandable inventory
+        run: |
+          lua5.4 tests/loot_smoke.lua
+          luajit tests/loot_smoke.lua
       - name: Headless LÖVE UI bootstrap checks
         run: |
           lua5.4 tests/main_smoke.lua
