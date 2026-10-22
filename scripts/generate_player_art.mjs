@@ -15,7 +15,7 @@ if(!(await readFile(resolve(root,"../ORIGEM.txt"),"utf8")).includes(pin))
 const importSource=async relativePath=>
     import(pathToFileURL(resolve(root,relativePath)).href);
 const {GameObjectDefs}=await importSource("shared/defs/register.ts");
-const {IdlePoses,Bones}=await importSource("client/src/animData.ts");
+const {IdlePoses,Bones,Animations}=await importSource("client/src/animData.ts");
 const imageRoot=resolve(root,"client/public/img");
 const filenames=new Map();
 async function walk(path){
@@ -85,7 +85,16 @@ function lua(v){
         .map(([key,val])=>"["+lua(key)+"]="+lua(val)).join(",")+"}";
     throw Error("Invalid metadata "+typeof v);
 }
+const punching=Animations.fists.keyframes.map(frame=>({
+    time:frame.time,
+    handR:{
+        pivot:frame.bones[Bones.HandR].pivot,
+        pos:frame.bones[Bones.HandR].pos,
+        rot:frame.bones[Bones.HandR].rot,
+    },
+}));
 const output={
+    animations:{fists:punching},
     sprites:{bodyScale:0.25,handScale:0.175,footScale:0.45},
     outfits,idlePoses:poses,
     source:{revision:pin,poseFile:"client/src/animData.ts",
@@ -97,6 +106,6 @@ await writeFile(resolve(outArg),
     "-- GPL-3.0-or-later; original asset paths verified (no substituted art).\n"+
     "return "+lua(output)+"\n");
 console.log("Upstream Survev player metadata:",Object.keys(outfits).length,
-    "outfits,",Object.keys(poses).length,"idle poses");
+    "outfits,",Object.keys(poses).length,"idle poses,",punching.length,"fist animation keyframes");
 if(Object.keys(outfits).length<10||Object.keys(poses).length<10)
     throw Error("Incomplete original player metadata");
