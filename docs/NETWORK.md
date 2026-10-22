@@ -99,3 +99,10 @@ As intersecoes sao verificadas apenas contra geometrias reconhecidas no estado d
 ### Colisao da frigideira e transicao de escadas
 
 Ao receber `UpdateMsg` contendo um jogador com frigideira, o cliente testa os segmentos exatos de reflexao, diferentes para o item equipado ou na cintura. A animacao de ataque da frigideira desativa a sua defesa quando nao estiver guardada. Em estruturas, os colliders de escadas e mascaras foram gerados do `StructureDefs` original, e as escadas `lootOnly` nao mudam a camada da bala. **Nao existe fisica de ricochete autoritativa no cliente**: essas operacoes so alteram os rastros locais. Testes: `tests/pan_collision_smoke.lua` e `tests/structure_layer_smoke.lua`.
+
+
+### Efeitos de impacto no cliente multiplayer
+
+Uma colisao visual confirmada por `bullet_trails.lua` pode gerar **particulas e som cosmeticos** derivados do Survev original: materiais de obstaculo usam `MapObjectDefs.hitParticle` e `sound.bullet`, jogadores usam `bloodSplat` e `player_bullet_hit`, e frigideiras usam `barrelChip` e `pan_bullet`. Sao 34 definicoes graficas transcritas e 22 grupos sonoros com MP3 originais; nenhuma destas animacoes indica que o servidor aceitou um dano.
+
+Os efeitos sao limitados e emitidos somente uma vez por impacto visual. A CI valida sprites PNG, duracao, decaimento, reutilizacao dos sons e supressao de efeitos apos troca de partida. O sistema ainda nao reproduz as particulas fisicamente anexadas aos personagens, todos os efeitos especiais/ambientais nem o audio espacial completo do motor original. A disponibilidade de MP3 depende do decodificador da versao do LÖVE usada no dispositivo.
