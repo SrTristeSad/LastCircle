@@ -47,7 +47,19 @@ jobs:
           trap 'kill "$server_pid" 2>/dev/null || true; cat /tmp/survev-server.log' EXIT
           python3 tests/fixtures/survev_matchmaking_server.py > /tmp/survev-matcher.log 2>&1 &
           matcher_pid=$!
-          sleep 2
+          for attempt in $(seq 1 40); do
+            if grep -q 'SURVEV_FIXTURE_READY:' /tmp/survev-server.log; then break; fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat /tmp/survev-server.log
+              exit 1
+            fi
+            sleep .25
+          done
+          if ! grep -q 'SURVEV_FIXTURE_READY:' /tmp/survev-server.log; then
+            cat /tmp/survev-server.log
+            echo "Survev original TS fixture never opened port"
+            exit 1
+          fi
           lua5.4 tests/ws_network.lua
           lua5.4 tests/ws_combat_network.lua
           lua5.4 tests/ws_spectate_network.lua
@@ -63,7 +75,19 @@ jobs:
           trap 'kill "$server_pid" 2>/dev/null || true; cat /tmp/survev-server-jit.log' EXIT
           python3 tests/fixtures/survev_matchmaking_server.py > /tmp/survev-matcher-jit.log 2>&1 &
           matcher_pid=$!
-          sleep 2
+          for attempt in $(seq 1 40); do
+            if grep -q 'SURVEV_FIXTURE_READY:' /tmp/survev-server-jit.log; then break; fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat /tmp/survev-server-jit.log
+              exit 1
+            fi
+            sleep .25
+          done
+          if ! grep -q 'SURVEV_FIXTURE_READY:' /tmp/survev-server-jit.log; then
+            cat /tmp/survev-server-jit.log
+            echo "Survev original TS fixture never opened port"
+            exit 1
+          fi
           luajit tests/ws_network.lua
           luajit tests/ws_combat_network.lua
           luajit tests/ws_spectate_network.lua
