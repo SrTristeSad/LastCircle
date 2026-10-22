@@ -17,6 +17,7 @@ local screen="demo"
 local tile,logo,selected,live,demo
 local smokeFrames=0
 local screenshotRequested=false
+local equipmentScreenshotRequested=false
 local index=1
 local imageErrors={}
 local sampleFiles={
@@ -213,11 +214,16 @@ function love.update(dt)
         live:update(state,dt)
         if os.getenv("LASTCIRCLE_DEMO_SMOKE")=="1" then
             smokeFrames=smokeFrames+1
-            if smokeFrames>=25 and love.filesystem.getInfo("LastCircle-demo.png") then
+            -- Exercise both the original fists and a real AK-47 world sprite
+            -- in the same real LÖVE2D/OpenGL test, without fake combat.
+            if smokeFrames==9 then assert(demo:equip(4)) end
+            if smokeFrames>=25
+                and love.filesystem.getInfo("LastCircle-demo.png")
+                and love.filesystem.getInfo("LastCircle-equipped.png") then
                 print("LASTCIRCLE_OFFLINE_DEMO_SUCCESS")
                 love.event.quit(0)
             elseif smokeFrames>=120 then
-                error("Offline screenshot was not created by real LÖVE runtime")
+                error("Offline previews failed in real LÖVE2D")
             end
         end
         return
@@ -367,5 +373,10 @@ function love.draw()
         and smokeFrames>=2 and not screenshotRequested then
         screenshotRequested=true
         love.graphics.captureScreenshot("LastCircle-demo.png")
+    end
+    if screen=="demo" and os.getenv("LASTCIRCLE_DEMO_SMOKE")=="1"
+        and smokeFrames>=11 and not equipmentScreenshotRequested then
+        equipmentScreenshotRequested=true
+        love.graphics.captureScreenshot("LastCircle-equipped.png")
     end
 end
