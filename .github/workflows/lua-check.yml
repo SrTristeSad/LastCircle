@@ -42,6 +42,10 @@ jobs:
         run: |
           lua5.4 tests/loot_smoke.lua
           luajit tests/loot_smoke.lua
+      - name: Authoritative Survev match results (Lua 5.4 and LuaJIT)
+        run: |
+          lua5.4 scripts/test_results_overlay.lua
+          luajit scripts/test_results_overlay.lua
       - name: Headless LÖVE UI bootstrap checks
         run: |
           lua5.4 tests/main_smoke.lua
