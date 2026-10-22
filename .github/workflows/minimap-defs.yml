@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - scripts/generate_minimap_defs.mjs
+      - scripts/check_minimap_parity.mjs
+      - tests/minimap_parity.lua
+      - src/survev/minimap.lua
       - .github/workflows/minimap-defs.yml
 permissions:
   contents: write
@@ -33,6 +36,14 @@ jobs:
           luac5.4 -p src/survev/minimap_defs.lua
           lua5.4 -e 'local d=require("src.survev.minimap_defs");assert(d.shack_01 and d.tree_01 and d.stone_01);print("Survev minimap source definitions OK")'
           luajit -e 'local d=require("src.survev.minimap_defs");assert(d.shack_01 and d.tree_01)'
+      - name: Compare original Survev minimap shapes in Lua 5.4
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_minimap_parity.mjs _reference/reference/survev lua5.4
+      - name: Compare original Survev minimap shapes in LuaJIT
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-transform-types \
+            scripts/check_minimap_parity.mjs _reference/reference/survev luajit
       - name: Commit generated source metadata
         run: |
           git config user.name "github-actions[bot]"
