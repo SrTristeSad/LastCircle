@@ -229,6 +229,22 @@ function love.mousepressed(x,y,button)
             -- Clicking UI never fires a gun or issues an unbound world action.
             return
         end
+        if button==1 then
+            local state=client:getGameState()
+            if state and state.joined and not state.gameOver
+                and not state.spectating then
+                local width,height=love.graphics.getDimensions()
+                local target=Hud.slotAt(state,width,height,x,y)
+                if target then
+                    local bySlot={
+                        Binds.Input.EquipPrimary,Binds.Input.EquipSecondary,
+                        Binds.Input.EquipMelee,Binds.Input.EquipThrowable,
+                    }
+                    pendingInput:queueAction(bySlot[target.slot+1])
+                    return
+                end
+            end
+        end
         if button==2 then
             local width,height=love.graphics.getDimensions()
             local target=Hud.hitTest(client:getGameState(),width,height,x,y)
