@@ -76,6 +76,10 @@ jobs:
         run: |
           lua5.4 tests/bullet_trails_smoke.lua
           luajit tests/bullet_trails_smoke.lua
+      - name: Survev structure stairs, masks and tracer layer source parity
+        run: |
+          lua5.4 tests/structure_layer_smoke.lua
+          luajit tests/structure_layer_smoke.lua
       - name: Survev equipped and holstered pan reflection collision
         run: |
           lua5.4 tests/pan_collision_smoke.lua
