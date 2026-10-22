@@ -1,0 +1,35 @@
+LASTCIRCLE - TESTE LOCAL DO CLIENTE LUA (SURVEV)
+=============================================
+
+1. Extraia TODO o arquivo ZIP em uma pasta, sem abrir o .love direto do ZIP.
+2. Instale o LÖVE2D 11.5: https://love2d.org/
+3. Clique duas vezes em TESTAR-LASTCIRCLE-WINDOWS.bat.
+   Alternativa: arraste LastCircle-Lua.love para love.exe.
+
+O teste entra diretamente em um MAPA LOCAL, SEM SERVIDOR.
+Isso permite avaliar o desenho REAL do terreno, dos rios, das casas,
+das arvores, dos itens de mapa e das portas com artes Survev originais.
+
+TECLAS:
+  WASD    - mover o personagem de teste.
+  MOUSE   - mirar / mostrar direcao.
+  F       - abrir ou fechar uma porta proxima, usando a regra original.
+  R / F5  - reiniciar o teste local.
+  F6      - painel para conectar a um servidor SURVEV compativel.
+  F7      - ver recursos graficos originais.
+  ESC     - sair.
+
+IMPORTANTE:
+- O mapa e o conjunto de objetos constituem CENARIO DE TESTE LOCAL.
+- As cores, sprites, definicoes, terreno e velocidades vem do Survev.
+- Movimento e interacoes locais sao uma simulacao para inspecao visual,
+  NAO uma partida multiplayer nem um servidor de jogo real.
+- F6 continua necessitando de URL WebSocket e joinToken reais de Survev.
+- O servidor Moo-Quest (1 ou 2) usa protocolo diferente e NAO funciona
+  como servidor do LastCircle.
+- O teste local NAO precisa de Node.js, login, token ou internet.
+- Ainda faltam HUD, player completo, armas, itens e camadas/masks finais.
+
+Repositorio: https://github.com/SrTristeSad/LastCircle
+Origem: https://github.com/survev/survev
+Licenca: GPL-3.0-or-later. Atribuicao no arquivo ATTRIBUTION-SURVEV.txt.
