@@ -86,6 +86,8 @@ for(const type of MapObjectDefs.getAllTypes()) {
             slideOffset:d.door.slideOffset,
             openSpeed:d.door.openSpeed,
             openOneWay:d.door.openOneWay,
+            interactionRad:d.door.interactionRad,
+            autoOpen:!!d.door.autoOpen,
             casing:d.door.casingImg ? {
                 asset:assetFor(d.door.casingImg.sprite),
                 sprite:d.door.casingImg.sprite,
